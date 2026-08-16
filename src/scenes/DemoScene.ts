@@ -23,7 +23,7 @@ import { createCombatFeedbackSystem } from "../ecs/systems/CombatFeedbackSystem"
 import { AudioManager } from "../audio/AudioManager";
 import { loadUnitData, loadCampConfig, loadSpireConfig } from "../data/loader";
 import { defineQuery, addEntity, addComponent } from "bitecs";
-import { GameStateComponent, GameStateValues, CampCoreComponent, ScreenAlertComponent } from "../ecs/components";
+import { GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent } from "../ecs/components";
 import { SpriteMap } from "../ecs/systems/RenderSyncSystem";
 import { createHUDSystem } from "../ecs/systems/HUDSystem";
 import { createBuildingSystem } from "../ecs/systems/BuildingSystem";
@@ -56,7 +56,7 @@ export class DemoScene extends Phaser.Scene {
   private recruitmentSystem!: ReturnType<typeof createRecruitmentSystem>;
   private progressionXPSystem!: ReturnType<typeof createProgressionXPSystem>;
 
-  private audioManager!: AudioManager;
+
   private screenAlertEid!: number;
 
   private bgMountains!: Phaser.GameObjects.TileSprite;
@@ -69,8 +69,12 @@ export class DemoScene extends Phaser.Scene {
 
   private stateQuery = defineQuery([GameStateComponent]);
   private coreQuery = defineQuery([CampCoreComponent]);
+  private dayNightQuery = defineQuery([DayNightCycle]);
 
-  constructor() {
+
+  private audioManager!: AudioManager;
+  private prevIsNight: number = -1;
+constructor() {
     super("DemoScene");
   }
 
@@ -96,6 +100,19 @@ export class DemoScene extends Phaser.Scene {
 
     // Setup Audio and Feedback
     this.audioManager = new AudioManager();
+
+    // Unlock Audio Context and start Day BGM on first interaction
+    this.input.once('pointerdown', () => {
+      this.audioManager.startBGM();
+      this.audioManager.setMusicMood('day', 0); // Start immediately as day
+    });
+
+    // Mute key
+    const mKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+    mKey.on('down', () => {
+      this.audioManager.toggleMute();
+    });
+
     this.combatFeedbackSystem = createCombatFeedbackSystem(this, this.audioManager);
 
     // Setup Singleton ScreenAlert
@@ -258,6 +275,25 @@ export class DemoScene extends Phaser.Scene {
 
     this.renderSyncSystem(world);
     this.hudSystem(world, delta);
+
+    // Check DayNightCycle to transition BGM
+    const dayNightEids = this.dayNightQuery(world);
+    if (dayNightEids.length > 0) {
+      const eid = dayNightEids[0];
+      const isNight = DayNightCycle.isNight[eid];
+
+      if (this.prevIsNight !== isNight) {
+        if (this.prevIsNight !== -1) {
+          if (isNight === 1) {
+            this.audioManager.setMusicMood('night', 3000);
+          } else {
+            this.audioManager.setMusicMood('day', 3000);
+          }
+        }
+        this.prevIsNight = isNight;
+      }
+    }
+
 
     // Check Win/Loss Condition
     const stateEids = this.stateQuery(world);
