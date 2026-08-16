@@ -1,22 +1,45 @@
 import { z } from "zod";
 
-// Faction: 0 = Hero, 1 = Monster
+// ─────────────────────────────────────────────────────
+// Shared enums
+// ─────────────────────────────────────────────────────
+
+// Faction: "hero" maps to FactionValues.Hero (0), "monster" maps to FactionValues.Monster (1)
 export const FactionEnum = z.enum(["hero", "monster"]);
 export type Faction = z.infer<typeof FactionEnum>;
 
-// Combat Type for RPS system
-// Melee > Ranged > Magic > Melee
+// Combat Type for RPS system: Melee > Ranged > Magic > Melee
 export const CombatTypeEnum = z.enum(["melee", "ranged", "magic"]);
 export type CombatType = z.infer<typeof CombatTypeEnum>;
 
+// ─────────────────────────────────────────────────────
+// M1 — Unit archetype schema (heroes + monsters)
+// Lives in: public/data/heroes/*.json, public/data/monsters/*.json
+// ─────────────────────────────────────────────────────
 export const UnitStatsSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  faction: FactionEnum,
+  id:         z.string(),
+  name:       z.string(),
+  faction:    FactionEnum,
   combatType: CombatTypeEnum,
-  health: z.number().int().positive(),
-  attack: z.number().int().positive(),
-  speed: z.number().positive(),
+  health:     z.number().int().positive(),
+  attack:     z.number().int().positive(),
+  speed:      z.number().positive(),
 });
-
 export type UnitStats = z.infer<typeof UnitStatsSchema>;
+
+// ─────────────────────────────────────────────────────
+// M2 — Floor definition schema
+// Lives in: public/data/floors/floor_NN.json
+// One JSON file per tower floor. floorId is 1-indexed.
+// ─────────────────────────────────────────────────────
+export const FloorDataSchema = z.object({
+  // 1-indexed floor number. Floor 1 = bottom of tower (closest to gate).
+  floorId:       z.number().int().min(1),
+  // Max monsters that can spawn on this floor during a raid.
+  monsterBudget: z.number().int().positive(),
+  // HP of the barricade blocking the ladder to the next floor.
+  barricadeHP:   z.number().int().positive(),
+  // If true, this floor has an archer alcove nest — only reachable by flying units.
+  hasAlcoveNest: z.boolean(),
+});
+export type FloorData = z.infer<typeof FloorDataSchema>;

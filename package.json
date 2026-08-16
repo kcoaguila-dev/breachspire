@@ -1,7 +1,7 @@
 {
-  "name": "app",
-  "version": "1.0.0",
-  "description": "",
+  "name": "breachspire",
+  "version": "0.1.0",
+  "description": "2D side-scrolling co-op roguelite — Phaser 3 + bitECS + Zod",
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
@@ -15,7 +15,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/kcoaguila-dev/breachspire/issues"
   },

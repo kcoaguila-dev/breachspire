@@ -1,4 +1,4 @@
-import { UnitStats, UnitStatsSchema } from "./schemas";
+import { UnitStats, UnitStatsSchema, FloorData, FloorDataSchema } from "./schemas";
 
 export async function loadUnitData(url: string): Promise<UnitStats> {
   const response = await fetch(url);
@@ -11,3 +11,15 @@ export async function loadUnitData(url: string): Promise<UnitStats> {
   // Invalid data will throw a ZodError immediately here
   return UnitStatsSchema.parse(data);
 }
+
+export async function loadFloorData(url: string): Promise<FloorData> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load floor data from ${url}: ${response.statusText}`);
+  }
+  const data = await response.json();
+
+  // Throws ZodError immediately if JSON does not match FloorDataSchema.
+  // This fires at scene startup — a malformed floor_NN.json is caught before any entity is created.
+  return FloorDataSchema.parse(data);
+}

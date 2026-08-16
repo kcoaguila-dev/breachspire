@@ -4,12 +4,14 @@ import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createCombatSystem } from "../ecs/systems/CombatSystem";
 import { createRenderSyncSystem } from "../ecs/systems/RenderSyncSystem";
 import { createMovementSystem } from "../ecs/systems/MovementSystem";
+import { createDeathSystem } from "../ecs/systems/DeathSystem";
 import { loadUnitData } from "../data/loader";
 
 export class DemoScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
   private movementSystem!: ReturnType<typeof createMovementSystem>;
   private combatSystem!: ReturnType<typeof createCombatSystem>;
+  private deathSystem!: ReturnType<typeof createDeathSystem>;
   private renderSyncSystem!: ReturnType<typeof createRenderSyncSystem>;
 
   private spriteMap = new Map<number, Phaser.GameObjects.Rectangle>();
@@ -24,6 +26,7 @@ export class DemoScene extends Phaser.Scene {
     this.fsmSystem = createFSMSystem();
     this.movementSystem = createMovementSystem();
     this.combatSystem = createCombatSystem();
+    this.deathSystem = createDeathSystem(this.spriteMap);
     this.renderSyncSystem = createRenderSyncSystem(this, this.spriteMap);
 
     try {
@@ -45,10 +48,16 @@ export class DemoScene extends Phaser.Scene {
   update(_time: number, delta: number) {
     if (!this.isReady) return;
 
-    // Run ECS pipeline
+    // ECS pipeline — order is critical:
+    // 1. FSM decides intent
+    // 2. Movement applies velocity
+    // 3. Combat applies damage
+    // 4. Death removes dead entities from world + spriteMap
+    // 5. RenderSync mirrors live ECS state to Phaser (must be last, read-only)
     this.fsmSystem(world, delta);
     this.movementSystem(world, delta);
     this.combatSystem(world, delta);
+    this.deathSystem(world);
     this.renderSyncSystem(world);
   }
 }
