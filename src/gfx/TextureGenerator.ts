@@ -39,6 +39,7 @@ export class TextureGenerator {
 
         // Spires
         this.generateCutawayWall(scene, "spire_cutaway_wall");
+        this.generateArchwayWall(scene, "spire_archway_wall");
         this.generatePixelBg(scene, "spire_floor_platform", 128, 16, "#8B4513", "#654321");
         this.generateRect(scene, "spire_barricade_gate", 32, 64, "#4B0082");
         this.generateDarkCrystal(scene, "spire_dark_crystal");
@@ -301,7 +302,8 @@ export class TextureGenerator {
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         const c1 = 0x2f3542;
         const c2 = 0x1e272e;
-        for (let y = 0; y < 64; y += 16) {
+        // The cutaway interior with dark stone bricks and wooden cross-beams.
+        for (let y = 0; y < 120; y += 16) {
             for (let x = 0; x < 128; x += 32) {
                 const offset = (y % 32 === 0) ? 0 : 16;
                 graphics.fillStyle(c1, 1);
@@ -311,10 +313,41 @@ export class TextureGenerator {
                 graphics.fillRect(x + offset, y + 14, 32, 2);
             }
         }
-        // Arch cutouts
-        graphics.fillStyle(0x0d0f18, 1);
-        graphics.fillRect(32, 24, 64, 40);
-        graphics.generateTexture(key, 128, 64);
+
+        // Wooden cross-beams
+        graphics.fillStyle(0x4a2e15, 1); // Dark wood color
+        graphics.fillRect(0, 0, 128, 8); // Top horizontal beam
+        graphics.fillRect(0, 112, 128, 8); // Bottom horizontal beam
+        // Vertical beams on sides
+        graphics.fillRect(0, 0, 8, 120);
+        graphics.fillRect(120, 0, 8, 120);
+
+        graphics.generateTexture(key, 128, 120);
+        graphics.destroy();
+    }
+
+    private static generateArchwayWall(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        const c1 = 0x576574; // Lighter stone for exterior
+        const c2 = 0x2f3542;
+        for (let y = 0; y < 120; y += 16) {
+            for (let x = 0; x < 128; x += 32) {
+                const offset = (y % 32 === 0) ? 0 : 16;
+                graphics.fillStyle(c1, 1);
+                graphics.fillRect(x + offset, y, 30, 14);
+                graphics.fillStyle(c2, 1);
+                graphics.fillRect(x + offset + 30, y, 2, 16);
+                graphics.fillRect(x + offset, y + 14, 32, 2);
+            }
+        }
+
+        // Grounded outer stone fortress wall with arched gateway entrance
+        graphics.fillStyle(0x0d0f18, 1); // Dark entrance
+        // Draw an arch
+        graphics.fillCircle(64, 50, 40);
+        graphics.fillRect(24, 50, 80, 70);
+
+        graphics.generateTexture(key, 128, 120);
         graphics.destroy();
     }
 

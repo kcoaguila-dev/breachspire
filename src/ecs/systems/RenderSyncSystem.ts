@@ -383,9 +383,12 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       const eid = floorsEntered[i];
       const container = scene.add.container(Position.x[eid], Position.y[eid]);
 
+      const isGroundFloor = FloorComponent.floorIndex[eid] === 1;
+      const wallTexture = isGroundFloor ? "spire_archway_wall" : "spire_cutaway_wall";
+
+      const wall = scene.add.sprite(0, -60, wallTexture);
       const platform = scene.add.sprite(0, 0, "spire_floor_platform");
-      const wall = scene.add.sprite(0, -32, "spire_cutaway_wall");
-      const barricade = scene.add.sprite(0, -16, "spire_barricade_gate");
+      const barricade = scene.add.sprite(0, -32, "spire_barricade_gate");
 
       container.add([wall, platform, barricade]);
       spriteMap.set(eid, container);

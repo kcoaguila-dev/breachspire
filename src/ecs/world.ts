@@ -21,6 +21,7 @@ import {
   InputStateComponent,
   CanReachElevated,
   FlightEnergyComponent,
+  FloorDefenderComponent,
 } from "./components";
 
 export const world = createWorld();
@@ -164,7 +165,8 @@ export function createSpireEntity(
   config: SpireConfig,
   side: SpireSideValues,
   x: number,
-  y: number
+  y: number,
+  defendersData?: Record<string, UnitStats>
 ): number {
   const entity = addEntity(world);
 
@@ -189,8 +191,8 @@ export function createSpireEntity(
 
   // Add initial floors
   for (let i = 1; i <= config.initialFloors; i++) {
-    // Scaffold vertically based on floor index
-    createFloorEntity(world, side, i, 100, x, y - i * 50);
+    // Scaffold vertically based on floor index. y - (i - 1) * 120
+    createFloorEntity(world, side, i, 100, x, y - (i - 1) * 120, defendersData);
   }
 
   return entity;
@@ -202,7 +204,8 @@ export function createFloorEntity(
   floorIndex: number,
   barricadeHP: number,
   x: number,
-  y: number
+  y: number,
+  defendersData?: Record<string, UnitStats>
 ): number {
   const entity = addEntity(world);
 
@@ -216,6 +219,26 @@ export function createFloorEntity(
   FloorComponent.barricadeHP[entity] = barricadeHP;
   FloorComponent.cleared[entity] = 0;
   FloorComponent.active[entity] = 1;
+
+  if (defendersData) {
+    const spawnDefender = (stats: UnitStats, spawnX: number, spawnY: number) => {
+      const defEid = createUnitEntity(world, stats, spawnX, spawnY);
+      addComponent(world, FloorDefenderComponent, defEid);
+      FloorDefenderComponent.floorEid[defEid] = entity;
+      FloorDefenderComponent.floorIndex[defEid] = floorIndex;
+      FloorDefenderComponent.spireSide[defEid] = side;
+    };
+
+    if (floorIndex === 1 && defendersData.goblin) {
+      spawnDefender(defendersData.goblin, x - 20, y);
+      spawnDefender(defendersData.goblin, x + 20, y);
+    } else if (floorIndex === 2 && defendersData.dark_archer && defendersData.cultist) {
+      spawnDefender(defendersData.dark_archer, x - 20, y);
+      spawnDefender(defendersData.cultist, x + 20, y);
+    } else if (floorIndex === 3 && defendersData.troll) {
+      spawnDefender(defendersData.troll, x, y);
+    }
+  }
 
   return entity;
 }

@@ -53,7 +53,7 @@ export function createSpireGrowthSystem() {
         const side = SpireComponent.side[eid];
         const newFloorIndex = currentFloors + 1;
         const x = Position.x[eid];
-        const y = Position.y[eid] - newFloorIndex * 50;
+        const y = Position.y[eid] - (newFloorIndex - 1) * 120;
 
         createFloorEntity(world, side, newFloorIndex, 100, x, y); // Barricade HP is arbitrary 100 for now. Could also come from config.
       }

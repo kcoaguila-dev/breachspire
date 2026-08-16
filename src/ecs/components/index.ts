@@ -130,6 +130,12 @@ export const FloorComponent = defineComponent({
   active: Types.ui8,  // 1 = true, 0 = false
 });
 
+export const FloorDefenderComponent = defineComponent({
+  floorEid: Types.eid,
+  floorIndex: Types.ui8,
+  spireSide: Types.ui8,
+});
+
 export const CampCoreComponent = defineComponent({
   lightEnergy: Types.f32,
   energyRate: Types.f32,
