@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, createSpireEntity } from "../ecs/world";
+import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner } from "../ecs/world";
 import { SpireSideValues } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createCombatSystem } from "../ecs/systems/CombatSystem";
@@ -8,6 +8,10 @@ import { createMovementSystem } from "../ecs/systems/MovementSystem";
 import { createDeathSystem } from "../ecs/systems/DeathSystem";
 import { createCampEnergySystem } from "../ecs/systems/CampEnergySystem";
 import { createSpireGrowthSystem } from "../ecs/systems/SpireGrowthSystem";
+import { createMonsterSpawnSystem } from "../ecs/systems/MonsterSpawnSystem";
+import { createCampSiegeSystem } from "../ecs/systems/CampSiegeSystem";
+import { createFloorCollapseSystem } from "../ecs/systems/FloorCollapseSystem";
+import { createGameStateSystem } from "../ecs/systems/GameStateSystem";
 import { loadUnitData, loadCampConfig, loadSpireConfig } from "../data/loader";
 
 export class DemoScene extends Phaser.Scene {
@@ -18,6 +22,11 @@ export class DemoScene extends Phaser.Scene {
   private campEnergySystem!: ReturnType<typeof createCampEnergySystem>;
   private spireGrowthSystem!: ReturnType<typeof createSpireGrowthSystem>;
   private renderSyncSystem!: ReturnType<typeof createRenderSyncSystem>;
+
+  private monsterSpawnSystem!: ReturnType<typeof createMonsterSpawnSystem>;
+  private campSiegeSystem!: ReturnType<typeof createCampSiegeSystem>;
+  private floorCollapseSystem!: ReturnType<typeof createFloorCollapseSystem>;
+  private gameStateSystem!: ReturnType<typeof createGameStateSystem>;
 
   private spriteMap = new Map<number, Phaser.GameObjects.Rectangle>();
 
@@ -36,6 +45,10 @@ export class DemoScene extends Phaser.Scene {
     this.spireGrowthSystem = createSpireGrowthSystem();
     this.renderSyncSystem = createRenderSyncSystem(this, this.spriteMap);
 
+    this.campSiegeSystem = createCampSiegeSystem();
+    this.floorCollapseSystem = createFloorCollapseSystem();
+    this.gameStateSystem = createGameStateSystem();
+
     try {
       // Load Data from public directory
       const knightData = await loadUnitData('/data/heroes/knight.json');
@@ -43,8 +56,12 @@ export class DemoScene extends Phaser.Scene {
       const campConfig = await loadCampConfig('/data/camp/camp_config.json');
       const spireConfig = await loadSpireConfig('/data/spires/spire_config.json');
 
+      this.monsterSpawnSystem = createMonsterSpawnSystem(goblinData);
+
       const centerY = 500;
       const centerX = 400;
+
+      createGameStateEntity(world);
 
       // Spawn Camp
       createCampCoreEntity(world, campConfig, centerX, centerY);
@@ -52,8 +69,12 @@ export class DemoScene extends Phaser.Scene {
       createCampWallEntity(world, campConfig, SpireSideValues.Right, centerX + 100, centerY);
 
       // Spawn Spires
-      createSpireEntity(world, spireConfig, SpireSideValues.Left, centerX - 300, centerY);
-      createSpireEntity(world, spireConfig, SpireSideValues.Right, centerX + 300, centerY);
+      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, centerX - 300, centerY);
+      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, centerX + 300, centerY);
+
+      // Spawn invasion spawners
+      createInvasionSpawner(world, leftSpire, SpireSideValues.Left, 3000, 3);
+      createInvasionSpawner(world, rightSpire, SpireSideValues.Right, 3000, 3);
 
       // Spawn units
       createUnitEntity(world, knightData, centerX - 50, centerY);
@@ -79,7 +100,14 @@ export class DemoScene extends Phaser.Scene {
     this.fsmSystem(world, delta);
     this.movementSystem(world, delta);
     this.combatSystem(world, delta);
-    this.deathSystem(world);
+    this.campSiegeSystem(world, delta); // M3
+    this.deathSystem(world); // Remove units/walls if dead
+
+    // M3 logic
+    this.monsterSpawnSystem(world, delta);
+    this.floorCollapseSystem(world, delta);
+    this.gameStateSystem(world, delta);
+
     this.campEnergySystem(world, delta);
     this.spireGrowthSystem(world, delta);
     this.renderSyncSystem(world);

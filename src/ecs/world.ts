@@ -63,6 +63,26 @@ export function createUnitEntity(
   return entity;
 }
 
+import { GameStateComponent, GameStateValues, InvasionSpawner } from "./components";
+
+export function createGameStateEntity(world: IWorld): number {
+  const entity = addEntity(world);
+  addComponent(world, GameStateComponent, entity);
+  GameStateComponent.state[entity] = GameStateValues.RUNNING;
+  return entity;
+}
+
+export function createInvasionSpawner(world: IWorld, spireEntity: number, side: SpireSideValues, cooldown: number, waveSize: number): number {
+  // We can attach it directly to the spire entity
+  addComponent(world, InvasionSpawner, spireEntity);
+  InvasionSpawner.spireSide[spireEntity] = side;
+  InvasionSpawner.baseCooldown[spireEntity] = cooldown;
+  InvasionSpawner.spawnCooldown[spireEntity] = cooldown;
+  InvasionSpawner.timer[spireEntity] = 0;
+  InvasionSpawner.waveSize[spireEntity] = waveSize;
+  return spireEntity;
+}
+
 // ─────────────────────────────────────────────────────
 // M2 Factories
 // ─────────────────────────────────────────────────────
@@ -83,6 +103,14 @@ export function createCampCoreEntity(
   CampCoreComponent.lightEnergy[entity] = config.startingLightEnergy;
   CampCoreComponent.energyRate[entity] = config.energyRate;
   CampCoreComponent.maxEnergy[entity] = config.maxLightEnergy;
+
+  // Added health components for core
+  addComponent(world, Health, entity);
+  const coreHP = 1000; // Example HP
+  Health.current[entity] = coreHP;
+  Health.max[entity] = coreHP;
+  CampCoreComponent.currentHP[entity] = coreHP;
+  CampCoreComponent.maxHP[entity] = coreHP;
 
   return entity;
 }

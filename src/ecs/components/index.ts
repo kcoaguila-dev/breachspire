@@ -90,6 +90,26 @@ export const CampCoreComponent = defineComponent({
   lightEnergy: Types.f32,
   energyRate: Types.f32,
   maxEnergy: Types.f32,
+  currentHP: Types.f32,
+  maxHP: Types.f32,
+});
+
+export const InvasionSpawner = defineComponent({
+  spireSide: Types.ui8, // 0 = Left, 1 = Right
+  baseCooldown: Types.f32,
+  spawnCooldown: Types.f32,
+  timer: Types.f32,
+  waveSize: Types.ui8,
+});
+
+export enum GameStateValues {
+  RUNNING = 0,
+  VICTORY = 1,
+  DEFEAT = 2,
+}
+
+export const GameStateComponent = defineComponent({
+  state: Types.ui8,
 });
 
 export const CampWallComponent = defineComponent({
