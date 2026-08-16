@@ -1,0 +1,12 @@
+{
+  "id": "valkyrie",
+  "name": "Valkyrie",
+  "faction": "hero",
+  "combatType": "ranged",
+  "health": 55,
+  "attack": 20,
+  "speed": 60,
+  "canReachElevated": true,
+  "flightEnergyMax": 8.0,
+  "flightDrainRate": 1.0
+}

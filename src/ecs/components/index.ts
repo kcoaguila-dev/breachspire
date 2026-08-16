@@ -82,6 +82,26 @@ export const SupportRequestComponent = defineComponent({
 export const SpriteComponent = defineComponent({
   textureId: Types.ui32, // Simplified way to map to a texture if needed, though we often map EID directly to Phaser Sprites
 });
+
+// ─────────────────────────────────────────────────────
+// M5 Components
+// ─────────────────────────────────────────────────────
+
+export const CanReachElevated = defineComponent();
+
+export const AlcoveNestComponent = defineComponent({
+  floorId: Types.ui8,
+  isOccupied: Types.ui8, // 1 = occupied, 0 = empty
+});
+
+export const FlightEnergyComponent = defineComponent({
+  current: Types.f32,
+  max: Types.f32,
+  drainRate: Types.f32,
+  rechargeRate: Types.f32,
+  isAirborne: Types.ui8, // 1 = airborne, 0 = grounded
+});
+
 // ─────────────────────────────────────────────────────
 // M2 Components
 // ─────────────────────────────────────────────────────

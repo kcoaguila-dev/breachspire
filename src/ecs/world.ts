@@ -19,6 +19,8 @@ import {
   CampWallComponent,
   PlayerControlled,
   InputStateComponent,
+  CanReachElevated,
+  FlightEnergyComponent,
 } from "./components";
 
 export const world = createWorld();
@@ -61,6 +63,19 @@ export function createUnitEntity(
   addComponent(world, FSMState, entity);
   FSMState.state[entity] = FSMStateValues.IDLE;
   FSMState.targetEntity[entity] = 0;
+
+  if (stats.canReachElevated) {
+    addComponent(world, CanReachElevated, entity);
+  }
+
+  if (stats.flightEnergyMax !== undefined) {
+    addComponent(world, FlightEnergyComponent, entity);
+    FlightEnergyComponent.max[entity] = stats.flightEnergyMax;
+    FlightEnergyComponent.current[entity] = stats.flightEnergyMax;
+    FlightEnergyComponent.drainRate[entity] = stats.flightDrainRate ?? 1.0;
+    FlightEnergyComponent.rechargeRate[entity] = 2.0; // Default recharge rate
+    FlightEnergyComponent.isAirborne[entity] = 0;
+  }
 
   return entity;
 }
