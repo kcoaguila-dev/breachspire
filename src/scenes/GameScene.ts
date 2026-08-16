@@ -27,6 +27,7 @@ import { defineQuery, addEntity, addComponent } from "bitecs";
 import { GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent } from "../ecs/components";
 import { SpriteMap } from "../ecs/systems/RenderSyncSystem";
 import { createHUDSystem } from "../ecs/systems/HUDSystem";
+import { resetWorldState } from "../ecs/world";
 import { createBuildingSystem } from "../ecs/systems/BuildingSystem";
 import { createRecruitmentSystem } from "../ecs/systems/RecruitmentSystem";
 import { createProgressionXPSystem } from "../ecs/systems/ProgressionXPSystem";
@@ -85,6 +86,11 @@ constructor() {
   }
 
   async create() {
+    this.isReady = false;
+    this.isGameOver = false;
+    this.prevIsNight = -1;
+    resetWorldState(world);
+
     this.fsmSystem = createFSMSystem();
     this.movementSystem = createMovementSystem();
     this.combatSystem = createCombatSystem();
@@ -381,7 +387,7 @@ constructor() {
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
-    const text = isVictory ? "VICTORY" : "DEFEAT - THE HEARTH HAS FALLEN";
+    const text = isVictory ? "VICTORY" : "DEFEAT - THE COMMANDER HAS FALLEN";
     const color = isVictory ? "#00ff00" : "#ff0000";
 
     const titleText = this.add.text(centerX, centerY - 50, text, {

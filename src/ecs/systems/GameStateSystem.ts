@@ -1,16 +1,21 @@
 import { defineQuery, IWorld } from "bitecs";
-import { CampCoreComponent, GameStateComponent, GameStateValues, SpireComponent, Health, FactionTag, FactionValues, Position } from "../components";
+import { CampCoreComponent, GameStateComponent, GameStateValues, SpireComponent, Health, FactionTag, FactionValues, Position, PlayerControlled } from "../components";
 
 const coreQuery = defineQuery([CampCoreComponent, Position]);
 const spireQuery = defineQuery([SpireComponent, Health]);
 const stateQuery = defineQuery([GameStateComponent]);
 const monsterQuery = defineQuery([FactionTag, Health, Position]);
+const playerQuery = defineQuery([PlayerControlled, Health]);
 
 // ─────────────────────────────────────────────────────
 // EXPORTED PURE LOGIC
 // ─────────────────────────────────────────────────────
-export function evaluateGameState(coreHp: number, leftSpireAlive: boolean, rightSpireAlive: boolean): GameStateValues {
-  if (coreHp <= 0) {
+export function isLeaderDead(playerHp: number): boolean {
+  return playerHp <= 0;
+}
+
+export function evaluateGameState(coreHp: number, leftSpireAlive: boolean, rightSpireAlive: boolean, leaderDead: boolean = false): GameStateValues {
+  if (coreHp <= 0 || leaderDead) {
       return GameStateValues.DEFEAT;
   }
   if (!leftSpireAlive && !rightSpireAlive) {
@@ -69,7 +74,16 @@ export function createGameStateSystem() {
         }
     }
 
-    let nextState = evaluateGameState(coreHp, leftSpireAlive, rightSpireAlive);
+    const players = playerQuery(world);
+    let leaderDead = false;
+    for (let i = 0; i < players.length; i++) {
+        if (isLeaderDead(Health.current[players[i]])) {
+            leaderDead = true;
+            break;
+        }
+    }
+
+    let nextState = evaluateGameState(coreHp, leftSpireAlive, rightSpireAlive, leaderDead);
 
     // Check for core breach
     if (nextState === GameStateValues.RUNNING && hasCore) {

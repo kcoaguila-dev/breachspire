@@ -1,4 +1,4 @@
-import { createWorld, addEntity, addComponent, IWorld } from "bitecs";
+import { createWorld, addEntity, addComponent, IWorld, getAllEntities, removeEntity } from "bitecs";
 import { UnitStats, CampConfig, SpireConfig } from "../data/schemas";
 import {
   Position,
@@ -25,6 +25,13 @@ import {
 } from "./components";
 
 export const world = createWorld();
+
+export function resetWorldState(w: IWorld): void {
+    const entities = getAllEntities(w);
+    for (let i = 0; i < entities.length; i++) {
+        removeEntity(w, entities[i]);
+    }
+}
 
 export function createUnitEntity(
   world: IWorld,

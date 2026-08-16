@@ -64,6 +64,7 @@ export class TextureGenerator {
     }
 
     private static generateWallFoundationMound(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x654321, 1);
         graphics.beginPath();
@@ -80,6 +81,7 @@ export class TextureGenerator {
     }
 
     private static generateSteedCommander(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Steed Body
         graphics.fillStyle(0xC0C0C0, 1); // Armored barding
@@ -109,6 +111,7 @@ export class TextureGenerator {
     }
 
     private static generateToolHammerStand(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Richer stand
         graphics.fillStyle(0x5C4033, 1); // Darker wood base
@@ -128,6 +131,7 @@ export class TextureGenerator {
     }
 
     private static generateToolBowStand(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x8B4513, 1);
         graphics.fillRect(8, 16, 16, 16);
@@ -146,6 +150,7 @@ export class TextureGenerator {
     }
 
     private static generateToolSwordStand(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x8B4513, 1);
         graphics.fillRect(8, 16, 16, 16); // Stand
@@ -161,6 +166,7 @@ export class TextureGenerator {
     }
 
     private static generatePeasantUnit(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Face Shadow
         graphics.fillStyle(0x1e372e, 1);
@@ -173,6 +179,7 @@ export class TextureGenerator {
     }
 
     private static generateWallStonePristine(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x708090, 1);
         graphics.fillRect(0, 0, 32, 128);
@@ -181,6 +188,7 @@ export class TextureGenerator {
     }
 
     private static generateWallStoneCracked(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x708090, 1);
         graphics.fillRect(0, 0, 32, 128);
@@ -196,6 +204,7 @@ export class TextureGenerator {
     }
 
     private static generateWallStoneCrumbling(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x708090, 1);
         graphics.fillRect(0, 0, 32, 128);
@@ -216,6 +225,7 @@ export class TextureGenerator {
     }
 
     private static generateWallStoneCritical(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x708090, 1);
         graphics.fillRect(0, 32, 32, 96); // Top missing
@@ -235,6 +245,7 @@ export class TextureGenerator {
     }
 
     private static generateWallRubbleCollapsed(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Only rubble at bottom
         graphics.fillStyle(0x404040, 1);
@@ -253,6 +264,7 @@ export class TextureGenerator {
     }
 
     private static generateCobblestoneBank(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         const c1 = Phaser.Display.Color.HexStringToColor("#696969").color; // Dim gray
         const c2 = Phaser.Display.Color.HexStringToColor("#808080").color; // Gray
@@ -271,6 +283,7 @@ export class TextureGenerator {
     }
 
     private static generateTrees(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         const c1 = 0x228B22;
         const c2 = 0x006400;
@@ -300,6 +313,7 @@ export class TextureGenerator {
     }
 
     private static generateRect(scene: Phaser.Scene, key: string, width: number, height: number, colorStr: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(Phaser.Display.Color.HexStringToColor(colorStr).color, 1);
         graphics.fillRect(0, 0, width, height);
@@ -308,6 +322,7 @@ export class TextureGenerator {
     }
 
     private static generateSky(scene: Phaser.Scene, key: string, width: number, height: number) {
+        if (scene.textures.exists(key)) return;
         // Sky from 0 to 650 (Dusk/Sunset)
         const gradientTexture = scene.textures.createCanvas(key, width, height);
         if (gradientTexture) {
@@ -323,6 +338,7 @@ export class TextureGenerator {
     }
 
     private static generatePixelBg(scene: Phaser.Scene, key: string, width: number, height: number, color1: string, color2: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         const c1 = Phaser.Display.Color.HexStringToColor(color1).color;
         const c2 = Phaser.Display.Color.HexStringToColor(color2).color;
@@ -337,6 +353,7 @@ export class TextureGenerator {
     }
 
     private static generateMountains(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x2F4F4F, 1); // Dark slate gray titan silhouettes
         graphics.beginPath();
@@ -353,6 +370,7 @@ export class TextureGenerator {
     }
 
     private static generateCampCore(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Nordic Longhouse (Great Hall)
         graphics.fillStyle(0x8B4513, 1); // Wooden walls
@@ -392,6 +410,7 @@ export class TextureGenerator {
     }
 
     private static generateCutawayWall(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         const c1 = 0x2f3542;
         const c2 = 0x1e272e;
@@ -420,6 +439,7 @@ export class TextureGenerator {
     }
 
     private static generateArchwayWall(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         const c1 = 0x576574; // Lighter stone for exterior
         const c2 = 0x2f3542;
@@ -445,6 +465,7 @@ export class TextureGenerator {
     }
 
     private static generateDarkCrystal(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x6c5ce7, 1);
         graphics.beginPath();
@@ -462,6 +483,7 @@ export class TextureGenerator {
     }
 
     private static generateKnight(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Helmet
         graphics.fillStyle(0x7b8594, 1);
@@ -489,6 +511,7 @@ export class TextureGenerator {
     }
 
     private static generateArcher(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Hood
         graphics.fillStyle(0x27ae60, 1);
@@ -507,6 +530,7 @@ export class TextureGenerator {
     }
 
     private static generateMage(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Cowl
         graphics.fillStyle(0x8e44ad, 1);
@@ -528,6 +552,7 @@ export class TextureGenerator {
     }
 
     private static generateValkyrie(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Helm
         graphics.fillStyle(0xbdc3c7, 1);
@@ -550,6 +575,7 @@ export class TextureGenerator {
     }
 
     private static generateTroll(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Massive Body
         graphics.fillStyle(0x576574, 1);
@@ -566,6 +592,7 @@ export class TextureGenerator {
     }
 
     private static generateGoblin(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Body
         graphics.fillStyle(0x27ae60, 1);
@@ -579,6 +606,7 @@ export class TextureGenerator {
     }
 
     private static generateCultist(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Robe
         graphics.fillStyle(0x2c3e50, 1);

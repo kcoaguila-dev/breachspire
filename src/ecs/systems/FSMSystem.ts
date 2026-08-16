@@ -1,5 +1,5 @@
 import { defineQuery, IWorld, hasComponent } from "bitecs";
-import { FSMState, FSMStateValues, Position, Velocity, Speed, Health, FactionTag, FloorDefenderComponent } from "../components";
+import { FSMState, FSMStateValues, Position, Velocity, Speed, Health, FactionTag, FloorDefenderComponent, PlayerControlled } from "../components";
 
 const fsmQuery = defineQuery([FSMState, Position, Velocity, Speed, FactionTag, Health]);
 const aliveQuery = defineQuery([Health, Position, FactionTag]);
@@ -15,6 +15,11 @@ export function createFSMSystem() {
 
     for (let i = 0; i < entities.length; i++) {
       const eid = entities[i];
+
+      if (hasComponent(world, PlayerControlled, eid)) {
+        continue; // Player velocity and state are strictly driven by PlayerInputSystem
+      }
+
       if (Health.current[eid] <= 0) {
         Velocity.x[eid] = 0;
         Velocity.y[eid] = 0;

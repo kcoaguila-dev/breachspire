@@ -18,4 +18,5 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, TitleScene, UpgradeShopScene, GameScene],
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+(window as any).__PHASER_GAME__ = game;

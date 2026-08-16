@@ -1,5 +1,5 @@
 import { defineQuery, IWorld, addEntity, addComponent, hasComponent } from "bitecs";
-import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole } from "../components";
+import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole, PlayerControlled } from "../components";
 
 const combatQuery = defineQuery([Health, Attack, CombatTypeComponent, FSMState, Position]);
 
@@ -44,6 +44,9 @@ export function createCombatSystem() {
 
     for (let i = 0; i < entities.length; i++) {
       const eid = entities[i];
+      if (hasComponent(world, PlayerControlled, eid)) {
+        continue; // The Commander is a non-combatant leader managing kingdom economy
+      }
       if (Health.current[eid] <= 0) continue;
 
       const state = FSMState.state[eid];

@@ -83,10 +83,13 @@ export function createPlayerInputSystem(
       const speed = Speed.value[eid];
       const { p1Velocity } = computeCoopInput({ left, right, up, down, shift }, { left: false, right: false, up: false, down: false }, speed, 0);
 
-      Velocity.x[eid] = p1Velocity.vx;
-      // We don't overwrite Y velocity from player input because ClimbingSystem controls vertical movement (gravity/ladder)
-      // but we do need it if they are flying? Spires game usually restricts Y movement to ladders/gravity.
-      // So we leave Velocity.y untouched here so ClimbingSystem can manage it.
+      if (!left && !right && !up && !down) {
+          Velocity.x[eid] = 0;
+          Velocity.y[eid] = 0;
+      } else {
+          Velocity.x[eid] = p1Velocity.vx;
+          // Only overwrite Y velocity entirely if input is neutral, otherwise let ClimbingSystem handle gravity/verticality
+      }
     }
 
     return world;
