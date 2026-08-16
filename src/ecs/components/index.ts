@@ -56,7 +56,6 @@ export const FSMState = defineComponent({
 });
 
 export const CommanderTag = defineComponent();
-export const PlayerControlled = defineComponent();
 
 export enum SupportActionEnum {
   RallyFlag = 0,

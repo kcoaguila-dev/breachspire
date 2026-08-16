@@ -14,14 +14,18 @@ import { createMonsterSpawnSystem } from "../ecs/systems/MonsterSpawnSystem";
 import { createCampSiegeSystem } from "../ecs/systems/CampSiegeSystem";
 import { createFloorCollapseSystem } from "../ecs/systems/FloorCollapseSystem";
 import { createGameStateSystem } from "../ecs/systems/GameStateSystem";
+import { createCommanderSupportSystem } from "../ecs/systems/CommanderSupportSystem";
+import { createLeaderDeathSystem } from "../ecs/systems/LeaderDeathSystem";
 import { loadUnitData, loadCampConfig, loadSpireConfig } from "../data/loader";
 
 export class DemoScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
   private movementSystem!: ReturnType<typeof createMovementSystem>;
   private combatSystem!: ReturnType<typeof createCombatSystem>;
+  private leaderDeathSystem!: ReturnType<typeof createLeaderDeathSystem>;
   private deathSystem!: ReturnType<typeof createDeathSystem>;
   private campEnergySystem!: ReturnType<typeof createCampEnergySystem>;
+  private commanderSupportSystem!: ReturnType<typeof createCommanderSupportSystem>;
   private spireGrowthSystem!: ReturnType<typeof createSpireGrowthSystem>;
   private renderSyncSystem!: ReturnType<typeof createRenderSyncSystem>;
 
@@ -44,8 +48,10 @@ export class DemoScene extends Phaser.Scene {
     this.fsmSystem = createFSMSystem();
     this.movementSystem = createMovementSystem();
     this.combatSystem = createCombatSystem();
+    this.leaderDeathSystem = createLeaderDeathSystem();
     this.deathSystem = createDeathSystem(this.spriteMap);
     this.campEnergySystem = createCampEnergySystem();
+    this.commanderSupportSystem = createCommanderSupportSystem();
     this.spireGrowthSystem = createSpireGrowthSystem();
     this.renderSyncSystem = createRenderSyncSystem(this, this.spriteMap);
 
@@ -119,7 +125,8 @@ export class DemoScene extends Phaser.Scene {
     this.movementSystem(world, delta);
     this.combatSystem(world, delta);
     this.campSiegeSystem(world, delta); // M3
-    this.deathSystem(world); // Remove units/walls if dead
+    this.leaderDeathSystem(world, delta); // M4 — intercepts leader death before DeathSystem runs
+    this.deathSystem(world); // Remove non-leader units/walls if dead
 
     // M3 logic
     this.monsterSpawnSystem(world, delta);
@@ -127,6 +134,7 @@ export class DemoScene extends Phaser.Scene {
     this.gameStateSystem(world, delta);
 
     this.campEnergySystem(world, delta);
+    this.commanderSupportSystem(world, delta); // M4
     this.spireGrowthSystem(world, delta);
 
     // Update camera before render sync
