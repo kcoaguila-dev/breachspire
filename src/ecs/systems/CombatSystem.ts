@@ -1,5 +1,5 @@
-import { defineQuery, IWorld } from "bitecs";
-import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position } from "../components";
+import { defineQuery, IWorld, addEntity, addComponent } from "bitecs";
+import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent } from "../components";
 
 const combatQuery = defineQuery([Health, Attack, CombatTypeComponent, FSMState, Position]);
 
@@ -71,7 +71,19 @@ export function createCombatSystem() {
           const finalDamage = baseDamage * multiplier;
 
           Health.current[targetEid] = Math.max(0, Health.current[targetEid] - finalDamage);
-          // console.log(`Entity ${eid} attacks ${targetEid} for ${finalDamage} damage! (${Health.current[targetEid]} HP remaining)`);
+
+          // AUDIO: We can't easily play audio here because we don't have audioManager,
+          // but we can spawn an AudioEvent or just rely on the feedback system playing
+          // sounds based on the DamageTextEvent. Let's add sound playing based on attack type in CombatFeedbackSystem.
+
+          // Phase 7: Spawn DamageTextEvent
+          const eventEid = addEntity(world);
+          addComponent(world, DamageTextEvent, eventEid);
+          DamageTextEvent.targetX[eventEid] = Position.x[targetEid];
+          DamageTextEvent.targetY[eventEid] = Position.y[targetEid] - 30; // Float slightly above
+          DamageTextEvent.amount[eventEid] = finalDamage;
+          DamageTextEvent.isAdvantage[eventEid] = multiplier > 1.0 ? 2 : (multiplier < 1.0 ? 0 : 1);
+          DamageTextEvent.combatType[eventEid] = attackerType;
 
           attackCooldowns.set(eid, BASE_COOLDOWN);
         }

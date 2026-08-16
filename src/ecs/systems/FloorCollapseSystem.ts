@@ -1,5 +1,6 @@
 import { defineQuery, IWorld } from "bitecs";
-import { FloorComponent, InvasionSpawner } from "../components";
+import { FloorComponent, InvasionSpawner, DestructionEvent, Position } from "../components";
+import { addEntity, addComponent } from "bitecs";
 import { computeSpawnRate } from "./MonsterSpawnSystem";
 
 const floorQuery = defineQuery([FloorComponent]);
@@ -48,7 +49,12 @@ export function createFloorCollapseSystem() {
             if (isFloorClearable(FloorComponent.barricadeHP[floorEid])) {
                 FloorComponent.cleared[floorEid] = 1;
                 FloorComponent.active[floorEid] = 0;
-                // Barricade is destroyed, visual cue (collapse) handled in render system
+                // Trigger DestructionEvent
+                const eventEid = addEntity(world);
+                addComponent(world, DestructionEvent, eventEid);
+                DestructionEvent.x[eventEid] = Position.x[floorEid] !== undefined ? Position.x[floorEid] : 0;
+                DestructionEvent.y[eventEid] = Position.y[floorEid] !== undefined ? Position.y[floorEid] : 0;
+                DestructionEvent.type[eventEid] = 0; // 0 = Floor Collapse
             }
         }
 
