@@ -1,0 +1,9 @@
+{
+  "id": "warrior",
+  "name": "Warrior",
+  "faction": "hero",
+  "combatType": "melee",
+  "health": 120,
+  "attack": 18,
+  "speed": 45
+}
