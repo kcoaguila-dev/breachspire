@@ -21,6 +21,7 @@ import { AudioManager } from "../audio/AudioManager";
 import { loadUnitData, loadCampConfig, loadSpireConfig } from "../data/loader";
 import { defineQuery, addEntity, addComponent } from "bitecs";
 import { GameStateComponent, GameStateValues, CampCoreComponent, ScreenAlertComponent } from "../ecs/components";
+import { SpriteMap } from "../ecs/systems/RenderSyncSystem";
 import { createHUDSystem } from "../ecs/systems/HUDSystem";
 import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateManager";
 
@@ -47,7 +48,7 @@ export class DemoScene extends Phaser.Scene {
   private audioManager!: AudioManager;
   private screenAlertEid!: number;
 
-  private spriteMap = new Map<number, Phaser.GameObjects.Rectangle>();
+  private spriteMap: SpriteMap = new Map();
 
   private isReady = false;
   private isGameOver = false;
@@ -105,6 +106,17 @@ export class DemoScene extends Phaser.Scene {
 
       const centerY = 500;
       const centerX = 400;
+
+      // Add Parallax Backgrounds
+      const sw = this.scale.width;
+      const sh = this.scale.height;
+      this.add.tileSprite(sw/2, sh/2, sw, sh, "bg_sky").setScrollFactor(0.0);
+      this.add.tileSprite(sw/2, sh - 150, sw, 300, "bg_mountains").setScrollFactor(0.1);
+      this.add.tileSprite(sw/2, sh - 100, sw, 200, "bg_trees").setScrollFactor(0.3);
+      this.add.tileSprite(sw/2, sh, sw * 3, 64, "ground_tile").setScrollFactor(1.0).setDepth(0);
+
+      // Setup world bounds and camera
+      this.cameras.main.setBounds(-1000, -2000, 2800, 2600);
 
       createGameStateEntity(world);
 

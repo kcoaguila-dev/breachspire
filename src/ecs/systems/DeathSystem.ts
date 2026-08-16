@@ -1,5 +1,6 @@
 ﻿import { defineQuery, IWorld, removeEntity } from "bitecs";
 import { Health } from "../components";
+import { SpriteMap } from "./RenderSyncSystem";
 
 // All entities that have Health — DeathSystem evaluates every one per frame.
 const mortalQuery = defineQuery([Health]);
@@ -30,7 +31,7 @@ export function isDead(currentHP: number): boolean {
  * @param spriteMap - The same Map<eid, Phaser.GameObjects.Rectangle> used by RenderSyncSystem.
  *                    Sprites are destroyed here so RenderSyncSystem never sees a dead entity.
  */
-export function createDeathSystem(spriteMap: Map<number, Phaser.GameObjects.Rectangle>) {
+export function createDeathSystem(spriteMap: SpriteMap) {
   return (world: IWorld): IWorld => {
     const entities = mortalQuery(world);
 
