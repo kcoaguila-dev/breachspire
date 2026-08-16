@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateGameState } from '../src/ecs/systems/GameStateSystem';
+import { evaluateGameState, isMonsterBreachingCore } from '../src/ecs/systems/GameStateSystem';
 import { GameStateValues } from '../src/ecs/components';
 
 describe('GameStateSystem — Pure Logic', () => {
@@ -16,5 +16,9 @@ describe('GameStateSystem — Pure Logic', () => {
     expect(evaluateGameState(100, true, true)).toBe(GameStateValues.RUNNING);
     expect(evaluateGameState(100, true, false)).toBe(GameStateValues.RUNNING);
     expect(evaluateGameState(100, false, true)).toBe(GameStateValues.RUNNING);
+  });
+  it('should correctly identify if a monster is breaching the core', () => {
+    expect(isMonsterBreachingCore(1620, 650, 1600, 650, 40)).toBe(true);
+    expect(isMonsterBreachingCore(1800, 650, 1600, 650, 40)).toBe(false);
   });
 });

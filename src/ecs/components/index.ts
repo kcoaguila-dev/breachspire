@@ -150,6 +150,9 @@ export const InvasionSpawner = defineComponent({
   spawnCooldown: Types.f32,
   timer: Types.f32,
   waveSize: Types.ui8,
+  pendingGoblins: Types.ui16,
+  pendingArchers: Types.ui16,
+  pendingTrolls: Types.ui16,
 });
 
 export enum GameStateValues {
@@ -267,4 +270,11 @@ export const DayNightCycle = defineComponent({
   timeOfDay: Types.f32,
   dayNumber: Types.ui16,
   isNight: Types.ui8,
+});
+
+export const AetherMoteComponent = defineComponent();
+
+export const AetherCollectEvent = defineComponent({
+  x: Types.f32,
+  y: Types.f32,
 });

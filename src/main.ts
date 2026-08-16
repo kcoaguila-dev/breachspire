@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { BootScene } from "./scenes/BootScene";
 import { TitleScene } from "./scenes/TitleScene";
 import { UpgradeShopScene } from "./scenes/UpgradeShopScene";
-import { DemoScene } from "./scenes/DemoScene";
+import { GameScene } from "./scenes/GameScene";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.WEBGL,
@@ -15,7 +15,7 @@ const config: Phaser.Types.Core.GameConfig = {
   pixelArt: true,
   backgroundColor: "#08090d",
   parent: "game-container",
-  scene: [BootScene, TitleScene, UpgradeShopScene, DemoScene],
+  scene: [BootScene, TitleScene, UpgradeShopScene, GameScene],
 };
 
 new Phaser.Game(config);

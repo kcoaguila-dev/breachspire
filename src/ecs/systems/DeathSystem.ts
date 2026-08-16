@@ -1,5 +1,5 @@
-﻿import { defineQuery, IWorld, removeEntity } from "bitecs";
-import { Health } from "../components";
+import { defineQuery, IWorld, removeEntity, addEntity, addComponent } from "bitecs";
+import { Health, FactionTag, FactionValues, Position, AetherMoteComponent } from "../components";
 import { SpriteMap } from "./RenderSyncSystem";
 
 // All entities that have Health — DeathSystem evaluates every one per frame.
@@ -44,6 +44,18 @@ export function createDeathSystem(spriteMap: SpriteMap) {
         if (sprite) {
           sprite.destroy();
           spriteMap.delete(eid);
+        }
+
+        // Drop motes if monster
+        if (FactionTag.faction[eid] === FactionValues.Monster) {
+           const dropCount = Math.random() > 0.5 ? 2 : 1;
+           for(let j=0; j<dropCount; j++) {
+               const moteEid = addEntity(world);
+               addComponent(world, Position, moteEid);
+               addComponent(world, AetherMoteComponent, moteEid);
+               Position.x[moteEid] = Position.x[eid] !== undefined ? Position.x[eid] + (Math.random()*20 - 10) : 0;
+               Position.y[moteEid] = Position.y[eid] !== undefined ? Position.y[eid] - 10 : 0;
+           }
         }
 
         // Remove the entity from the world — this fires exitQuery in RenderSyncSystem

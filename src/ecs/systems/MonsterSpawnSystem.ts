@@ -26,60 +26,67 @@ export function shouldSpawnWave(timer: number, cooldown: number): boolean {
 // SYSTEM FACTORY
 // ─────────────────────────────────────────────────────
 export function createMonsterSpawnSystem(monsterData: UnitStats, archerData?: UnitStats, trollData?: UnitStats) {
+  let wasNight = false;
+
   return (world: IWorld, delta: number): IWorld => {
     const timeEids = dayNightQuery(world);
     const isNight = timeEids.length > 0 ? DayNightCycle.isNight[timeEids[0]] === 1 : true;
     const dayNumber = timeEids.length > 0 ? DayNightCycle.dayNumber[timeEids[0]] : 1;
-
-    // Only spawn during night
-    if (!isNight) return world;
     const spawners = spawnerQuery(world);
+
+    // If it just turned night, populate pending spawns
+    if (isNight && !wasNight) {
+      for (let i = 0; i < spawners.length; i++) {
+        const eid = spawners[i];
+        if (SpireComponent.isAlive[eid] === 0) continue;
+        const spireFloors = SpireComponent.floorCount[eid];
+        const composition = computeWaveComposition(dayNumber, spireFloors);
+        InvasionSpawner.pendingGoblins[eid] += composition.goblinCount;
+        InvasionSpawner.pendingArchers[eid] += composition.archerCount;
+        InvasionSpawner.pendingTrolls[eid] += composition.trollCount;
+        InvasionSpawner.timer[eid] = InvasionSpawner.spawnCooldown[eid]; // Force immediate spawn of first squad
+      }
+    }
+    wasNight = isNight;
+
+    if (!isNight) return world;
 
     for (let i = 0; i < spawners.length; i++) {
       const eid = spawners[i];
-
-      // Dead entity guard logic (SpireComponent isAlive can be used if Spire health hits 0)
       if (SpireComponent.isAlive[eid] === 0) continue;
+
+      // Space out night spawns into squads (e.g. 2–3 monsters every 5–8 seconds)
+      const STAGGERED_COOLDOWN = 6500; // 6.5 seconds
 
       let timer = InvasionSpawner.timer[eid];
       timer += delta;
 
-      const cooldown = InvasionSpawner.spawnCooldown[eid];
-
-      if (shouldSpawnWave(timer, cooldown)) {
+      if (timer >= STAGGERED_COOLDOWN) {
         timer = 0;
-        const spireFloors = SpireComponent.floorCount[eid];
-        const composition = computeWaveComposition(dayNumber, spireFloors);
 
         const baseX = Position.x[eid];
         const baseY = Position.y[eid];
-
-        let spawnOffset = 0;
         const dir = SpireComponent.side[eid] === 0 ? 1 : -1;
+        let spawnOffset = 0;
 
-        // Goblins
-        for (let j = 0; j < composition.goblinCount; j++) {
-           const spawnX = baseX + (spawnOffset * 10) * dir;
-           createUnitEntity(world, monsterData, spawnX, baseY);
-           spawnOffset++;
-        }
+        // Spawn a small squad (max 3 units per tick)
+        let spawnedThisTick = 0;
 
-        // Archers
-        if (archerData) {
-            for (let j = 0; j < composition.archerCount; j++) {
-               const spawnX = baseX + (spawnOffset * 10) * dir;
-               createUnitEntity(world, archerData, spawnX, baseY);
-               spawnOffset++;
-            }
-        }
-
-        // Trolls
-        if (trollData) {
-            for (let j = 0; j < composition.trollCount; j++) {
-               const spawnX = baseX + (spawnOffset * 10) * dir;
-               createUnitEntity(world, trollData, spawnX, baseY);
-               spawnOffset++;
-            }
+        while (spawnedThisTick < 3) {
+          if (InvasionSpawner.pendingTrolls[eid] > 0 && trollData) {
+            createUnitEntity(world, trollData, baseX + (spawnOffset * 10) * dir, baseY);
+            InvasionSpawner.pendingTrolls[eid]--;
+          } else if (InvasionSpawner.pendingArchers[eid] > 0 && archerData) {
+            createUnitEntity(world, archerData, baseX + (spawnOffset * 10) * dir, baseY);
+            InvasionSpawner.pendingArchers[eid]--;
+          } else if (InvasionSpawner.pendingGoblins[eid] > 0) {
+            createUnitEntity(world, monsterData, baseX + (spawnOffset * 10) * dir, baseY);
+            InvasionSpawner.pendingGoblins[eid]--;
+          } else {
+            break; // No more pending spawns
+          }
+          spawnOffset++;
+          spawnedThisTick++;
         }
       }
 

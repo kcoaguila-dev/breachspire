@@ -1,0 +1,12 @@
+
+> breachspire@0.1.0 dev
+> vite
+
+
+  VITE v8.2.1  ready in 413 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+10:08:02 PM [vite] (client) page reload src/scenes/GameScene.ts
+10:08:26 PM [vite] (client) page reload src/scenes/GameScene.ts
+10:09:13 PM [vite] (client) page reload src/scenes/GameScene.ts

@@ -1,9 +1,10 @@
 import { defineQuery, IWorld } from "bitecs";
-import { CampCoreComponent, GameStateComponent, GameStateValues, SpireComponent, Health } from "../components";
+import { CampCoreComponent, GameStateComponent, GameStateValues, SpireComponent, Health, FactionTag, FactionValues, Position } from "../components";
 
-const coreQuery = defineQuery([CampCoreComponent, Health]);
+const coreQuery = defineQuery([CampCoreComponent, Position]);
 const spireQuery = defineQuery([SpireComponent, Health]);
 const stateQuery = defineQuery([GameStateComponent]);
+const monsterQuery = defineQuery([FactionTag, Health, Position]);
 
 // ─────────────────────────────────────────────────────
 // EXPORTED PURE LOGIC
@@ -18,6 +19,12 @@ export function evaluateGameState(coreHp: number, leftSpireAlive: boolean, right
   return GameStateValues.RUNNING;
 }
 
+export function isMonsterBreachingCore(monsterX: number, monsterY: number, coreX: number, coreY: number, contactRadius: number = 40): boolean {
+  const dx = monsterX - coreX;
+  const dy = monsterY - coreY;
+  return Math.sqrt(dx * dx + dy * dy) <= contactRadius;
+}
+
 // ─────────────────────────────────────────────────────
 // SYSTEM FACTORY
 // ─────────────────────────────────────────────────────
@@ -27,11 +34,23 @@ export function createGameStateSystem() {
     if (states.length === 0) return world; // No state component found
 
     const stateEid = states[0]; // Assuming only one GameStateComponent
+    if (GameStateComponent.state[stateEid] !== GameStateValues.RUNNING) {
+      return world; // Already over
+    }
 
     const cores = coreQuery(world);
     let coreHp = 1; // Default assume alive if no core
+    let coreX = 0;
+    let coreY = 0;
+    let hasCore = false;
     if (cores.length > 0) {
-        coreHp = Health.current[cores[0]];
+        const coreEid = cores[0];
+        // The core has no HP component anymore per instructions, or we ignore it.
+        // But evaluateGameState still checks coreHp. So we assume it's 1.
+        coreHp = 1;
+        coreX = Position.x[coreEid];
+        coreY = Position.y[coreEid];
+        hasCore = true;
     }
 
     const spires = spireQuery(world);
@@ -50,7 +69,24 @@ export function createGameStateSystem() {
         }
     }
 
-    const nextState = evaluateGameState(coreHp, leftSpireAlive, rightSpireAlive);
+    let nextState = evaluateGameState(coreHp, leftSpireAlive, rightSpireAlive);
+
+    // Check for core breach
+    if (nextState === GameStateValues.RUNNING && hasCore) {
+      const monsters = monsterQuery(world);
+      for (let i = 0; i < monsters.length; i++) {
+        const monsterEid = monsters[i];
+        if (FactionTag.faction[monsterEid] === FactionValues.Monster && Health.current[monsterEid] > 0) {
+          const mx = Position.x[monsterEid];
+          const my = Position.y[monsterEid];
+          if (isMonsterBreachingCore(mx, my, coreX, coreY, 40)) {
+            nextState = GameStateValues.DEFEAT;
+            break;
+          }
+        }
+      }
+    }
+
     GameStateComponent.state[stateEid] = nextState;
 
     return world;
