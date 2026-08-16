@@ -1,7 +1,7 @@
 {
   "name": "breachspire",
   "version": "0.1.0",
-  "description": "2D side-scrolling co-op roguelite — Phaser 3 + bitECS + Zod",
+  "description": "2D side-scrolling co-op roguelite — Phaser 4 + bitECS + Zod",
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
@@ -22,7 +22,7 @@
   "homepage": "https://github.com/kcoaguila-dev/breachspire#readme",
   "dependencies": {
     "bitecs": "^0.3.40",
-    "phaser": "^3.88.2",
+    "phaser": "^4.2.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

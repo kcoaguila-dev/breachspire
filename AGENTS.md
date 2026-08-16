@@ -1,4 +1,4 @@
-﻿# AGENTS.md — Breachspire Architecture Reference
+# AGENTS.md — Breachspire Architecture Reference
 > **This file is the law.** Every AI coding agent working on this repository must read this file before touching any source file.
 > No exceptions. No skipping ahead.
 
@@ -10,7 +10,7 @@
 
 | Tool | Version | Why |
 |---|---|---|
-| **Phaser 3** | `^3.x` | Browser-native renderer. itch.io first, no WASM export pain. |
+| **Phaser 4** | `^4.2.x` | Stable since April 2026. WebGL-only renderer. Render Node arch, SpriteGPULayer, bitECS used internally by Phaser itself. Canvas deprecated. |
 | **bitECS** | `^0.3.x` | Data-oriented ECS. Entities are numbers. Components are flat typed arrays. |
 | **Zod** | `^4.x` | Schema validation of all external JSON at load time. |
 | **Vite** | latest | Dev server + bundler. `npm run dev` to start. |
@@ -486,7 +486,7 @@ grep -n "if\|for\|while\|Math\." src/scenes/*.ts
 
 | Decision | Resolution |
 |---|---|
-| Phaser 3 vs Phaser 4 | **Phaser 3** — Phaser 4 alpha, API unstable |
+| Phaser 3 vs Phaser 4 | **Phaser 4** — stable since April 10 2026 (v4.0.0). Canvas deprecated in v4. Migrated from v3 — Scene API unchanged, `scene.add.*` unchanged, physics block removed (we never used it — bitECS owns movement). |
 | bitECS vs Phaser built-in | **bitECS** — more control, aligns with Phaser 4 direction |
 | JSON in `public/` vs `src/` | **`public/`** — runtime fetch, not bundled |
 | Electron now vs later | **Later** — only needed for Steam |
