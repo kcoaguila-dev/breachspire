@@ -1,4 +1,4 @@
-import { UnitStats, UnitStatsSchema, FloorData, FloorDataSchema, CampConfig, CampConfigSchema, SpireConfig, SpireConfigSchema } from "./schemas";
+import { UnitStats, UnitStatsSchema, FloorData, FloorDataSchema, CampConfig, CampConfigSchema, SpireConfig, SpireConfigSchema, CampUpgrade, CampUpgradeTreeSchema } from "./schemas";
 
 export async function loadUnitData(url: string): Promise<UnitStats> {
   const response = await fetch(url);
@@ -63,4 +63,13 @@ export async function loadSpireConfig(url: string): Promise<SpireConfig> {
   }
   const data = await response.json();
   return SpireConfigSchema.parse(data);
+}
+
+export async function loadCampUpgrades(url: string): Promise<CampUpgrade[]> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load camp upgrades from ${url}: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return CampUpgradeTreeSchema.parse(data);
 }

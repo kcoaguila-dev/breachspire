@@ -65,3 +65,16 @@ export const SpireConfigSchema = z.object({
   initialFloors:      z.number().int().nonnegative(),
 });
 export type SpireConfig = z.infer<typeof SpireConfigSchema>;
+
+export const CampUpgradeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  cost: z.number().int().positive(),
+  effectType: z.enum(["wall_hp", "energy_rate", "flight_duration", "recruit_slot"]),
+  value: z.number()
+});
+export type CampUpgrade = z.infer<typeof CampUpgradeSchema>;
+
+export const CampUpgradeTreeSchema = z.array(CampUpgradeSchema);
+export type CampUpgradeTree = z.infer<typeof CampUpgradeTreeSchema>;

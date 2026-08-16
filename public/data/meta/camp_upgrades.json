@@ -1,0 +1,34 @@
+[
+  {
+    "id": "upg_wall_hp_1",
+    "name": "Reinforced Walls I",
+    "description": "Increases base camp wall HP by 500.",
+    "cost": 100,
+    "effectType": "wall_hp",
+    "value": 500
+  },
+  {
+    "id": "upg_energy_rate_1",
+    "name": "Solar Array I",
+    "description": "Increases light energy generation rate by 1.",
+    "cost": 150,
+    "effectType": "energy_rate",
+    "value": 1
+  },
+  {
+    "id": "upg_flight_duration_1",
+    "name": "Aero Frame I",
+    "description": "Increases flight energy duration by 10.",
+    "cost": 200,
+    "effectType": "flight_duration",
+    "value": 10
+  },
+  {
+    "id": "upg_recruit_slot_1",
+    "name": "Bunks I",
+    "description": "Unlocks an additional hero roster slot.",
+    "cost": 300,
+    "effectType": "recruit_slot",
+    "value": 1
+  }
+]
