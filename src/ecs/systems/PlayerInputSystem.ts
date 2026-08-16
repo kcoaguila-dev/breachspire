@@ -1,5 +1,6 @@
 import { defineQuery, IWorld } from "bitecs";
-import { PlayerControlled, InputStateComponent, Velocity, Speed, Health } from "../components";
+import { PlayerControlled, InputStateComponent, Velocity, Speed, Health, ClimbingState } from "../components";
+import { hasComponent } from "bitecs";
 
 const playerQuery = defineQuery([PlayerControlled, InputStateComponent, Velocity, Speed, Health]);
 
@@ -77,6 +78,11 @@ export function createPlayerInputSystem(
 
       Velocity.x[eid] = p1Velocity.vx;
       Velocity.y[eid] = p1Velocity.vy;
+
+      if (hasComponent(world, ClimbingState, eid) && ClimbingState.isClimbing[eid] === 1) {
+          // If climbing, ClimbingSystem will override velocity.
+          // However, we want to ensure climbing system gets to handle it without gravity logic interference if we add gravity later.
+      }
     }
 
     return world;

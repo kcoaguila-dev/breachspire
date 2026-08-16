@@ -43,6 +43,11 @@ export class TextureGenerator {
         this.generateRect(scene, "spire_barricade_gate", 32, 64, "#4B0082");
         this.generateDarkCrystal(scene, "spire_dark_crystal");
 
+        this.generateSpireChamberCutaway(scene, "spire_chamber_cutaway");
+        this.generateSpireLadderWood(scene, "spire_ladder_wood");
+        this.generateFloorDarkCrystalPulse(scene, "floor_dark_crystal_pulse");
+        this.generateSpireSummitCrown(scene, "spire_summit_crown");
+
         // Recruitment & Tool Stands
         this.generateToolHammerStand(scene, "tool_hammer_stand");
         this.generateToolBowStand(scene, "tool_bow_stand");
@@ -294,6 +299,93 @@ export class TextureGenerator {
         graphics.fillCircle(32, 44, 4);
 
         graphics.generateTexture(key, 64, 64);
+        graphics.destroy();
+    }
+
+    private static generateSpireChamberCutaway(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        const width = 128;
+        const height = 120;
+        // Dark brick interior
+        const c1 = 0x2f3542;
+        const c2 = 0x1e272e;
+        for (let y = 0; y < height; y += 16) {
+            for (let x = 0; x < width; x += 32) {
+                const offset = (y % 32 === 0) ? 0 : 16;
+                graphics.fillStyle(c1, 1);
+                graphics.fillRect(x + offset, y, 30, 14);
+                graphics.fillStyle(c2, 1);
+                graphics.fillRect(x + offset + 30, y, 2, 16);
+                graphics.fillRect(x + offset, y + 14, 32, 2);
+            }
+        }
+        // Wooden beam ceiling/floor
+        graphics.fillStyle(0x5c4033, 1);
+        graphics.fillRect(0, height - 16, width, 16);
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(0, height - 16, width, 2);
+
+        // Exterior stone pillar edge
+        graphics.fillStyle(0x708090, 1);
+        graphics.fillRect(width - 16, 0, 16, height);
+        graphics.fillStyle(0x506070, 1);
+        graphics.fillRect(width - 4, 0, 4, height);
+
+        graphics.generateTexture(key, width, height);
+        graphics.destroy();
+    }
+
+    private static generateSpireLadderWood(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        const width = 32;
+        const height = 120;
+        graphics.fillStyle(0x8b5a2b, 1);
+        // Vertical rails
+        graphics.fillRect(4, 0, 4, height);
+        graphics.fillRect(width - 8, 0, 4, height);
+        // Horizontal rungs
+        for (let y = 10; y < height; y += 20) {
+            graphics.fillRect(4, y, width - 8, 4);
+        }
+        graphics.generateTexture(key, width, height);
+        graphics.destroy();
+    }
+
+    private static generateFloorDarkCrystalPulse(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x8a2be2, 1);
+        graphics.beginPath();
+        graphics.moveTo(32, 8);
+        graphics.lineTo(48, 32);
+        graphics.lineTo(32, 56);
+        graphics.lineTo(16, 32);
+        graphics.fillPath();
+
+        graphics.fillStyle(0xff69b4, 1);
+        graphics.fillCircle(32, 32, 8);
+        graphics.fillStyle(0xe6e6fa, 1);
+        graphics.fillCircle(32, 32, 4);
+
+        graphics.generateTexture(key, 64, 64);
+        graphics.destroy();
+    }
+
+    private static generateSpireSummitCrown(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        const width = 128;
+        const height = 128;
+        graphics.fillStyle(0x2f3542, 1);
+        // Base
+        graphics.fillRect(0, 64, width, 64);
+        // Spikes
+        for(let i=0; i<4; i++) {
+            graphics.beginPath();
+            graphics.moveTo(i * 32, 64);
+            graphics.lineTo(i * 32 + 16, 0);
+            graphics.lineTo(i * 32 + 32, 64);
+            graphics.fillPath();
+        }
+        graphics.generateTexture(key, width, height);
         graphics.destroy();
     }
 

@@ -7,6 +7,7 @@ import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
 import { createSplitCameraSystem } from "../ecs/systems/SplitCameraSystem";
 import { createCoopSystem } from "../ecs/systems/CoopSystem";
 import { CoopStateComponent, WildernessPoiComponent } from "../ecs/components";
+import { createClimbingSystem } from "../ecs/systems/ClimbingSystem";
 import { createCombatSystem } from "../ecs/systems/CombatSystem";
 import { createRenderSyncSystem } from "../ecs/systems/RenderSyncSystem";
 import { createMovementSystem } from "../ecs/systems/MovementSystem";
@@ -33,6 +34,7 @@ import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateMan
 
 export class DemoScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
+  private climbingSystem!: ReturnType<typeof createClimbingSystem>;
   private movementSystem!: ReturnType<typeof createMovementSystem>;
   private combatSystem!: ReturnType<typeof createCombatSystem>;
   private leaderDeathSystem!: ReturnType<typeof createLeaderDeathSystem>;
@@ -76,6 +78,7 @@ export class DemoScene extends Phaser.Scene {
 
   async create() {
     this.fsmSystem = createFSMSystem();
+    this.climbingSystem = createClimbingSystem();
     this.movementSystem = createMovementSystem();
     this.combatSystem = createCombatSystem();
     this.leaderDeathSystem = createLeaderDeathSystem();
@@ -230,6 +233,7 @@ export class DemoScene extends Phaser.Scene {
     this.progressionXPSystem(world, delta);
 
     this.fsmSystem(world, delta);
+    this.climbingSystem(world, delta);
     this.movementSystem(world, delta);
     this.combatSystem(world, delta);
     this.campSiegeSystem(world, delta); // M3

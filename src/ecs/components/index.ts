@@ -130,6 +130,12 @@ export const FloorComponent = defineComponent({
   active: Types.ui8,  // 1 = true, 0 = false
 });
 
+export const FloorCrystalComponent = defineComponent({
+  floorIndex: Types.ui8,
+  spireEid: Types.eid,
+  isDestroyed: Types.ui8,
+});
+
 export const CampCoreComponent = defineComponent({
   lightEnergy: Types.f32,
   energyRate: Types.f32,
@@ -188,6 +194,12 @@ export const InputStateComponent = defineComponent({
   up: Types.ui8,
   down: Types.ui8,
   attack: Types.ui8,
+});
+
+export const ClimbingState = defineComponent({
+  isClimbing: Types.ui8,
+  ladderX: Types.f32,
+  targetFloorY: Types.f32,
 });
 
 // ─────────────────────────────────────────────────────

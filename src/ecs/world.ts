@@ -15,6 +15,7 @@ import {
   SpireComponent,
   SpireSideValues,
   FloorComponent,
+  FloorCrystalComponent,
   CampCoreComponent,
   CampWallComponent,
   PlayerControlled,
@@ -188,9 +189,10 @@ export function createSpireEntity(
   Health.max[entity] = config.crystalMaxHP;
 
   // Add initial floors
+  // Base floor (1) is at Y=650, each subsequent floor is 120px higher
+  const baseY = 650;
   for (let i = 1; i <= config.initialFloors; i++) {
-    // Scaffold vertically based on floor index
-    createFloorEntity(world, side, i, 100, x, y - i * 50);
+    createFloorEntity(world, side, i, entity, x, baseY - (i - 1) * 120);
   }
 
   return entity;
@@ -200,7 +202,7 @@ export function createFloorEntity(
   world: IWorld,
   side: SpireSideValues,
   floorIndex: number,
-  barricadeHP: number,
+  spireEid: number,
   x: number,
   y: number
 ): number {
@@ -213,9 +215,19 @@ export function createFloorEntity(
   addComponent(world, FloorComponent, entity);
   FloorComponent.spireSide[entity] = side;
   FloorComponent.floorIndex[entity] = floorIndex;
-  FloorComponent.barricadeHP[entity] = barricadeHP;
+  FloorComponent.barricadeHP[entity] = 0; // Legacy
   FloorComponent.cleared[entity] = 0;
   FloorComponent.active[entity] = 1;
+
+  // Add crystal for this floor
+  addComponent(world, FloorCrystalComponent, entity);
+  FloorCrystalComponent.floorIndex[entity] = floorIndex;
+  FloorCrystalComponent.spireEid[entity] = spireEid;
+  FloorCrystalComponent.isDestroyed[entity] = 0;
+
+  addComponent(world, Health, entity);
+  Health.current[entity] = 500;
+  Health.max[entity] = 500;
 
   return entity;
 }

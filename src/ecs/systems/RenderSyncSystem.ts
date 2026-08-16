@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, FloorCrystalComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getWallDamageStage } from "./CampSiegeSystem";
 
@@ -25,8 +25,9 @@ const campWallQueryEnter = enterQuery(campWallQuery);
 const spireQuery = defineQuery([Position, SpireComponent, Health]);
 const spireQueryEnter = enterQuery(spireQuery);
 
-const floorQuery = defineQuery([Position, FloorComponent]);
+const floorQuery = defineQuery([Position, FloorComponent, FloorCrystalComponent]);
 const floorQueryEnter = enterQuery(floorQuery);
+const floorQueryExit = exitQuery(floorQuery);
 
 const wallBlueprintQuery = defineQuery([WallBlueprint, Position]);
 const wallBlueprintQueryEnter = enterQuery(wallBlueprintQuery);
@@ -256,7 +257,8 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     const spiresEntered = spireQueryEnter(world);
     for (let i = 0; i < spiresEntered.length; i++) {
       const eid = spiresEntered[i];
-      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "spire_dark_crystal");
+      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "spire_summit_crown");
+      sprite.setOrigin(0.5, 1);
       spriteMap.set(eid, sprite);
     }
     const spires = spireQuery(world);
@@ -268,7 +270,8 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
           sprite.setAlpha(0.2);
         } else {
           const floorCount = SpireComponent.floorCount[eid];
-          sprite.setPosition(Position.x[eid], Position.y[eid] - floorCount * 50 - 24);
+          // Floor base is 650, each is 120. Top is 650 - floorCount * 120
+          sprite.setPosition(Position.x[eid], 650 - floorCount * 120);
           const time = scene.time.now;
           sprite.setAlpha(0.8 + Math.sin(time / 150) * 0.2);
         }
@@ -371,16 +374,42 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     }
 
     // 5. Floors
+    const floorsExited = floorQueryExit(world);
+    for (let i = 0; i < floorsExited.length; i++) {
+        const eid = floorsExited[i];
+        const container = spriteMap.get(eid);
+        if (container) {
+            container.destroy();
+            spriteMap.delete(eid);
+        }
+    }
+
     const floorsEntered = floorQueryEnter(world);
     for (let i = 0; i < floorsEntered.length; i++) {
       const eid = floorsEntered[i];
       const container = scene.add.container(Position.x[eid], Position.y[eid]);
 
-      const platform = scene.add.sprite(0, 0, "spire_floor_platform");
-      const wall = scene.add.sprite(0, -32, "spire_cutaway_wall");
-      const barricade = scene.add.sprite(0, -16, "spire_barricade_gate");
+      // Shift up by half height (60) because origin is usually center, but let's align appropriately
+      // Actually chamber texture is 128x120. If we want it to sit on Y, set origin.
+      const chamber = scene.add.sprite(0, -60, "spire_chamber_cutaway");
+      const ladder = scene.add.sprite(0, -60, "spire_ladder_wood");
+      const crystal = scene.add.sprite(0, -60, "floor_dark_crystal_pulse");
 
-      container.add([wall, platform, barricade]);
+      crystal.setName("crystal");
+      chamber.setName("chamber");
+      ladder.setName("ladder");
+
+      // Add a slight floating animation to crystal
+      scene.tweens.add({
+          targets: crystal,
+          y: -65,
+          duration: 1500,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+      });
+
+      container.add([chamber, ladder, crystal]);
       spriteMap.set(eid, container);
     }
     const floors = floorQuery(world);
@@ -389,12 +418,40 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       const container = spriteMap.get(eid);
       if (container && container instanceof Phaser.GameObjects.Container) {
         container.setPosition(Position.x[eid], Position.y[eid]);
-        if (FloorComponent.cleared[eid] === 1) {
-            container.setAlpha(0.3);
-            container.each((child: any) => child.setTint(0x555555));
+
+        const crystalSprite = container.getByName("crystal") as Phaser.GameObjects.Sprite;
+        const chamberSprite = container.getByName("chamber") as Phaser.GameObjects.Sprite;
+
+        if (FloorCrystalComponent.isDestroyed[eid] === 1) {
+            // Collapse visuals
+            if (crystalSprite && crystalSprite.visible) {
+                crystalSprite.setVisible(false);
+                chamberSprite.setTexture("wall_rubble_collapsed"); // Reusing rubble texture for now
+                chamberSprite.setTint(0x555555);
+                chamberSprite.setAlpha(0.6);
+
+                // Crumble particle effect
+                for(let p = 0; p < 15; p++) {
+                    const px = Position.x[eid] + (Math.random() - 0.5) * 60;
+                    const py = Position.y[eid] - Math.random() * 60;
+                    const stone = scene.add.rectangle(px, py, 4, 4, 0x8a2be2);
+                    scene.tweens.add({
+                        targets: stone,
+                        y: Position.y[eid] + 20,
+                        x: px + (Math.random() - 0.5) * 40,
+                        alpha: 0,
+                        duration: 800 + Math.random() * 400,
+                        ease: 'Quad.easeIn',
+                        onComplete: () => stone.destroy()
+                    });
+                }
+            }
         } else {
-            container.setAlpha(1.0);
-            container.each((child: any) => child.clearTint());
+            // Pulse crystal based on HP
+            if (crystalSprite) {
+                const hpRatio = Math.max(0, Health.current[eid] / Health.max[eid]);
+                crystalSprite.setAlpha(0.4 + 0.6 * hpRatio);
+            }
         }
       }
     }
