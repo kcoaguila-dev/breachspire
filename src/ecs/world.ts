@@ -220,9 +220,10 @@ export function createFloorEntity(
   return entity;
 }
 
-export function setPlayerControlled(world: IWorld, entity: number): void {
+export function setPlayerControlled(world: IWorld, entity: number, playerId: number = 1): void {
   addComponent(world, PlayerControlled, entity);
   PlayerControlled.isControlled[entity] = 1;
+  PlayerControlled.playerId[entity] = playerId;
 
   addComponent(world, InputStateComponent, entity);
   InputStateComponent.left[entity] = 0;

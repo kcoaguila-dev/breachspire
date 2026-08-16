@@ -3,7 +3,9 @@ import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, cr
 import { SpireSideValues } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
-import { createCameraFollowSystem } from "../ecs/systems/CameraFollowSystem";
+import { createSplitCameraSystem } from "../ecs/systems/SplitCameraSystem";
+import { createCoopSystem } from "../ecs/systems/CoopSystem";
+import { CoopStateComponent, WildernessPoiComponent } from "../ecs/components";
 import { createCombatSystem } from "../ecs/systems/CombatSystem";
 import { createRenderSyncSystem } from "../ecs/systems/RenderSyncSystem";
 import { createMovementSystem } from "../ecs/systems/MovementSystem";
@@ -41,7 +43,8 @@ export class DemoScene extends Phaser.Scene {
   private floorCollapseSystem!: ReturnType<typeof createFloorCollapseSystem>;
   private gameStateSystem!: ReturnType<typeof createGameStateSystem>;
   private playerInputSystem!: ReturnType<typeof createPlayerInputSystem>;
-  private cameraFollowSystem!: ReturnType<typeof createCameraFollowSystem>;
+  private splitCameraSystem!: ReturnType<typeof createSplitCameraSystem>;
+  private coopSystem!: ReturnType<typeof createCoopSystem>;
   private hudSystem!: ReturnType<typeof createHUDSystem>;
   private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
 
@@ -87,25 +90,42 @@ export class DemoScene extends Phaser.Scene {
     ScreenAlertComponent.rightFlankDanger[this.screenAlertEid] = 0;
     ScreenAlertComponent.shakeIntensity[this.screenAlertEid] = 0;
 
+    // Set Map Bounds (3200x1200)
+    this.physics?.world.setBounds(0, 0, 3200, 1200); // Optional if physics exists
+    this.cameras.main.setBounds(0, 0, 3200, 1200);
+
     // Setup Inputs
     const cursors = this.input.keyboard!.createCursorKeys();
     const wasd = this.input.keyboard!.addKeys('W,S,A,D') as any;
     const spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    const numpad0Key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.NUMPAD_ZERO);
+    const enterKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+    const f2Key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F2);
 
-    this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey);
-    this.cameraFollowSystem = createCameraFollowSystem(this);
+    this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey, numpad0Key, enterKey);
+    this.splitCameraSystem = createSplitCameraSystem(this);
 
     try {
       // Load Data from public directory
       const knightData = await loadUnitData('/data/heroes/knight.json');
+      // For P2 we can reuse knightData or load an archer if available. We'll use knightData for now if no archer.
+      // But let's check if archer exists. If it fails, fallback to knight.
+      let p2Data = knightData;
+      try {
+        p2Data = await loadUnitData('/data/heroes/archer.json');
+      } catch (e) { }
+
       const goblinData = await loadUnitData('/data/monsters/goblin.json');
       const campConfig = await loadCampConfig('/data/camp/camp_config.json');
       const spireConfig = await loadSpireConfig('/data/spires/spire_config.json');
 
       this.monsterSpawnSystem = createMonsterSpawnSystem(goblinData);
+      this.coopSystem = createCoopSystem(f2Key, p2Data);
 
-      const centerY = 500;
-      const centerX = 400;
+      const centerY = 600;
+
+      // Camp Core at 1600
+      const coreX = 1600;
 
       // Add Parallax Backgrounds
       const sw = this.scale.width;
@@ -120,24 +140,43 @@ export class DemoScene extends Phaser.Scene {
 
       createGameStateEntity(world);
 
+      // Coop Entity
+      const coopEid = addEntity(world);
+      addComponent(world, CoopStateComponent, coopEid);
+      CoopStateComponent.isCoopActive[coopEid] = 0;
+      CoopStateComponent.player1Eid[coopEid] = -1;
+      CoopStateComponent.player2Eid[coopEid] = -1;
+
       // Spawn Camp
-      createCampCoreEntity(world, campConfig, centerX, centerY);
-      createCampWallEntity(world, campConfig, SpireSideValues.Left, centerX - 100, centerY);
-      createCampWallEntity(world, campConfig, SpireSideValues.Right, centerX + 100, centerY);
+      createCampCoreEntity(world, campConfig, coreX, centerY);
+      createCampWallEntity(world, campConfig, SpireSideValues.Left, 1200, centerY);
+      createCampWallEntity(world, campConfig, SpireSideValues.Right, 2000, centerY);
 
       // Spawn Spires
-      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, centerX - 300, centerY);
-      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, centerX + 300, centerY);
+      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, 200, centerY);
+      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, 3000, centerY);
+
+      // Wilderness Shrines
+      const leftShrine = addEntity(world);
+      addComponent(world, WildernessPoiComponent, leftShrine);
+      WildernessPoiComponent.poiType[leftShrine] = 0;
+      WildernessPoiComponent.x[leftShrine] = 800;
+
+      const rightShrine = addEntity(world);
+      addComponent(world, WildernessPoiComponent, rightShrine);
+      WildernessPoiComponent.poiType[rightShrine] = 0;
+      WildernessPoiComponent.x[rightShrine] = 2400;
 
       // Spawn invasion spawners
       createInvasionSpawner(world, leftSpire, SpireSideValues.Left, 3000, 3);
       createInvasionSpawner(world, rightSpire, SpireSideValues.Right, 3000, 3);
 
       // Spawn units
-      const knightEntity = createUnitEntity(world, knightData, centerX - 50, centerY);
-      setPlayerControlled(world, knightEntity);
+      const knightEntity = createUnitEntity(world, knightData, coreX, centerY);
+      setPlayerControlled(world, knightEntity, 1);
+      CoopStateComponent.player1Eid[coopEid] = knightEntity;
 
-      createUnitEntity(world, goblinData, centerX + 200, centerY);
+      createUnitEntity(world, goblinData, coreX + 200, centerY);
 
       this.isReady = true;
       console.log("DemoScene ready");
@@ -181,7 +220,8 @@ export class DemoScene extends Phaser.Scene {
     this.combatFeedbackSystem(world, delta);
 
     // Update camera before render sync
-    this.cameraFollowSystem(world, delta);
+    this.coopSystem(world, delta);
+    this.splitCameraSystem(world, delta);
 
     this.renderSyncSystem(world);
     this.hudSystem(world, delta);
