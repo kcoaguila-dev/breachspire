@@ -1,3 +1,4 @@
+import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent } from "bitecs";
 import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";

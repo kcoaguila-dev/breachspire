@@ -51,6 +51,9 @@ export class DemoScene extends Phaser.Scene {
   private audioManager!: AudioManager;
   private screenAlertEid!: number;
 
+  private bgMountains!: Phaser.GameObjects.TileSprite;
+  private bgTrees!: Phaser.GameObjects.TileSprite;
+
   private spriteMap: SpriteMap = new Map();
 
   private isReady = false;
@@ -128,11 +131,14 @@ export class DemoScene extends Phaser.Scene {
       const coreX = 1600;
 
       // Add Parallax Backgrounds
+      const sw = this.scale.width;
+      const sh = this.scale.height;
       const worldWidth = 3200;
-      this.add.tileSprite(worldWidth/2, centerY - 300, worldWidth, 800, "bg_sky").setScrollFactor(0.0);
-      this.add.tileSprite(worldWidth/2, centerY - 150, worldWidth, 300, "bg_mountains").setScrollFactor(0.1);
-      this.add.tileSprite(worldWidth/2, centerY - 100, worldWidth, 200, "bg_trees").setScrollFactor(0.3);
-      this.add.tileSprite(worldWidth/2, centerY + 32, worldWidth, 64, "ground_tile").setScrollFactor(1.0).setDepth(0);
+
+      this.add.tileSprite(sw / 2, sh / 2, sw, sh, "bg_sky").setScrollFactor(0).setDepth(-10);
+      this.bgMountains = this.add.tileSprite(sw / 2, sh - 220, sw, 300, "bg_mountains").setScrollFactor(0).setDepth(-9);
+      this.bgTrees = this.add.tileSprite(sw / 2, sh - 140, sw, 200, "bg_trees").setScrollFactor(0).setDepth(-8);
+      this.add.tileSprite(worldWidth / 2, centerY + 32, worldWidth, 64, "ground_tile").setScrollFactor(1.0).setDepth(0);
 
       // Center the camera on the avatar
       this.cameras.main.centerOn(coreX, centerY);
@@ -221,6 +227,9 @@ export class DemoScene extends Phaser.Scene {
     // Update camera before render sync
     this.coopSystem(world, delta);
     this.splitCameraSystem(world, delta);
+
+    if (this.bgMountains) this.bgMountains.tilePositionX = this.cameras.main.scrollX * 0.1;
+    if (this.bgTrees) this.bgTrees.tilePositionX = this.cameras.main.scrollX * 0.3;
 
     this.renderSyncSystem(world);
     this.hudSystem(world, delta);
