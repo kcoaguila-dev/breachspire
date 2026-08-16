@@ -1,8 +1,9 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getWallDamageStage } from "./CampSiegeSystem";
+import { getAmbientLightingColor } from "./DayNightSystem";
 
 export type RenderGameObject =
   | Phaser.GameObjects.Sprite
@@ -11,6 +12,8 @@ export type RenderGameObject =
   | Phaser.GameObjects.Image;
 
 export type SpriteMap = Map<number, RenderGameObject>;
+
+const dayNightQuery = defineQuery([DayNightCycle]);
 
 const unitQuery = defineQuery([Position, FactionTag, Health, Velocity]); // CombatTypeComponent might be optional for peasants/builders
 const unitQueryEnter = enterQuery(unitQuery);
@@ -42,6 +45,10 @@ const levelUpEventQuery = defineQuery([LevelUpEvent]);
 export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap) {
   let victoryBanner: Phaser.GameObjects.Text | null = null;
   let defeatBanner: Phaser.GameObjects.Text | null = null;
+
+  const ambientRect = scene.add.rectangle(scene.scale.width / 2, scene.scale.height / 2, scene.scale.width, scene.scale.height, 0xffffff, 1);
+  ambientRect.setScrollFactor(0);
+  (ambientRect as any).setDepth(99);
 
   // Create UI elements
   const unitHpGraphicsMap = new Map<number, Phaser.GameObjects.Graphics>();
@@ -414,6 +421,24 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
                 defeatBanner = scene.add.text(400, 200, "DEFEAT!", { fontSize: '64px', color: '#ff0000' }).setOrigin(0.5);
             }
         }
+    }
+
+    // 7. Ambient Lighting
+    const cycleEids = dayNightQuery(world);
+    if (cycleEids.length > 0) {
+        const eid = cycleEids[0];
+        const time = DayNightCycle.timeOfDay[eid];
+        // Cycle is 45000 day + 30000 night = 75000 total
+        const cycleProgress = (time % 75000) / 75000;
+        const color = getAmbientLightingColor(cycleProgress);
+
+        // Ensure integer values
+        const r = Math.floor(color.r);
+        const g = Math.floor(color.g);
+        const b = Math.floor(color.b);
+        const hexColor = (r << 16) + (g << 8) + b;
+
+        ambientRect.setFillStyle(hexColor, color.alpha);
     }
 
     return world;
