@@ -1,0 +1,7 @@
+{
+  "startingLightEnergy": 0,
+  "energyRate": 5,
+  "maxLightEnergy": 100,
+  "leftWallHP": 1000,
+  "rightWallHP": 1000
+}

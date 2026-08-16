@@ -58,3 +58,42 @@ export const FSMState = defineComponent({
 export const SpriteComponent = defineComponent({
   textureId: Types.ui32, // Simplified way to map to a texture if needed, though we often map EID directly to Phaser Sprites
 });
+// ─────────────────────────────────────────────────────
+// M2 Components
+// ─────────────────────────────────────────────────────
+
+export enum SpireSideValues {
+  Left = 0,
+  Right = 1,
+}
+
+export const SpireComponent = defineComponent({
+  side: Types.ui8,
+  darkEnergy: Types.f32,
+  growthCost: Types.f32,
+  floorCount: Types.ui8,
+  maxFloors: Types.ui8,
+  crystalHP: Types.f32,
+  darkEnergyRate: Types.f32,
+  isAlive: Types.ui8, // 1 = true, 0 = false
+});
+
+export const FloorComponent = defineComponent({
+  spireSide: Types.ui8,
+  floorIndex: Types.ui8,
+  barricadeHP: Types.f32,
+  cleared: Types.ui8, // 1 = true, 0 = false
+  active: Types.ui8,  // 1 = true, 0 = false
+});
+
+export const CampCoreComponent = defineComponent({
+  lightEnergy: Types.f32,
+  energyRate: Types.f32,
+  maxEnergy: Types.f32,
+});
+
+export const CampWallComponent = defineComponent({
+  side: Types.ui8, // 0 = Left, 1 = Right
+  hp: Types.f32,
+  maxHp: Types.f32,
+});

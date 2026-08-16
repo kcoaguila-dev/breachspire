@@ -1,5 +1,5 @@
 import { createWorld, addEntity, addComponent, IWorld } from "bitecs";
-import { UnitStats } from "../data/schemas";
+import { UnitStats, CampConfig, SpireConfig } from "../data/schemas";
 import {
   Position,
   Health,
@@ -12,6 +12,11 @@ import {
   FSMState,
   FSMStateValues,
   Velocity,
+  SpireComponent,
+  SpireSideValues,
+  FloorComponent,
+  CampCoreComponent,
+  CampWallComponent,
 } from "./components";
 
 export const world = createWorld();
@@ -54,6 +59,118 @@ export function createUnitEntity(
   addComponent(world, FSMState, entity);
   FSMState.state[entity] = FSMStateValues.IDLE;
   FSMState.targetEntity[entity] = 0;
+
+  return entity;
+}
+
+// ─────────────────────────────────────────────────────
+// M2 Factories
+// ─────────────────────────────────────────────────────
+
+export function createCampCoreEntity(
+  world: IWorld,
+  config: CampConfig,
+  x: number,
+  y: number
+): number {
+  const entity = addEntity(world);
+
+  addComponent(world, Position, entity);
+  Position.x[entity] = x;
+  Position.y[entity] = y;
+
+  addComponent(world, CampCoreComponent, entity);
+  CampCoreComponent.lightEnergy[entity] = config.startingLightEnergy;
+  CampCoreComponent.energyRate[entity] = config.energyRate;
+  CampCoreComponent.maxEnergy[entity] = config.maxLightEnergy;
+
+  return entity;
+}
+
+export function createCampWallEntity(
+  world: IWorld,
+  config: CampConfig,
+  side: SpireSideValues,
+  x: number,
+  y: number
+): number {
+  const entity = addEntity(world);
+
+  addComponent(world, Position, entity);
+  Position.x[entity] = x;
+  Position.y[entity] = y;
+
+  const hp = side === SpireSideValues.Left ? config.leftWallHP : config.rightWallHP;
+
+  addComponent(world, Health, entity);
+  Health.current[entity] = hp;
+  Health.max[entity] = hp;
+
+  addComponent(world, CampWallComponent, entity);
+  CampWallComponent.side[entity] = side;
+  CampWallComponent.hp[entity] = hp;
+  CampWallComponent.maxHp[entity] = hp;
+
+  return entity;
+}
+
+export function createSpireEntity(
+  world: IWorld,
+  config: SpireConfig,
+  side: SpireSideValues,
+  x: number,
+  y: number
+): number {
+  const entity = addEntity(world);
+
+  addComponent(world, Position, entity);
+  Position.x[entity] = x;
+  Position.y[entity] = y;
+
+  addComponent(world, SpireComponent, entity);
+  SpireComponent.side[entity] = side;
+  SpireComponent.darkEnergy[entity] = config.startingDarkEnergy;
+  SpireComponent.darkEnergyRate[entity] = config.darkEnergyRate;
+  SpireComponent.growthCost[entity] = config.floorGrowthCost;
+  SpireComponent.floorCount[entity] = config.initialFloors;
+  SpireComponent.maxFloors[entity] = config.maxFloors;
+  SpireComponent.crystalHP[entity] = config.crystalMaxHP;
+  SpireComponent.isAlive[entity] = 1;
+
+  // Spire acts as an entity with health
+  addComponent(world, Health, entity);
+  Health.current[entity] = config.crystalMaxHP;
+  Health.max[entity] = config.crystalMaxHP;
+
+  // Add initial floors
+  for (let i = 1; i <= config.initialFloors; i++) {
+    // Scaffold vertically based on floor index
+    createFloorEntity(world, side, i, 100, x, y - i * 50);
+  }
+
+  return entity;
+}
+
+export function createFloorEntity(
+  world: IWorld,
+  side: SpireSideValues,
+  floorIndex: number,
+  barricadeHP: number,
+  x: number,
+  y: number
+): number {
+  const entity = addEntity(world);
+
+  addComponent(world, Position, entity);
+  Position.x[entity] = x;
+  Position.y[entity] = y;
+
+  addComponent(world, FloorComponent, entity);
+  FloorComponent.spireSide[entity] = side;
+  FloorComponent.floorIndex[entity] = floorIndex;
+  FloorComponent.barricadeHP[entity] = barricadeHP;
+  FloorComponent.cleared[entity] = 0;
+  FloorComponent.active[entity] = 1;
 
   return entity;
 }

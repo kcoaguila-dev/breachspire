@@ -43,3 +43,25 @@ export const FloorDataSchema = z.object({
   hasAlcoveNest: z.boolean(),
 });
 export type FloorData = z.infer<typeof FloorDataSchema>;
+// ─────────────────────────────────────────────────────
+// M2 — Camp and Spire config schemas
+// ─────────────────────────────────────────────────────
+
+export const CampConfigSchema = z.object({
+  startingLightEnergy: z.number().nonnegative(),
+  energyRate:          z.number().nonnegative(),
+  maxLightEnergy:      z.number().positive(),
+  leftWallHP:          z.number().positive(),
+  rightWallHP:         z.number().positive(),
+});
+export type CampConfig = z.infer<typeof CampConfigSchema>;
+
+export const SpireConfigSchema = z.object({
+  startingDarkEnergy: z.number().nonnegative(),
+  darkEnergyRate:     z.number().nonnegative(),
+  floorGrowthCost:    z.number().positive(),
+  maxFloors:          z.number().int().positive(),
+  crystalMaxHP:       z.number().positive(),
+  initialFloors:      z.number().int().nonnegative(),
+});
+export type SpireConfig = z.infer<typeof SpireConfigSchema>;

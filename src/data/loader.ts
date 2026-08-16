@@ -1,4 +1,4 @@
-import { UnitStats, UnitStatsSchema, FloorData, FloorDataSchema } from "./schemas";
+import { UnitStats, UnitStatsSchema, FloorData, FloorDataSchema, CampConfig, CampConfigSchema, SpireConfig, SpireConfigSchema } from "./schemas";
 
 export async function loadUnitData(url: string): Promise<UnitStats> {
   const response = await fetch(url);
@@ -22,4 +22,21 @@ export async function loadFloorData(url: string): Promise<FloorData> {
   // Throws ZodError immediately if JSON does not match FloorDataSchema.
   // This fires at scene startup — a malformed floor_NN.json is caught before any entity is created.
   return FloorDataSchema.parse(data);
-}
+}
+export async function loadCampConfig(url: string): Promise<CampConfig> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load camp config from ${url}: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return CampConfigSchema.parse(data);
+}
+
+export async function loadSpireConfig(url: string): Promise<SpireConfig> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load spire config from ${url}: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return SpireConfigSchema.parse(data);
+}
