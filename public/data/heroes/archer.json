@@ -1,0 +1,9 @@
+{
+  "id": "archer",
+  "name": "Archer",
+  "faction": "hero",
+  "combatType": "ranged",
+  "health": 75,
+  "attack": 22,
+  "speed": 65
+}

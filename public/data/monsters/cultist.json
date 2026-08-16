@@ -1,0 +1,9 @@
+{
+  "id": "cultist",
+  "name": "Cultist",
+  "faction": "monster",
+  "combatType": "magic",
+  "health": 65,
+  "attack": 24,
+  "speed": 45
+}

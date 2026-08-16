@@ -1,0 +1,9 @@
+{
+  "id": "commander",
+  "name": "Commander",
+  "faction": "hero",
+  "combatType": "melee",
+  "health": 100,
+  "attack": 10,
+  "speed": 55
+}

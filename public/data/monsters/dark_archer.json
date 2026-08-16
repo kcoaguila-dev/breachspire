@@ -1,0 +1,9 @@
+{
+  "id": "dark_archer",
+  "name": "Dark Archer",
+  "faction": "monster",
+  "combatType": "ranged",
+  "health": 50,
+  "attack": 16,
+  "speed": 60
+}

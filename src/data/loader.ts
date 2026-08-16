@@ -12,6 +12,30 @@ export async function loadUnitData(url: string): Promise<UnitStats> {
   return UnitStatsSchema.parse(data);
 }
 
+export async function loadAllHeroData(): Promise<Record<string, UnitStats>> {
+  const heroIds = ["knight", "warrior", "archer", "mage", "commander"];
+  const heroes: Record<string, UnitStats> = {};
+
+  await Promise.all(heroIds.map(async (id) => {
+    const data = await loadUnitData(`/data/heroes/${id}.json`);
+    heroes[id] = data;
+  }));
+
+  return heroes;
+}
+
+export async function loadAllMonsterData(): Promise<Record<string, UnitStats>> {
+  const monsterIds = ["goblin", "troll", "dark_archer", "cultist"];
+  const monsters: Record<string, UnitStats> = {};
+
+  await Promise.all(monsterIds.map(async (id) => {
+    const data = await loadUnitData(`/data/monsters/${id}.json`);
+    monsters[id] = data;
+  }));
+
+  return monsters;
+}
+
 export async function loadFloorData(url: string): Promise<FloorData> {
   const response = await fetch(url);
   if (!response.ok) {

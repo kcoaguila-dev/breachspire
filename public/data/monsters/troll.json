@@ -1,0 +1,9 @@
+{
+  "id": "troll",
+  "name": "Troll",
+  "faction": "monster",
+  "combatType": "melee",
+  "health": 140,
+  "attack": 25,
+  "speed": 35
+}

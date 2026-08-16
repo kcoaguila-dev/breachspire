@@ -1,0 +1,9 @@
+{
+  "id": "mage",
+  "name": "Mage",
+  "faction": "hero",
+  "combatType": "magic",
+  "health": 60,
+  "attack": 30,
+  "speed": 50
+}
