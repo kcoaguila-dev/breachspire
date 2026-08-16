@@ -1,11 +1,12 @@
 import { defineQuery, IWorld } from "bitecs";
-import { CampCoreComponent, SpireComponent, SpireSideValues, DayNightCycle } from "../components";
+import { CampCoreComponent, SpireComponent, SpireSideValues, DayNightCycle, CoopStateComponent } from "../components";
 import { formatEnergyText } from "../../ui/HUDState";
 import Phaser from "phaser";
 
 const coreQuery = defineQuery([CampCoreComponent]);
 const spireQuery = defineQuery([SpireComponent]);
 const dayNightQuery = defineQuery([DayNightCycle]);
+const coopQuery = defineQuery([CoopStateComponent]);
 
 export function createHUDSystem(scene: Phaser.Scene) {
   // Setup Phaser UI elements
@@ -17,6 +18,16 @@ export function createHUDSystem(scene: Phaser.Scene) {
   // Core Energy Text
   const coreEnergyText = scene.add.text(400, 20, 'Energy: 0/0', { fontSize: '20px', color: '#ffea00', backgroundColor: '#0008' }).setOrigin(0.5, 0);
   uiElements.push(coreEnergyText);
+
+  // Coop Divider
+  const screenWidth = scene.scale.width;
+  const screenHeight = scene.scale.height;
+  const dividerHeight = 8;
+  const dividerY = (screenHeight / 2) - (dividerHeight / 2);
+  const divider = scene.add.rectangle(screenWidth / 2, dividerY + dividerHeight / 2, screenWidth, dividerHeight, 0x4a4a4a);
+  divider.setStrokeStyle(2, 0x2c2c2c);
+  divider.setVisible(false);
+  uiElements.push(divider);
 
   // Left Spire Floors
   const leftSpireText = scene.add.text(20, 60, 'L Spire: 0 Floors', textStyle);
@@ -40,6 +51,14 @@ export function createHUDSystem(scene: Phaser.Scene) {
   });
 
   return (world: IWorld, _delta: number): IWorld => {
+    // Check Coop state for Divider visibility
+    const coops = coopQuery(world);
+    let isCoopActive = false;
+    if (coops.length > 0) {
+      isCoopActive = CoopStateComponent.isCoopActive[coops[0]] === 1;
+    }
+    divider.setVisible(isCoopActive);
+
     // 0. Update Day Night Cycle
     const cycleEids = dayNightQuery(world);
     if (cycleEids.length > 0) {

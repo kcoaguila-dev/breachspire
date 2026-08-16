@@ -5,11 +5,26 @@ import Phaser from "phaser";
 const playerQuery = defineQuery([PlayerControlled, Position]);
 const coopQuery = defineQuery([CoopStateComponent]);
 
+export function computeCameraViewports(screenWidth: number, screenHeight: number, isCoopActive: boolean) {
+  if (isCoopActive) {
+    return {
+      cam1: { x: 0, y: 0, width: screenWidth, height: screenHeight / 2 },
+      cam2: { x: 0, y: screenHeight / 2, width: screenWidth, height: screenHeight / 2 }
+    };
+  } else {
+    return {
+      cam1: { x: 0, y: 0, width: screenWidth, height: screenHeight },
+      cam2: null
+    };
+  }
+}
+
 export function createSplitCameraSystem(scene: Phaser.Scene) {
   const lerpFactor = 0.1; // Adjust for smoothness
 
   let p2Camera: Phaser.Cameras.Scene2D.Camera | null = null;
-  const originalWidth = scene.cameras.main.width;
+  const originalWidth = scene.scale.width;
+  const originalHeight = scene.scale.height;
 
   return (world: IWorld, _delta: number): IWorld => {
     const players = playerQuery(world);
@@ -42,15 +57,23 @@ export function createSplitCameraSystem(scene: Phaser.Scene) {
 
     const cam1 = scene.cameras.main;
 
-    if (isCoopActive && actualP1Eid !== -1 && actualP2Eid !== -1) {
+    // Check if actual coop is fully active (both players are present)
+    const fullyCoop = isCoopActive && actualP1Eid !== -1 && actualP2Eid !== -1;
+    const viewports = computeCameraViewports(originalWidth, originalHeight, fullyCoop);
+
+    if (fullyCoop) {
       // Split Screen Active
-      if (cam1.width !== originalWidth / 2) {
-          cam1.setSize(originalWidth / 2, cam1.height);
+      if (cam1.height !== viewports.cam1.height) {
+          cam1.setViewport(viewports.cam1.x, viewports.cam1.y, viewports.cam1.width, viewports.cam1.height);
       }
 
-      if (!p2Camera) {
-        p2Camera = scene.cameras.add(originalWidth / 2, 0, originalWidth / 2, cam1.height);
+      if (!p2Camera && viewports.cam2) {
+        p2Camera = scene.cameras.add(viewports.cam2.x, viewports.cam2.y, viewports.cam2.width, viewports.cam2.height);
         p2Camera.setBounds(0, 0, 3200, 1200);
+      } else if (p2Camera && viewports.cam2) {
+        if (p2Camera.height !== viewports.cam2.height) {
+           p2Camera.setViewport(viewports.cam2.x, viewports.cam2.y, viewports.cam2.width, viewports.cam2.height);
+        }
       }
 
       // Update Cam1 (Player 1)
@@ -71,8 +94,8 @@ export function createSplitCameraSystem(scene: Phaser.Scene) {
 
     } else {
       // Solo Screen Active
-      if (cam1.width !== originalWidth) {
-        cam1.setSize(originalWidth, cam1.height);
+      if (cam1.height !== viewports.cam1.height) {
+        cam1.setViewport(viewports.cam1.x, viewports.cam1.y, viewports.cam1.width, viewports.cam1.height);
       }
       if (p2Camera) {
         scene.cameras.remove(p2Camera);
