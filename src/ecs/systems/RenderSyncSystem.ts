@@ -44,7 +44,6 @@ const levelUpEventQuery = defineQuery([LevelUpEvent]);
 
 export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap) {
   let victoryBanner: Phaser.GameObjects.Text | null = null;
-  let defeatBanner: Phaser.GameObjects.Text | null = null;
 
   const ambientRect = scene.add.rectangle(scene.scale.width / 2, scene.scale.height / 2, scene.scale.width, scene.scale.height, 0xffffff, 1);
   ambientRect.setScrollFactor(0);
@@ -445,10 +444,6 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         if (state === GameStateValues.VICTORY) {
             if (!victoryBanner) {
                 victoryBanner = scene.add.text(400, 200, "VICTORY!", { fontSize: '64px', color: '#00ff00' }).setOrigin(0.5);
-            }
-        } else if (state === GameStateValues.DEFEAT) {
-            if (!defeatBanner) {
-                defeatBanner = scene.add.text(400, 200, "DEFEAT!", { fontSize: '64px', color: '#ff0000' }).setOrigin(0.5);
             }
         }
     }

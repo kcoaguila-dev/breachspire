@@ -363,7 +363,23 @@ constructor() {
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
-    const text = isVictory ? "VICTORY" : "DEFEAT";
+    let text = isVictory ? "VICTORY" : "DEFEAT";
+    if (!isVictory) {
+      text = "DEFEAT - THE HEARTH HAS FALLEN";
+      this.audioManager.playTone(150, 'sawtooth', 0.8, 0.4);
+
+      const flashRect = this.add.rectangle(centerX, centerY, this.cameras.main.width, this.cameras.main.height, 0xff0000, 0.5);
+      flashRect.setScrollFactor(0);
+      flashRect.setDepth(999);
+      this.tweens.add({
+        targets: flashRect,
+        alpha: 0,
+        duration: 500,
+        ease: 'Power2'
+      });
+
+      this.cameras.main.shake(500, 0.05);
+    }
     const color = isVictory ? "#00ff00" : "#ff0000";
 
     const titleText = this.add.text(centerX, centerY - 50, text, {

@@ -122,14 +122,6 @@ export function createCampCoreEntity(
   CampCoreComponent.energyRate[entity] = config.energyRate;
   CampCoreComponent.maxEnergy[entity] = config.maxLightEnergy;
 
-  // Added health components for core
-  addComponent(world, Health, entity);
-  const coreHP = 1000; // Example HP
-  Health.current[entity] = coreHP;
-  Health.max[entity] = coreHP;
-  CampCoreComponent.currentHP[entity] = coreHP;
-  CampCoreComponent.maxHP[entity] = coreHP;
-
   return entity;
 }
 

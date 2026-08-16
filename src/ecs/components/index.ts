@@ -140,8 +140,6 @@ export const CampCoreComponent = defineComponent({
   lightEnergy: Types.f32,
   energyRate: Types.f32,
   maxEnergy: Types.f32,
-  currentHP: Types.f32,
-  maxHP: Types.f32,
 });
 
 export const InvasionSpawner = defineComponent({

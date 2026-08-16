@@ -161,7 +161,7 @@ export class AudioManager {
   }
 
   // SFX Helper
-  private playTone(frequency: number, type: OscillatorType, duration: number, volume: number = 0.5) {
+  public playTone(frequency: number, type: OscillatorType, duration: number, volume: number = 0.5) {
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }

@@ -1,21 +1,34 @@
 import { defineQuery, IWorld } from "bitecs";
-import { CampCoreComponent, GameStateComponent, GameStateValues, SpireComponent, Health } from "../components";
+import { CampCoreComponent, GameStateComponent, GameStateValues, SpireComponent, Health, Position, FactionTag, FactionValues } from "../components";
 
-const coreQuery = defineQuery([CampCoreComponent, Health]);
+const coreQuery = defineQuery([CampCoreComponent, Position]);
 const spireQuery = defineQuery([SpireComponent, Health]);
 const stateQuery = defineQuery([GameStateComponent]);
+const monsterQuery = defineQuery([Position, Health, FactionTag]);
 
 // ─────────────────────────────────────────────────────
 // EXPORTED PURE LOGIC
 // ─────────────────────────────────────────────────────
-export function evaluateGameState(coreHp: number, leftSpireAlive: boolean, rightSpireAlive: boolean): GameStateValues {
-  if (coreHp <= 0) {
+export function evaluateGameState(isCoreBreached: boolean, leftSpireAlive: boolean, rightSpireAlive: boolean): GameStateValues {
+  if (isCoreBreached) {
       return GameStateValues.DEFEAT;
   }
   if (!leftSpireAlive && !rightSpireAlive) {
       return GameStateValues.VICTORY;
   }
   return GameStateValues.RUNNING;
+}
+
+export function isMonsterBreachingCore(
+  monsterX: number,
+  monsterY: number,
+  coreX: number,
+  coreY: number,
+  contactRadius: number = 40
+): boolean {
+  const dx = Math.abs(monsterX - coreX);
+  const dy = Math.abs(monsterY - coreY);
+  return dx <= contactRadius && dy <= 60;
 }
 
 // ─────────────────────────────────────────────────────
@@ -29,9 +42,28 @@ export function createGameStateSystem() {
     const stateEid = states[0]; // Assuming only one GameStateComponent
 
     const cores = coreQuery(world);
-    let coreHp = 1; // Default assume alive if no core
+    let isCoreBreached = false;
+    let coreX = 1600;
+    let coreY = 650;
+
     if (cores.length > 0) {
-        coreHp = Health.current[cores[0]];
+        const coreEid = cores[0];
+        coreX = Position.x[coreEid];
+        coreY = Position.y[coreEid];
+    }
+
+    const monsters = monsterQuery(world);
+    for (let i = 0; i < monsters.length; i++) {
+        const monsterEid = monsters[i];
+        if (Health.current[monsterEid] <= 0) continue;
+        if (FactionTag.faction[monsterEid] === FactionValues.Monster) {
+            const mx = Position.x[monsterEid];
+            const my = Position.y[monsterEid];
+            if (isMonsterBreachingCore(mx, my, coreX, coreY)) {
+                isCoreBreached = true;
+                break;
+            }
+        }
     }
 
     const spires = spireQuery(world);
@@ -50,7 +82,7 @@ export function createGameStateSystem() {
         }
     }
 
-    const nextState = evaluateGameState(coreHp, leftSpireAlive, rightSpireAlive);
+    const nextState = evaluateGameState(isCoreBreached, leftSpireAlive, rightSpireAlive);
     GameStateComponent.state[stateEid] = nextState;
 
     return world;
