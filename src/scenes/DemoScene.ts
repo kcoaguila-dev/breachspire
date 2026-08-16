@@ -6,6 +6,7 @@ import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
 import { createSplitCameraSystem } from "../ecs/systems/SplitCameraSystem";
 import { createCoopSystem } from "../ecs/systems/CoopSystem";
+import { createClimbingSystem } from "../ecs/systems/ClimbingSystem";
 import { CoopStateComponent, WildernessPoiComponent } from "../ecs/components";
 import { createCombatSystem } from "../ecs/systems/CombatSystem";
 import { createRenderSyncSystem } from "../ecs/systems/RenderSyncSystem";
@@ -50,6 +51,7 @@ export class DemoScene extends Phaser.Scene {
   private playerInputSystem!: ReturnType<typeof createPlayerInputSystem>;
   private splitCameraSystem!: ReturnType<typeof createSplitCameraSystem>;
   private coopSystem!: ReturnType<typeof createCoopSystem>;
+  private climbingSystem!: ReturnType<typeof createClimbingSystem>;
   private hudSystem!: ReturnType<typeof createHUDSystem>;
   private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
   private buildingSystem!: ReturnType<typeof createBuildingSystem>;
@@ -135,6 +137,7 @@ constructor() {
     const f2Key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F2);
 
     this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey, numpad0Key, enterKey);
+    this.climbingSystem = createClimbingSystem();
     this.splitCameraSystem = createSplitCameraSystem(this);
 
     try {
@@ -153,8 +156,19 @@ constructor() {
 
       let trollData = goblinData;
       let archerData = goblinData;
+      let cultistData = goblinData;
+      let darkArcherData = goblinData;
       try { trollData = await loadUnitData('/data/monsters/troll.json'); } catch(e) {}
       try { archerData = await loadUnitData('/data/monsters/archer.json'); } catch(e) {}
+      try { cultistData = await loadUnitData('/data/monsters/cultist.json'); } catch(e) {}
+      try { darkArcherData = await loadUnitData('/data/monsters/dark_archer.json'); } catch(e) {}
+
+      const defendersData = {
+        goblin: goblinData,
+        troll: trollData,
+        dark_archer: darkArcherData,
+        cultist: cultistData
+      };
 
       this.monsterSpawnSystem = createMonsterSpawnSystem(goblinData, archerData, trollData); // Actually p2Data might be archer. Let's load archer explicitly for monsters if we can.
       this.coopSystem = createCoopSystem(f2Key, p2Data);
@@ -194,8 +208,8 @@ constructor() {
       createCampWallEntity(world, campConfig, SpireSideValues.Right, 2000, centerY);
 
       // Spawn Spires
-      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, 200, centerY);
-      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, 3000, centerY);
+      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, 200, centerY, defendersData);
+      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, 3000, centerY, defendersData);
 
       // Wilderness Shrines
       const leftShrine = addEntity(world);
@@ -247,6 +261,7 @@ constructor() {
     this.progressionXPSystem(world, delta);
 
     this.fsmSystem(world, delta);
+    this.climbingSystem(world, delta);
     this.movementSystem(world, delta);
     this.combatSystem(world, delta);
     this.campSiegeSystem(world, delta); // M3

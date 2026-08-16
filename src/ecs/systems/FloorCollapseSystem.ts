@@ -1,10 +1,11 @@
-import { defineQuery, IWorld } from "bitecs";
-import { FloorComponent, InvasionSpawner, DestructionEvent, Position } from "../components";
+import { defineQuery, IWorld, removeEntity } from "bitecs";
+import { FloorComponent, InvasionSpawner, DestructionEvent, Position, FloorDefenderComponent } from "../components";
 import { addEntity, addComponent } from "bitecs";
 import { computeSpawnRate } from "./MonsterSpawnSystem";
 
 const floorQuery = defineQuery([FloorComponent]);
 const spawnerQuery = defineQuery([InvasionSpawner]);
+const defenderQuery = defineQuery([FloorDefenderComponent]);
 
 // ─────────────────────────────────────────────────────
 // EXPORTED PURE LOGIC
@@ -55,6 +56,15 @@ export function createFloorCollapseSystem() {
                 DestructionEvent.x[eventEid] = Position.x[floorEid] !== undefined ? Position.x[floorEid] : 0;
                 DestructionEvent.y[eventEid] = Position.y[floorEid] !== undefined ? Position.y[floorEid] : 0;
                 DestructionEvent.type[eventEid] = 0; // 0 = Floor Collapse
+
+                // Remove assigned defenders
+                const defenders = defenderQuery(world);
+                for (let j = 0; j < defenders.length; j++) {
+                    const defEid = defenders[j];
+                    if (FloorDefenderComponent.floorEid[defEid] === floorEid) {
+                        removeEntity(world, defEid);
+                    }
+                }
             }
         }
 
