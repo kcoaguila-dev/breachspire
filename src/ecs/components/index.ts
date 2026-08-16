@@ -167,7 +167,19 @@ export const CampWallComponent = defineComponent({
 // ─────────────────────────────────────────────────────
 
 export const PlayerControlled = defineComponent({
+  playerId: Types.ui8, // 1 or 2
   isControlled: Types.ui8,
+});
+
+export const CoopStateComponent = defineComponent({
+  isCoopActive: Types.ui8, // 1 = active, 0 = inactive
+  player1Eid: Types.eid,
+  player2Eid: Types.eid,
+});
+
+export const WildernessPoiComponent = defineComponent({
+  poiType: Types.ui8, // 0 = Aether Shrine, 1 = Outpost, 2 = Scouting Ruin
+  x: Types.f32,
 });
 
 export const InputStateComponent = defineComponent({
