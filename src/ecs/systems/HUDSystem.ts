@@ -1,10 +1,9 @@
 import { defineQuery, IWorld } from "bitecs";
-import { CampCoreComponent, CampWallComponent, SpireComponent, Health, SpireSideValues } from "../components";
-import { formatEnergyText, calculateBarFill } from "../../ui/HUDState";
+import { CampCoreComponent, SpireComponent, SpireSideValues } from "../components";
+import { formatEnergyText } from "../../ui/HUDState";
 import Phaser from "phaser";
 
 const coreQuery = defineQuery([CampCoreComponent]);
-const wallQuery = defineQuery([CampWallComponent, Health]);
 const spireQuery = defineQuery([SpireComponent]);
 
 export function createHUDSystem(scene: Phaser.Scene) {
@@ -17,18 +16,6 @@ export function createHUDSystem(scene: Phaser.Scene) {
   // Core Energy Text
   const coreEnergyText = scene.add.text(400, 20, 'Energy: 0/0', { fontSize: '20px', color: '#ffea00', backgroundColor: '#0008' }).setOrigin(0.5, 0);
   uiElements.push(coreEnergyText);
-
-  // Left Wall Text + Bar
-  const leftWallText = scene.add.text(20, 20, 'L Wall HP', textStyle);
-  const leftWallBarBg = scene.add.rectangle(20, 40, 100, 10, 0x555555).setOrigin(0, 0);
-  const leftWallBarFg = scene.add.rectangle(20, 40, 100, 10, 0x00ff00).setOrigin(0, 0);
-  uiElements.push(leftWallText, leftWallBarBg, leftWallBarFg);
-
-  // Right Wall Text + Bar
-  const rightWallText = scene.add.text(780, 20, 'R Wall HP', textStyle).setOrigin(1, 0);
-  const rightWallBarBg = scene.add.rectangle(780, 40, 100, 10, 0x555555).setOrigin(1, 0);
-  const rightWallBarFg = scene.add.rectangle(780, 40, 100, 10, 0x00ff00).setOrigin(1, 0);
-  uiElements.push(rightWallText, rightWallBarBg, rightWallBarFg);
 
   // Left Spire Floors
   const leftSpireText = scene.add.text(20, 60, 'L Spire: 0 Floors', textStyle);
@@ -55,26 +42,6 @@ export function createHUDSystem(scene: Phaser.Scene) {
       const energy = CampCoreComponent.lightEnergy[coreEid];
       const max = CampCoreComponent.maxEnergy[coreEid];
       coreEnergyText.setText(formatEnergyText(energy, max));
-    }
-
-    // 2. Update Wall HPs
-    const walls = wallQuery(world);
-    // Reset bars if dead/missing
-    leftWallBarFg.scaleX = 0;
-    rightWallBarFg.scaleX = 0;
-
-    for (let i = 0; i < walls.length; i++) {
-      const wallEid = walls[i];
-      const side = CampWallComponent.side[wallEid];
-      const hp = Health.current[wallEid];
-      const maxHp = Health.max[wallEid];
-      const fill = calculateBarFill(hp, maxHp);
-
-      if (side === SpireSideValues.Left) {
-        leftWallBarFg.scaleX = fill;
-      } else if (side === SpireSideValues.Right) {
-        rightWallBarFg.scaleX = fill;
-      }
     }
 
     // 3. Update Spire Floors

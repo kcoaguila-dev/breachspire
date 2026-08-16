@@ -27,7 +27,12 @@ export class TextureGenerator {
         // Camp
         this.generateCampCore(scene, "camp_core_hearth");
         this.generateRect(scene, "camp_wall_wood", 32, 128, "#8B4513");
-        this.generateRect(scene, "camp_wall_stone", 32, 128, "#708090");
+        this.generateWallStonePristine(scene, "wall_stage_1_pristine");
+        this.generateWallStoneCracked(scene, "wall_stage_2_cracked");
+        this.generateWallStoneCrumbling(scene, "wall_stage_3_crumbling");
+        this.generateWallStoneCritical(scene, "wall_stage_4_critical");
+        this.generateWallRubbleCollapsed(scene, "wall_rubble_collapsed");
+        this.generateRect(scene, "camp_wall_stone", 32, 128, "#708090"); // Keep for fallback if needed
 
         // Spires
         this.generateCutawayWall(scene, "spire_cutaway_wall");
@@ -44,6 +49,86 @@ export class TextureGenerator {
         this.generateGoblin(scene, "unit_goblin");
         this.generateTroll(scene, "unit_troll");
         this.generateCultist(scene, "unit_cultist");
+    }
+
+    private static generateWallStonePristine(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x708090, 1);
+        graphics.fillRect(0, 0, 32, 128);
+        graphics.generateTexture(key, 32, 128);
+        graphics.destroy();
+    }
+
+    private static generateWallStoneCracked(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x708090, 1);
+        graphics.fillRect(0, 0, 32, 128);
+        // Cracks
+        graphics.lineStyle(2, 0x2f4f4f, 1);
+        graphics.beginPath();
+        graphics.moveTo(8, 0);
+        graphics.lineTo(16, 32);
+        graphics.lineTo(8, 64);
+        graphics.strokePath();
+        graphics.generateTexture(key, 32, 128);
+        graphics.destroy();
+    }
+
+    private static generateWallStoneCrumbling(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x708090, 1);
+        graphics.fillRect(0, 0, 32, 128);
+        // Deep Cracks
+        graphics.lineStyle(3, 0x2f4f4f, 1);
+        graphics.beginPath();
+        graphics.moveTo(16, 0);
+        graphics.lineTo(8, 32);
+        graphics.lineTo(24, 64);
+        graphics.lineTo(16, 96);
+        graphics.strokePath();
+        // Chips
+        graphics.fillStyle(0x000000, 0.5);
+        graphics.fillRect(0, 32, 8, 8);
+        graphics.fillRect(24, 80, 8, 16);
+        graphics.generateTexture(key, 32, 128);
+        graphics.destroy();
+    }
+
+    private static generateWallStoneCritical(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x708090, 1);
+        graphics.fillRect(0, 32, 32, 96); // Top missing
+        // Heavy fractures
+        graphics.lineStyle(4, 0x1a2421, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 32);
+        graphics.lineTo(16, 64);
+        graphics.lineTo(8, 96);
+        graphics.lineTo(32, 128);
+        graphics.strokePath();
+        graphics.fillStyle(0x000000, 0.5);
+        graphics.fillRect(0, 64, 12, 12);
+        graphics.fillRect(20, 96, 12, 16);
+        graphics.generateTexture(key, 32, 128);
+        graphics.destroy();
+    }
+
+    private static generateWallRubbleCollapsed(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        // Only rubble at bottom
+        graphics.fillStyle(0x404040, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 128);
+        graphics.lineTo(8, 100);
+        graphics.lineTo(24, 110);
+        graphics.lineTo(32, 128);
+        graphics.fillPath();
+        // Loose stones
+        graphics.fillStyle(0x708090, 1);
+        graphics.fillRect(4, 115, 8, 8);
+        graphics.fillRect(20, 120, 6, 6);
+        graphics.generateTexture(key, 32, 128);
+        graphics.destroy();
     }
 
     private static generateRect(scene: Phaser.Scene, key: string, width: number, height: number, colorStr: string) {
