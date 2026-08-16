@@ -16,9 +16,11 @@ import { createFloorCollapseSystem } from "../ecs/systems/FloorCollapseSystem";
 import { createGameStateSystem } from "../ecs/systems/GameStateSystem";
 import { createCommanderSupportSystem } from "../ecs/systems/CommanderSupportSystem";
 import { createLeaderDeathSystem } from "../ecs/systems/LeaderDeathSystem";
+import { createCombatFeedbackSystem } from "../ecs/systems/CombatFeedbackSystem";
+import { AudioManager } from "../audio/AudioManager";
 import { loadUnitData, loadCampConfig, loadSpireConfig } from "../data/loader";
-import { defineQuery } from "bitecs";
-import { GameStateComponent, GameStateValues, CampCoreComponent } from "../ecs/components";
+import { defineQuery, addEntity, addComponent } from "bitecs";
+import { GameStateComponent, GameStateValues, CampCoreComponent, ScreenAlertComponent } from "../ecs/components";
 import { createHUDSystem } from "../ecs/systems/HUDSystem";
 import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateManager";
 
@@ -40,6 +42,10 @@ export class DemoScene extends Phaser.Scene {
   private playerInputSystem!: ReturnType<typeof createPlayerInputSystem>;
   private cameraFollowSystem!: ReturnType<typeof createCameraFollowSystem>;
   private hudSystem!: ReturnType<typeof createHUDSystem>;
+  private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
+
+  private audioManager!: AudioManager;
+  private screenAlertEid!: number;
 
   private spriteMap = new Map<number, Phaser.GameObjects.Rectangle>();
 
@@ -68,6 +74,17 @@ export class DemoScene extends Phaser.Scene {
     this.floorCollapseSystem = createFloorCollapseSystem();
     this.gameStateSystem = createGameStateSystem();
     this.hudSystem = createHUDSystem(this);
+
+    // Setup Audio and Feedback
+    this.audioManager = new AudioManager();
+    this.combatFeedbackSystem = createCombatFeedbackSystem(this, this.audioManager);
+
+    // Setup Singleton ScreenAlert
+    this.screenAlertEid = addEntity(world);
+    addComponent(world, ScreenAlertComponent, this.screenAlertEid);
+    ScreenAlertComponent.leftFlankDanger[this.screenAlertEid] = 0;
+    ScreenAlertComponent.rightFlankDanger[this.screenAlertEid] = 0;
+    ScreenAlertComponent.shakeIntensity[this.screenAlertEid] = 0;
 
     // Setup Inputs
     const cursors = this.input.keyboard!.createCursorKeys();
@@ -147,6 +164,9 @@ export class DemoScene extends Phaser.Scene {
     this.campEnergySystem(world, delta);
     this.commanderSupportSystem(world, delta); // M4
     this.spireGrowthSystem(world, delta);
+
+    // Run feedback system (consumes DamageTextEvents and applies alerts/shake)
+    this.combatFeedbackSystem(world, delta);
 
     // Update camera before render sync
     this.cameraFollowSystem(world, delta);

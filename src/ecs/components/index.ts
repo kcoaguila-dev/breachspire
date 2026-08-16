@@ -177,3 +177,27 @@ export const InputStateComponent = defineComponent({
   down: Types.ui8,
   attack: Types.ui8,
 });
+
+// ─────────────────────────────────────────────────────
+// Phase 7 Components
+// ─────────────────────────────────────────────────────
+
+export const DamageTextEvent = defineComponent({
+  targetX: Types.f32,
+  targetY: Types.f32,
+  amount: Types.f32,
+  isAdvantage: Types.ui8,
+  combatType: Types.ui8, // 0 = Melee, 1 = Ranged, 2 = Magic
+});
+
+export const ScreenAlertComponent = defineComponent({
+  leftFlankDanger: Types.ui8,
+  rightFlankDanger: Types.ui8,
+  shakeIntensity: Types.f32,
+});
+
+export const DestructionEvent = defineComponent({
+  x: Types.f32,
+  y: Types.f32,
+  type: Types.ui8, // 0 = Floor Collapse, 1 = Wall Breach
+});

@@ -1,5 +1,6 @@
 import { defineQuery, IWorld } from "bitecs";
-import { Health, CampWallComponent } from "../components";
+import { Health, CampWallComponent, DestructionEvent, Position } from "../components";
+import { addEntity, addComponent } from "bitecs";
 
 const wallQuery = defineQuery([CampWallComponent, Health]);
 
@@ -47,6 +48,12 @@ export function createCampSiegeSystem() {
             // Setting HP to exactly 0 to represent destruction
             Health.current[wallEid] = 0;
             CampWallComponent.hp[wallEid] = 0;
+            // Trigger DestructionEvent
+            const eventEid = addEntity(world);
+            addComponent(world, DestructionEvent, eventEid);
+            DestructionEvent.x[eventEid] = Position.x[wallEid] !== undefined ? Position.x[wallEid] : 0;
+            DestructionEvent.y[eventEid] = Position.y[wallEid] !== undefined ? Position.y[wallEid] : 0;
+            DestructionEvent.type[eventEid] = 1; // 1 = Wall Breach
         } else {
             // Sync CampWallComponent HP with Health Component
             CampWallComponent.hp[wallEid] = Health.current[wallEid];
