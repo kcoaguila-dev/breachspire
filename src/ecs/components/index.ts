@@ -55,6 +55,31 @@ export const FSMState = defineComponent({
   targetEntity: Types.eid, // Target entity ID
 });
 
+export const CommanderTag = defineComponent();
+export const PlayerControlled = defineComponent();
+
+export enum SupportActionEnum {
+  RallyFlag = 0,
+  RepairWall = 1,
+  AetherSurge = 2,
+}
+
+export const SoftFailRetreatComponent = defineComponent({
+  isRetreating: Types.ui8,
+  retreatTimer: Types.f32,
+  savedLootRatio: Types.f32,
+});
+
+export const RunSpoilsComponent = defineComponent({
+  spoils: Types.f32,
+});
+
+export const SupportRequestComponent = defineComponent({
+  actionType: Types.ui8, // Maps to SupportActionEnum
+  targetEid: Types.eid, // The entity this targets (e.g. wall or hero)
+  requested: Types.ui8, // 1 = requested, 0 = fulfilled
+});
+
 export const SpriteComponent = defineComponent({
   textureId: Types.ui32, // Simplified way to map to a texture if needed, though we often map EID directly to Phaser Sprites
 });
