@@ -6,6 +6,28 @@ const dayNightQuery = defineQuery([DayNightCycle]);
 // ─────────────────────────────────────────────────────
 // EXPORTED PURE LOGIC — testable by Vitest
 // ─────────────────────────────────────────────────────
+export function getAmbientLightingColor(cycleProgress: number): { r: number, g: number, b: number, alpha: number } {
+    if (cycleProgress < 0.5) {
+        return { r: 255, g: 255, b: 255, alpha: 0.0 };
+    } else if (cycleProgress < 0.65) {
+        const t = (cycleProgress - 0.5) / 0.15;
+        return {
+            r: 255 + (255 - 255) * t,
+            g: 255 + (140 - 255) * t,
+            b: 255 + (60 - 255) * t,
+            alpha: 0.0 + (0.25 - 0.0) * t
+        };
+    } else {
+        const t = (cycleProgress - 0.65) / 0.35;
+        return {
+            r: 255 + (10 - 255) * t,
+            g: 140 + (12 - 140) * t,
+            b: 60 + (35 - 60) * t,
+            alpha: 0.25 + (0.65 - 0.25) * t
+        };
+    }
+}
+
 export function computeDayNightPhase(elapsedTime: number, dayDuration: number, nightDuration: number): { isNight: boolean, progress: number, dayNumber: number } {
     const cycleDuration = dayDuration + nightDuration;
     // Assume we start at Day 1
