@@ -17,6 +17,10 @@ import { createGameStateSystem } from "../ecs/systems/GameStateSystem";
 import { createCommanderSupportSystem } from "../ecs/systems/CommanderSupportSystem";
 import { createLeaderDeathSystem } from "../ecs/systems/LeaderDeathSystem";
 import { loadUnitData, loadCampConfig, loadSpireConfig } from "../data/loader";
+import { defineQuery } from "bitecs";
+import { GameStateComponent, GameStateValues, CampCoreComponent } from "../ecs/components";
+import { createHUDSystem } from "../ecs/systems/HUDSystem";
+import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateManager";
 
 export class DemoScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
@@ -35,10 +39,15 @@ export class DemoScene extends Phaser.Scene {
   private gameStateSystem!: ReturnType<typeof createGameStateSystem>;
   private playerInputSystem!: ReturnType<typeof createPlayerInputSystem>;
   private cameraFollowSystem!: ReturnType<typeof createCameraFollowSystem>;
+  private hudSystem!: ReturnType<typeof createHUDSystem>;
 
   private spriteMap = new Map<number, Phaser.GameObjects.Rectangle>();
 
   private isReady = false;
+  private isGameOver = false;
+
+  private stateQuery = defineQuery([GameStateComponent]);
+  private coreQuery = defineQuery([CampCoreComponent]);
 
   constructor() {
     super("DemoScene");
@@ -58,6 +67,7 @@ export class DemoScene extends Phaser.Scene {
     this.campSiegeSystem = createCampSiegeSystem();
     this.floorCollapseSystem = createFloorCollapseSystem();
     this.gameStateSystem = createGameStateSystem();
+    this.hudSystem = createHUDSystem(this);
 
     // Setup Inputs
     const cursors = this.input.keyboard!.createCursorKeys();
@@ -109,6 +119,7 @@ export class DemoScene extends Phaser.Scene {
 
   update(_time: number, delta: number) {
     if (!this.isReady) return;
+    if (this.isGameOver) return;
 
     // ECS pipeline — order is critical:
     // 1. FSM decides intent
@@ -141,5 +152,62 @@ export class DemoScene extends Phaser.Scene {
     this.cameraFollowSystem(world, delta);
 
     this.renderSyncSystem(world);
+    this.hudSystem(world, delta);
+
+    // Check Win/Loss Condition
+    const stateEids = this.stateQuery(world);
+    if (stateEids.length > 0) {
+      const currentState = GameStateComponent.state[stateEids[0]];
+      if (currentState === GameStateValues.VICTORY || currentState === GameStateValues.DEFEAT) {
+        this.handleGameOver(currentState === GameStateValues.VICTORY, world);
+      }
+    }
+  }
+
+  private handleGameOver(isVictory: boolean, world: any) {
+    this.isGameOver = true;
+
+    // Save state
+    const saveState = loadCampSaveState();
+    saveState.runCount += 1;
+
+    // Calculate earned Aether (for now, simply use whatever is left in CampCore, plus maybe bonus)
+    let aetherEarned = 0;
+    const cores = this.coreQuery(world);
+    if (cores.length > 0) {
+      aetherEarned = Math.floor(CampCoreComponent.lightEnergy[cores[0]]);
+    }
+
+    // In defeat, retain 50%, in victory, 100%
+    const retainedRatio = isVictory ? 1.0 : 0.5;
+    const actualSpoils = Math.floor(aetherEarned * retainedRatio);
+    saveState.totalAetherEarned += actualSpoils;
+
+    saveCampSaveState(saveState);
+
+    const centerX = this.cameras.main.width / 2;
+    const centerY = this.cameras.main.height / 2;
+
+    const text = isVictory ? "VICTORY" : "DEFEAT";
+    const color = isVictory ? "#00ff00" : "#ff0000";
+
+    const titleText = this.add.text(centerX, centerY - 50, text, {
+      fontSize: "64px",
+      color: color,
+      fontStyle: "bold"
+    }).setOrigin(0.5);
+    titleText.setScrollFactor(0);
+    titleText.setDepth(1000);
+
+    const descText = this.add.text(centerX, centerY + 20, `Spoils Retained: ${actualSpoils}`, {
+      fontSize: "32px",
+      color: "#ffffff"
+    }).setOrigin(0.5);
+    descText.setScrollFactor(0);
+    descText.setDepth(1000);
+
+    this.time.delayedCall(3000, () => {
+      this.scene.start("TitleScene");
+    });
   }
 }

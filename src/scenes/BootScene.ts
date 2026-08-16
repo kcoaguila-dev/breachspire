@@ -7,10 +7,9 @@ export class BootScene extends Phaser.Scene {
 
   preload() {
     // Preload minimal assets if needed.
-    // We are mostly rendering primitives for this slice.
   }
 
   create() {
-    this.scene.start("DemoScene");
+    this.scene.start("TitleScene");
   }
 }
