@@ -1,7 +1,9 @@
 import Phaser from "phaser";
-import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner } from "../ecs/world";
+import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled } from "../ecs/world";
 import { SpireSideValues } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
+import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
+import { createCameraFollowSystem } from "../ecs/systems/CameraFollowSystem";
 import { createCombatSystem } from "../ecs/systems/CombatSystem";
 import { createRenderSyncSystem } from "../ecs/systems/RenderSyncSystem";
 import { createMovementSystem } from "../ecs/systems/MovementSystem";
@@ -27,6 +29,8 @@ export class DemoScene extends Phaser.Scene {
   private campSiegeSystem!: ReturnType<typeof createCampSiegeSystem>;
   private floorCollapseSystem!: ReturnType<typeof createFloorCollapseSystem>;
   private gameStateSystem!: ReturnType<typeof createGameStateSystem>;
+  private playerInputSystem!: ReturnType<typeof createPlayerInputSystem>;
+  private cameraFollowSystem!: ReturnType<typeof createCameraFollowSystem>;
 
   private spriteMap = new Map<number, Phaser.GameObjects.Rectangle>();
 
@@ -48,6 +52,14 @@ export class DemoScene extends Phaser.Scene {
     this.campSiegeSystem = createCampSiegeSystem();
     this.floorCollapseSystem = createFloorCollapseSystem();
     this.gameStateSystem = createGameStateSystem();
+
+    // Setup Inputs
+    const cursors = this.input.keyboard!.createCursorKeys();
+    const wasd = this.input.keyboard!.addKeys('W,S,A,D') as any;
+    const spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey);
+    this.cameraFollowSystem = createCameraFollowSystem(this);
 
     try {
       // Load Data from public directory
@@ -77,7 +89,9 @@ export class DemoScene extends Phaser.Scene {
       createInvasionSpawner(world, rightSpire, SpireSideValues.Right, 3000, 3);
 
       // Spawn units
-      createUnitEntity(world, knightData, centerX - 50, centerY);
+      const knightEntity = createUnitEntity(world, knightData, centerX - 50, centerY);
+      setPlayerControlled(world, knightEntity);
+
       createUnitEntity(world, goblinData, centerX + 200, centerY);
 
       this.isReady = true;
@@ -97,6 +111,10 @@ export class DemoScene extends Phaser.Scene {
     // 4. Death removes dead entities from world + spriteMap
     // 5. System specific logical updates
     // 6. RenderSync mirrors live ECS state to Phaser (must be last, read-only)
+
+    // Process input first
+    this.playerInputSystem(world, delta);
+
     this.fsmSystem(world, delta);
     this.movementSystem(world, delta);
     this.combatSystem(world, delta);
@@ -110,6 +128,10 @@ export class DemoScene extends Phaser.Scene {
 
     this.campEnergySystem(world, delta);
     this.spireGrowthSystem(world, delta);
+
+    // Update camera before render sync
+    this.cameraFollowSystem(world, delta);
+
     this.renderSyncSystem(world);
   }
 }
