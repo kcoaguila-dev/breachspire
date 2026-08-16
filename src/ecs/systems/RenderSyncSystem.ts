@@ -16,7 +16,7 @@ const unitQuery = defineQuery([Position, FactionTag, Health, Velocity, CombatTyp
 const unitQueryEnter = enterQuery(unitQuery);
 const unitQueryExit = exitQuery(unitQuery);
 
-const campCoreQuery = defineQuery([Position, CampCoreComponent]);
+const campCoreQuery = defineQuery([Position, CampCoreComponent, Health]);
 const campCoreQueryEnter = enterQuery(campCoreQuery);
 
 const campWallQuery = defineQuery([Position, CampWallComponent, Health]);
@@ -143,10 +143,29 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       const sprite = spriteMap.get(eid);
       if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
         sprite.setPosition(Position.x[eid], Position.y[eid]);
-        // Pulse animation based on time
         const time = scene.time.now;
-        const scale = 1.0 + Math.sin(time / 200) * 0.1;
-        sprite.setScale(scale);
+
+        // Diegetic Visuals based on Health
+        const hpRatio = Math.max(0, Health.current[eid] / Health.max[eid]);
+
+        if (hpRatio > 0.5) {
+            // High HP: flickers intensely
+            const scale = 1.0 + Math.sin(time / 150) * 0.15 * hpRatio;
+            sprite.setScale(scale);
+            sprite.setAlpha(1.0);
+            sprite.clearTint();
+        } else if (hpRatio > 0) {
+            // Low HP: dims and cracks
+            const scale = 0.9 + Math.sin(time / 300) * 0.05;
+            sprite.setScale(scale);
+            sprite.setAlpha(0.7 + 0.3 * hpRatio);
+            sprite.setTint(0xffaaaa);
+        } else {
+            // Critical/Dead: darkens
+            sprite.setScale(0.8);
+            sprite.setAlpha(0.4);
+            sprite.setTint(0x555555);
+        }
       }
     }
 

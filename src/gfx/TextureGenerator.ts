@@ -19,9 +19,9 @@ export function getUnitTextureKey(faction: number, combatType: number, isFlying:
 export class TextureGenerator {
     static generateAll(scene: Phaser.Scene) {
         // Environment Parallax
-        this.generatePixelBg(scene, "bg_sky", 800, 600, "#87CEEB", "#1E90FF");
+        this.generateSky(scene, "bg_sky", 800, 1200);
         this.generateMountains(scene, "bg_mountains");
-        this.generatePixelBg(scene, "bg_trees", 800, 200, "#228B22", "#006400");
+        this.generateTrees(scene, "bg_trees");
         this.generatePixelBg(scene, "ground_tile", 64, 64, "#8B4513", "#5C4033");
 
         // Camp
@@ -131,12 +131,48 @@ export class TextureGenerator {
         graphics.destroy();
     }
 
+    private static generateTrees(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        const c1 = 0x228B22;
+        const c2 = 0x006400;
+
+        for (let i = 0; i < 20; i++) {
+            const x = Math.random() * 800;
+            const height = 100 + Math.random() * 100;
+            const y = 200; // bottom
+
+            graphics.fillStyle((Math.random() > 0.5) ? c1 : c2, 1);
+            graphics.beginPath();
+            graphics.moveTo(x - 20, y);
+            graphics.lineTo(x, y - height);
+            graphics.lineTo(x + 20, y);
+            graphics.fillPath();
+        }
+        graphics.generateTexture(key, 800, 200);
+        graphics.destroy();
+    }
+
     private static generateRect(scene: Phaser.Scene, key: string, width: number, height: number, colorStr: string) {
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(Phaser.Display.Color.HexStringToColor(colorStr).color, 1);
         graphics.fillRect(0, 0, width, height);
         graphics.generateTexture(key, width, height);
         graphics.destroy();
+    }
+
+    private static generateSky(scene: Phaser.Scene, key: string, width: number, height: number) {
+        // Sky from 0 to 650
+        const gradientTexture = scene.textures.createCanvas(key, width, height);
+        if (gradientTexture) {
+            const context = gradientTexture.getContext();
+            const grd = context.createLinearGradient(0, 0, 0, 650);
+            grd.addColorStop(0, "#87CEEB");
+            grd.addColorStop(1, "#1E90FF");
+            context.fillStyle = grd;
+            context.fillRect(0, 0, width, 650);
+            // Black below 650 is fine or transparent, we'll draw subterranean later in DemoScene or here
+            gradientTexture.refresh();
+        }
     }
 
     private static generatePixelBg(scene: Phaser.Scene, key: string, width: number, height: number, color1: string, color2: string) {

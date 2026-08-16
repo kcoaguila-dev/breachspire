@@ -7,7 +7,7 @@ import { DemoScene } from "./scenes/DemoScene";
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.WEBGL,
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 1280,
     height: 720,
