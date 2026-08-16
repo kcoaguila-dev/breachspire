@@ -17,13 +17,16 @@ export type CombatType = z.infer<typeof CombatTypeEnum>;
 // Lives in: public/data/heroes/*.json, public/data/monsters/*.json
 // ─────────────────────────────────────────────────────
 export const UnitStatsSchema = z.object({
-  id:         z.string(),
-  name:       z.string(),
-  faction:    FactionEnum,
-  combatType: CombatTypeEnum,
-  health:     z.number().int().positive(),
-  attack:     z.number().int().positive(),
-  speed:      z.number().positive(),
+  id:               z.string(),
+  name:             z.string(),
+  faction:          FactionEnum,
+  combatType:       CombatTypeEnum,
+  health:           z.number().int().positive(),
+  attack:           z.number().int().positive(),
+  speed:            z.number().positive(),
+  canReachElevated: z.boolean().optional(),
+  flightEnergyMax:  z.number().optional(),
+  flightDrainRate:  z.number().optional(),
 });
 export type UnitStats = z.infer<typeof UnitStatsSchema>;
 
