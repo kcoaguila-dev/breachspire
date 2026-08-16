@@ -227,6 +227,10 @@ export class AudioManager {
     setTimeout(() => this.playTone(1600, 'sine', 0.4, 0.3), 100);
   }
 
+  public playAetherCollect() {
+    this.playAetherChime();
+  }
+
   public playVictoryStinger() {
     this.playTone(440, 'square', 0.2);
     setTimeout(() => this.playTone(554, 'square', 0.2), 200);

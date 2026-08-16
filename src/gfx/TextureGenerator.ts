@@ -58,6 +58,26 @@ export class TextureGenerator {
         this.generateGoblin(scene, "unit_goblin");
         this.generateTroll(scene, "unit_troll");
         this.generateCultist(scene, "unit_cultist");
+        TextureGenerator.generateAetherMoteSpark(scene, 'aether_mote_spark');
+    }
+
+    private static generateAetherMoteSpark(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+
+        // Ambient halo
+        graphics.fillStyle(0x00d2d3, 0.4);
+        graphics.fillCircle(8, 8, 8);
+
+        // Inner core
+        graphics.fillStyle(0xf1c40f, 1);
+        graphics.fillCircle(8, 8, 4);
+
+        // Core bright spot
+        graphics.fillStyle(0xffffff, 1);
+        graphics.fillCircle(8, 8, 2);
+
+        graphics.generateTexture(key, 16, 16);
+        graphics.destroy();
     }
 
     private static generateWallFoundationMound(scene: Phaser.Scene, key: string) {

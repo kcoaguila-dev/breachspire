@@ -83,6 +83,20 @@ export const SpriteComponent = defineComponent({
   textureId: Types.ui32, // Simplified way to map to a texture if needed, though we often map EID directly to Phaser Sprites
 });
 
+export const AetherMoteComponent = defineComponent({
+  value: Types.f32,
+  isMagnetized: Types.ui8,
+  isHearthMote: Types.ui8, // 1 = spawned at hearth, 0 = monster drop
+  originX: Types.f32,
+  originY: Types.f32,
+  orbitAngle: Types.f32,
+});
+
+export const AetherCollectEvent = defineComponent({
+  x: Types.f32,
+  y: Types.f32,
+});
+
 // ─────────────────────────────────────────────────────
 // M5 Components
 // ─────────────────────────────────────────────────────

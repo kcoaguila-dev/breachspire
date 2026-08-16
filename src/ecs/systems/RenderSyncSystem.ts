@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getWallDamageStage } from "./CampSiegeSystem";
 import { getAmbientLightingColor } from "./DayNightSystem";
@@ -42,6 +42,10 @@ const stateQuery = defineQuery([GameStateComponent]);
 
 const levelUpEventQuery = defineQuery([LevelUpEvent]);
 
+const aetherMoteQuery = defineQuery([AetherMoteComponent, Position]);
+const aetherMoteQueryEnter = enterQuery(aetherMoteQuery);
+const aetherMoteQueryExit = exitQuery(aetherMoteQuery);
+
 export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap) {
   let victoryBanner: Phaser.GameObjects.Text | null = null;
   let defeatBanner: Phaser.GameObjects.Text | null = null;
@@ -54,6 +58,33 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
   const unitHpGraphicsMap = new Map<number, Phaser.GameObjects.Graphics>();
 
   return (world: IWorld) => {
+    // Aether Motes
+    const motesEntered = aetherMoteQueryEnter(world);
+    for (let i = 0; i < motesEntered.length; i++) {
+        const eid = motesEntered[i];
+        const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], 'aether_mote_spark');
+        spriteMap.set(eid, sprite);
+    }
+
+    const motes = aetherMoteQuery(world);
+    for (let i = 0; i < motes.length; i++) {
+        const eid = motes[i];
+        const sprite = spriteMap.get(eid);
+        if (sprite) {
+            sprite.setPosition(Position.x[eid], Position.y[eid]);
+        }
+    }
+
+    const motesExited = aetherMoteQueryExit(world);
+    for (let i = 0; i < motesExited.length; i++) {
+        const eid = motesExited[i];
+        const sprite = spriteMap.get(eid);
+        if (sprite) {
+            sprite.destroy();
+            spriteMap.delete(eid);
+        }
+    }
+
     // 1. Units
     const unitsEntered = unitQueryEnter(world);
     for (let i = 0; i < unitsEntered.length; i++) {

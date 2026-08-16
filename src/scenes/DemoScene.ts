@@ -11,7 +11,8 @@ import { createCombatSystem } from "../ecs/systems/CombatSystem";
 import { createRenderSyncSystem } from "../ecs/systems/RenderSyncSystem";
 import { createMovementSystem } from "../ecs/systems/MovementSystem";
 import { createDeathSystem } from "../ecs/systems/DeathSystem";
-import { createCampEnergySystem } from "../ecs/systems/CampEnergySystem";
+import { createAetherSpawningSystem } from "../ecs/systems/AetherSpawningSystem";
+import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSystem";
 import { createSpireGrowthSystem } from "../ecs/systems/SpireGrowthSystem";
 import { createMonsterSpawnSystem } from "../ecs/systems/MonsterSpawnSystem";
 import { createCampSiegeSystem } from "../ecs/systems/CampSiegeSystem";
@@ -37,7 +38,8 @@ export class DemoScene extends Phaser.Scene {
   private combatSystem!: ReturnType<typeof createCombatSystem>;
   private leaderDeathSystem!: ReturnType<typeof createLeaderDeathSystem>;
   private deathSystem!: ReturnType<typeof createDeathSystem>;
-  private campEnergySystem!: ReturnType<typeof createCampEnergySystem>;
+  private aetherSpawningSystem!: ReturnType<typeof createAetherSpawningSystem>;
+  private aetherCollectionSystem!: ReturnType<typeof createAetherCollectionSystem>;
   private commanderSupportSystem!: ReturnType<typeof createCommanderSupportSystem>;
   private spireGrowthSystem!: ReturnType<typeof createSpireGrowthSystem>;
   private renderSyncSystem!: ReturnType<typeof createRenderSyncSystem>;
@@ -84,7 +86,8 @@ constructor() {
     this.combatSystem = createCombatSystem();
     this.leaderDeathSystem = createLeaderDeathSystem();
     this.deathSystem = createDeathSystem(this.spriteMap);
-    this.campEnergySystem = createCampEnergySystem();
+    this.aetherSpawningSystem = createAetherSpawningSystem();
+    this.aetherCollectionSystem = createAetherCollectionSystem();
     this.commanderSupportSystem = createCommanderSupportSystem();
     this.spireGrowthSystem = createSpireGrowthSystem();
     this.renderSyncSystem = createRenderSyncSystem(this, this.spriteMap);
@@ -259,7 +262,8 @@ constructor() {
     this.floorCollapseSystem(world, delta);
     this.gameStateSystem(world, delta);
 
-    this.campEnergySystem(world, delta);
+    this.aetherSpawningSystem(world, delta);
+    this.aetherCollectionSystem(world, delta);
     this.commanderSupportSystem(world, delta); // M4
     this.spireGrowthSystem(world, delta);
 

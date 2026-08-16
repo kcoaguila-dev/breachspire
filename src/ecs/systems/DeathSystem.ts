@@ -1,5 +1,5 @@
-﻿import { defineQuery, IWorld, removeEntity } from "bitecs";
-import { Health } from "../components";
+import { defineQuery, IWorld, removeEntity, hasComponent, addEntity, addComponent } from "bitecs";
+import { Health, FactionTag, FactionValues, Position, AetherMoteComponent } from "../components";
 import { SpriteMap } from "./RenderSyncSystem";
 
 // All entities that have Health — DeathSystem evaluates every one per frame.
@@ -39,6 +39,27 @@ export function createDeathSystem(spriteMap: SpriteMap) {
       const eid = entities[i];
 
       if (isDead(Health.current[eid])) {
+        // Drop Aether Motes if it's a monster
+        if (hasComponent(world, FactionTag, eid) && FactionTag.faction[eid] === FactionValues.Monster) {
+          if (hasComponent(world, Position, eid)) {
+            const dropCount = Math.floor(Math.random() * 2) + 1; // 1-2 motes
+            for (let j = 0; j < dropCount; j++) {
+              const moteEid = addEntity(world);
+              addComponent(world, Position, moteEid);
+              Position.x[moteEid] = Position.x[eid];
+              Position.y[moteEid] = Position.y[eid];
+
+              addComponent(world, AetherMoteComponent, moteEid);
+              AetherMoteComponent.value[moteEid] = 5; // Wilderness drops might be worth less
+              AetherMoteComponent.isMagnetized[moteEid] = 0;
+              AetherMoteComponent.isHearthMote[moteEid] = 0;
+              AetherMoteComponent.originX[moteEid] = Position.x[eid] + (Math.random() * 20 - 10);
+              AetherMoteComponent.originY[moteEid] = Position.y[eid] + (Math.random() * 10 - 5);
+              AetherMoteComponent.orbitAngle[moteEid] = Math.random() * Math.PI * 2;
+            }
+          }
+        }
+
         // Destroy the Phaser visual object first
         const sprite = spriteMap.get(eid);
         if (sprite) {

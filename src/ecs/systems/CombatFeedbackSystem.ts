@@ -1,5 +1,5 @@
 import { defineQuery, IWorld, enterQuery, removeEntity } from "bitecs";
-import { DamageTextEvent, ScreenAlertComponent, DestructionEvent, CombatTypeValues } from "../components";
+import { DamageTextEvent, ScreenAlertComponent, DestructionEvent, CombatTypeValues, AetherCollectEvent } from "../components";
 import type { AudioManager } from "../../audio/AudioManager";
 import Phaser from "phaser";
 
@@ -10,6 +10,9 @@ const alertQuery = defineQuery([ScreenAlertComponent]);
 
 const destructionEventQuery = defineQuery([DestructionEvent]);
 const destructionEventEnterQuery = enterQuery(destructionEventQuery);
+
+const aetherCollectEventQuery = defineQuery([AetherCollectEvent]);
+const aetherCollectEventEnterQuery = enterQuery(aetherCollectEventQuery);
 
 import { CampWallComponent, Health, SpireSideValues } from "../components";
 const wallQuery = defineQuery([CampWallComponent, Health]);
@@ -96,6 +99,33 @@ export function createCombatFeedbackSystem(scene: Phaser.Scene, audio: AudioMana
 
       // Cleanup event entity immediately
       removeEntity(world, eid);
+    }
+
+    // Process Aether Collect Events
+    const aetherCollectEvents = aetherCollectEventEnterQuery(world);
+    for (let i = 0; i < aetherCollectEvents.length; i++) {
+        const eid = aetherCollectEvents[i];
+        const x = AetherCollectEvent.x[eid];
+        const y = AetherCollectEvent.y[eid];
+
+        // Audio
+        audio.playAetherCollect();
+
+        // VFX: Golden sparkle particle burst
+        for (let p = 0; p < 8; p++) {
+            const rect = scene.add.rectangle(x, y, 4, 4, 0xf1c40f);
+            scene.tweens.add({
+                targets: rect,
+                x: x + (Math.random() - 0.5) * 50,
+                y: y + (Math.random() - 0.5) * 50,
+                alpha: 0,
+                scale: 0,
+                duration: 400 + Math.random() * 200,
+                onComplete: () => rect.destroy()
+            });
+        }
+
+        removeEntity(world, eid);
     }
 
     // Process Destruction Events
