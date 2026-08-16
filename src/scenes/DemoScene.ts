@@ -25,6 +25,9 @@ import { defineQuery, addEntity, addComponent } from "bitecs";
 import { GameStateComponent, GameStateValues, CampCoreComponent, ScreenAlertComponent } from "../ecs/components";
 import { SpriteMap } from "../ecs/systems/RenderSyncSystem";
 import { createHUDSystem } from "../ecs/systems/HUDSystem";
+import { createBuildingSystem } from "../ecs/systems/BuildingSystem";
+import { createRecruitmentSystem } from "../ecs/systems/RecruitmentSystem";
+import { createProgressionXPSystem } from "../ecs/systems/ProgressionXPSystem";
 import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateManager";
 
 export class DemoScene extends Phaser.Scene {
@@ -47,6 +50,9 @@ export class DemoScene extends Phaser.Scene {
   private coopSystem!: ReturnType<typeof createCoopSystem>;
   private hudSystem!: ReturnType<typeof createHUDSystem>;
   private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
+  private buildingSystem!: ReturnType<typeof createBuildingSystem>;
+  private recruitmentSystem!: ReturnType<typeof createRecruitmentSystem>;
+  private progressionXPSystem!: ReturnType<typeof createProgressionXPSystem>;
 
   private audioManager!: AudioManager;
   private screenAlertEid!: number;
@@ -81,6 +87,9 @@ export class DemoScene extends Phaser.Scene {
     this.floorCollapseSystem = createFloorCollapseSystem();
     this.gameStateSystem = createGameStateSystem();
     this.hudSystem = createHUDSystem(this);
+    this.buildingSystem = createBuildingSystem();
+    this.recruitmentSystem = createRecruitmentSystem();
+    this.progressionXPSystem = createProgressionXPSystem();
 
     // Setup Audio and Feedback
     this.audioManager = new AudioManager();
@@ -204,6 +213,11 @@ export class DemoScene extends Phaser.Scene {
 
     // Process input first
     this.playerInputSystem(world, delta);
+
+    // Kingdom Building & Recruitment Systems
+    this.buildingSystem(world, delta);
+    this.recruitmentSystem(world, delta);
+    this.progressionXPSystem(world, delta);
 
     this.fsmSystem(world, delta);
     this.movementSystem(world, delta);

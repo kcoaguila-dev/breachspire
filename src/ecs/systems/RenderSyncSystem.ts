@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues } from "../components";
+import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getWallDamageStage } from "./CampSiegeSystem";
 
@@ -12,7 +12,7 @@ export type RenderGameObject =
 
 export type SpriteMap = Map<number, RenderGameObject>;
 
-const unitQuery = defineQuery([Position, FactionTag, Health, Velocity, CombatTypeComponent]);
+const unitQuery = defineQuery([Position, FactionTag, Health, Velocity]); // CombatTypeComponent might be optional for peasants/builders
 const unitQueryEnter = enterQuery(unitQuery);
 const unitQueryExit = exitQuery(unitQuery);
 
@@ -28,7 +28,16 @@ const spireQueryEnter = enterQuery(spireQuery);
 const floorQuery = defineQuery([Position, FloorComponent]);
 const floorQueryEnter = enterQuery(floorQuery);
 
+const wallBlueprintQuery = defineQuery([WallBlueprint, Position]);
+const wallBlueprintQueryEnter = enterQuery(wallBlueprintQuery);
+const wallBlueprintQueryExit = exitQuery(wallBlueprintQuery);
+
+const poiQuery = defineQuery([WildernessPoiComponent, Position]);
+const poiQueryEnter = enterQuery(poiQuery);
+
 const stateQuery = defineQuery([GameStateComponent]);
+
+const levelUpEventQuery = defineQuery([LevelUpEvent]);
 
 export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap) {
   let victoryBanner: Phaser.GameObjects.Text | null = null;
@@ -43,10 +52,14 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     for (let i = 0; i < unitsEntered.length; i++) {
       const eid = unitsEntered[i];
       const faction = FactionTag.faction[eid];
-      const combatType = CombatTypeComponent.type[eid];
+      let combatType = 0;
+      if (hasComponent(world, CombatTypeComponent, eid)) {
+          combatType = CombatTypeComponent.type[eid];
+      }
       const isFlying = hasComponent(world, CanReachElevated, eid);
+      const role = hasComponent(world, UnitRole, eid) ? UnitRole.role[eid] : undefined;
 
-      const textureId = getUnitTextureKey(faction, combatType, isFlying);
+      const textureId = getUnitTextureKey(faction, combatType, isFlying, role);
       const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], textureId);
       spriteMap.set(eid, sprite);
 
@@ -67,6 +80,40 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             sprite.setAlpha(0.2); // Dead visually
         } else {
             sprite.setPosition(Position.x[eid], Position.y[eid]);
+        }
+
+        if (hasComponent(world, UnitRole, eid)) {
+            const role = UnitRole.role[eid];
+            const combatType = hasComponent(world, CombatTypeComponent, eid) ? CombatTypeComponent.type[eid] : 0;
+            const faction = FactionTag.faction[eid];
+            const isFlying = hasComponent(world, CanReachElevated, eid);
+            const textureId = getUnitTextureKey(faction, combatType, isFlying, role);
+            if (sprite.texture.key !== textureId) {
+                sprite.setTexture(textureId);
+            }
+
+            if (UnitRole.level[eid] === 2) {
+                sprite.setTint(0xd0d8e8); // Silver
+            } else if (UnitRole.level[eid] >= 3) {
+                sprite.setTint(0xffea55); // Gold
+            } else {
+                sprite.clearTint();
+            }
+
+            // Hammering Dust Animation
+            if (UnitRole.isConstructing[eid]) {
+                // Spawn a quick fading tween circle
+                if (Math.random() < 0.2) { // roughly every 5 frames
+                    const dust = scene.add.circle(Position.x[eid] + (Math.random() * 10 - 5), Position.y[eid] - 5, 3, 0xaaaaaa, 0.8);
+                    scene.tweens.add({
+                        targets: dust,
+                        y: dust.y - 15,
+                        alpha: 0,
+                        duration: 400,
+                        onComplete: () => dust.destroy()
+                    });
+                }
+            }
         }
       }
 
@@ -207,6 +254,101 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
           sprite.setAlpha(0.8 + Math.sin(time / 150) * 0.2);
         }
       }
+    }
+
+    // --- 4.5. Wall Blueprints ---
+    const blueprintsEntered = wallBlueprintQueryEnter(world);
+    for (let i = 0; i < blueprintsEntered.length; i++) {
+        const eid = blueprintsEntered[i];
+        const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "wall_foundation_mound");
+        sprite.setOrigin(0.5, 1);
+        spriteMap.set(eid, sprite);
+    }
+    const blueprintsExit = wallBlueprintQueryExit(world);
+    for (let i = 0; i < blueprintsExit.length; i++) {
+        const eid = blueprintsExit[i];
+        const sprite = spriteMap.get(eid);
+        if (sprite) {
+            sprite.destroy();
+            spriteMap.delete(eid);
+        }
+    }
+    const blueprints = wallBlueprintQuery(world);
+    for (let i = 0; i < blueprints.length; i++) {
+        const eid = blueprints[i];
+        const sprite = spriteMap.get(eid);
+        if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
+            const state = WallBlueprint.state[eid];
+            if (state === BlueprintStateValues.MOUND) {
+                if (sprite.texture.key !== "wall_foundation_mound") sprite.setTexture("wall_foundation_mound");
+            } else if (state === BlueprintStateValues.ORDERED || state === BlueprintStateValues.BUILDING) {
+                // Keep mound for now, maybe add particle effects in the future
+                if (sprite.texture.key !== "wall_foundation_mound") sprite.setTexture("wall_foundation_mound");
+            } else if (state === BlueprintStateValues.COMPLETED) {
+                // The blueprint entity should probably be removed when completed, or we change its texture to clear
+                sprite.setVisible(false);
+            }
+        }
+    }
+
+    // --- 4.6. POIs ---
+    const poisEntered = poiQueryEnter(world);
+    for (let i = 0; i < poisEntered.length; i++) {
+        const eid = poisEntered[i];
+        const type = WildernessPoiComponent.poiType[eid];
+        let texture = "camp_core_hearth"; // fallback
+        if (type === 3) texture = "camp_core_hearth";
+        else if (type === 4) texture = "tool_hammer_stand";
+        else if (type === 5) texture = "tool_bow_stand";
+        else if (type === 6) texture = "tool_sword_stand";
+
+        const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], texture);
+        sprite.setOrigin(0.5, 1);
+        spriteMap.set(eid, sprite);
+    }
+
+    // --- 4.7 Level Up Events ---
+    const levelUpEvents = levelUpEventQuery(world);
+    for (let i = 0; i < levelUpEvents.length; i++) {
+        const eventEid = levelUpEvents[i];
+        const tx = LevelUpEvent.targetX[eventEid];
+        const ty = LevelUpEvent.targetY[eventEid];
+        const level = LevelUpEvent.level[eventEid];
+
+        // Spawn text
+        const text = scene.add.text(tx, ty, `★ LVL ${level}`, {
+            fontSize: '14px',
+            fontFamily: 'monospace',
+            color: '#ffea55',
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        text.setOrigin(0.5, 0.5);
+
+        scene.tweens.add({
+            targets: text,
+            y: ty - 40,
+            alpha: 0,
+            duration: 800,
+            onComplete: () => text.destroy()
+        });
+
+        // Golden particle burst using circle tweens
+        for(let p = 0; p < 8; p++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 20 + 10;
+            const flare = scene.add.circle(tx, ty + 20, 2, 0xffea55, 1);
+            scene.tweens.add({
+                targets: flare,
+                x: tx + Math.cos(angle) * speed,
+                y: ty + 20 + Math.sin(angle) * speed,
+                alpha: 0,
+                duration: 600,
+                onComplete: () => flare.destroy()
+            });
+        }
+
+        removeEntity(world, eventEid);
     }
 
     // 5. Floors

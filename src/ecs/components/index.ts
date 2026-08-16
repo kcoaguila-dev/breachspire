@@ -178,7 +178,7 @@ export const CoopStateComponent = defineComponent({
 });
 
 export const WildernessPoiComponent = defineComponent({
-  poiType: Types.ui8, // 0 = Aether Shrine, 1 = Outpost, 2 = Scouting Ruin
+  poiType: Types.ui8, // 0 = Aether Shrine, 1 = Outpost, 2 = Scouting Ruin, 3 = VagrantCamp, 4 = HammerStand, 5 = BowStand, 6 = SwordStand
   x: Types.f32,
 });
 
@@ -191,6 +191,39 @@ export const InputStateComponent = defineComponent({
 });
 
 // ─────────────────────────────────────────────────────
+// Kingdom Building & Recruitment Components
+// ─────────────────────────────────────────────────────
+
+export enum BlueprintStateValues {
+  MOUND = 0,
+  ORDERED = 1,
+  BUILDING = 2,
+  COMPLETED = 3,
+}
+
+export const WallBlueprint = defineComponent({
+  state: Types.ui8,
+  cost: Types.f32,
+  progress: Types.f32,
+  targetWallEid: Types.eid,
+});
+
+export enum RoleValues {
+  PEASANT = 0,
+  BUILDER = 1,
+  ARCHER = 2,
+  KNIGHT = 3,
+}
+
+export const UnitRole = defineComponent({
+  role: Types.ui8,
+  level: Types.ui8,
+  xp: Types.f32,
+  nextLevelXp: Types.f32,
+  isConstructing: Types.ui8,
+});
+
+// ─────────────────────────────────────────────────────
 // Phase 7 Components
 // ─────────────────────────────────────────────────────
 
@@ -200,6 +233,12 @@ export const DamageTextEvent = defineComponent({
   amount: Types.f32,
   isAdvantage: Types.ui8,
   combatType: Types.ui8, // 0 = Melee, 1 = Ranged, 2 = Magic
+});
+
+export const LevelUpEvent = defineComponent({
+  targetX: Types.f32,
+  targetY: Types.f32,
+  level: Types.ui8,
 });
 
 export const ScreenAlertComponent = defineComponent({
