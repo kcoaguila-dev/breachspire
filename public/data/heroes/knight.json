@@ -1,0 +1,9 @@
+{
+  "id": "knight",
+  "name": "Knight",
+  "faction": "hero",
+  "combatType": "melee",
+  "health": 100,
+  "attack": 20,
+  "speed": 50
+}

@@ -1,0 +1,9 @@
+{
+  "id": "goblin",
+  "name": "Goblin",
+  "faction": "monster",
+  "combatType": "ranged",
+  "health": 40,
+  "attack": 15,
+  "speed": 60
+}
