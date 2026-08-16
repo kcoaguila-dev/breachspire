@@ -30,7 +30,6 @@ export function getCombatMultiplier(attackerType: number, defenderType: number):
 export function createCombatSystem() {
   // Simple cooldown map (entityId -> cooldown remaining in ms)
   const attackCooldowns = new Map<number, number>();
-  const BASE_COOLDOWN = 1000; // 1 second between attacks
 
   return (world: IWorld, delta: number) => {
     const entities = combatQuery(world);
@@ -47,7 +46,7 @@ export function createCombatSystem() {
       if (Health.current[eid] <= 0) continue;
 
       const state = FSMState.state[eid];
-      if (state !== FSMStateValues.ENGAGE_TARGET) continue;
+      if (state !== FSMStateValues.ENGAGE_TARGET && state !== FSMStateValues.SUMMIT_SIEGE) continue;
 
       const targetEid = FSMState.targetEntity[eid];
       if (Health.current[targetEid] === undefined || Health.current[targetEid] <= 0) continue;
@@ -93,7 +92,7 @@ export function createCombatSystem() {
           DamageTextEvent.isAdvantage[eventEid] = multiplier > 1.0 ? 2 : (multiplier < 1.0 ? 0 : 1);
           DamageTextEvent.combatType[eventEid] = attackerType;
 
-          attackCooldowns.set(eid, BASE_COOLDOWN);
+          attackCooldowns.set(eid, Attack.cooldownMs[eid] || 1000);
         }
       }
     }

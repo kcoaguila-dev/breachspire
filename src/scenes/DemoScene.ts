@@ -8,6 +8,7 @@ import { createSplitCameraSystem } from "../ecs/systems/SplitCameraSystem";
 import { createCoopSystem } from "../ecs/systems/CoopSystem";
 import { CoopStateComponent, WildernessPoiComponent } from "../ecs/components";
 import { createCombatSystem } from "../ecs/systems/CombatSystem";
+import { createSpireTowerCombatSystem } from "../ecs/systems/SpireTowerCombatSystem";
 import { createRenderSyncSystem } from "../ecs/systems/RenderSyncSystem";
 import { createMovementSystem } from "../ecs/systems/MovementSystem";
 import { createDeathSystem } from "../ecs/systems/DeathSystem";
@@ -50,6 +51,7 @@ export class DemoScene extends Phaser.Scene {
   private playerInputSystem!: ReturnType<typeof createPlayerInputSystem>;
   private splitCameraSystem!: ReturnType<typeof createSplitCameraSystem>;
   private coopSystem!: ReturnType<typeof createCoopSystem>;
+  private spireTowerCombatSystem!: ReturnType<typeof createSpireTowerCombatSystem>;
   private hudSystem!: ReturnType<typeof createHUDSystem>;
   private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
   private buildingSystem!: ReturnType<typeof createBuildingSystem>;
@@ -119,6 +121,7 @@ export class DemoScene extends Phaser.Scene {
 
     this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey, numpad0Key, enterKey);
     this.splitCameraSystem = createSplitCameraSystem(this);
+    this.spireTowerCombatSystem = createSpireTowerCombatSystem();
 
     try {
       // Load Data from public directory
@@ -233,6 +236,7 @@ export class DemoScene extends Phaser.Scene {
     this.movementSystem(world, delta);
     this.combatSystem(world, delta);
     this.campSiegeSystem(world, delta); // M3
+    this.spireTowerCombatSystem(world, delta);
     this.leaderDeathSystem(world, delta); // M4 — intercepts leader death before DeathSystem runs
     this.deathSystem(world); // Remove non-leader units/walls if dead
 

@@ -27,6 +27,8 @@ export const UnitStatsSchema = z.object({
   canReachElevated: z.boolean().optional(),
   flightEnergyMax:  z.number().optional(),
   flightDrainRate:  z.number().optional(),
+  floorStayDuration:z.number().positive().default(10).optional(),
+  attackCooldownMs: z.number().positive().default(1000).optional(),
 });
 export type UnitStats = z.infer<typeof UnitStatsSchema>;
 

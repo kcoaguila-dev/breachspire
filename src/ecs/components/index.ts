@@ -17,6 +17,14 @@ export const Health = defineComponent({
 
 export const Attack = defineComponent({
   power: Types.f32,
+  cooldownMs: Types.f32,
+});
+
+export const SpireFloorStay = defineComponent({
+  currentTimer: Types.f32,
+  maxDuration: Types.f32,
+  currentFloorIndex: Types.ui8,
+  isAtSummit: Types.ui8,
 });
 
 export const Speed = defineComponent({
@@ -48,10 +56,11 @@ export enum FSMStateValues {
   ENGAGE_TARGET = 2,
   ATTACK_BARRICADE = 3,
   FLEE = 4,
+  SUMMIT_SIEGE = 5,
 }
 
 export const FSMState = defineComponent({
-  state: Types.ui8, // e.g. 0=IDLE, 1=MOVE_TO_LADDER, 2=ENGAGE_TARGET, 3=ATTACK_BARRICADE, 4=FLEE
+  state: Types.ui8, // e.g. 0=IDLE, 1=MOVE_TO_LADDER, 2=ENGAGE_TARGET, 3=ATTACK_BARRICADE, 4=FLEE, 5=SUMMIT_SIEGE
   targetEntity: Types.eid, // Target entity ID
 });
 

@@ -12,6 +12,7 @@ import {
   FSMState,
   FSMStateValues,
   Velocity,
+  SpireFloorStay,
   SpireComponent,
   SpireSideValues,
   FloorComponent,
@@ -47,6 +48,13 @@ export function createUnitEntity(
 
   addComponent(world, Attack, entity);
   Attack.power[entity] = stats.attack;
+  Attack.cooldownMs[entity] = stats.attackCooldownMs ?? 1000;
+
+  addComponent(world, SpireFloorStay, entity);
+  SpireFloorStay.currentTimer[entity] = stats.floorStayDuration ?? 10;
+  SpireFloorStay.maxDuration[entity] = stats.floorStayDuration ?? 10;
+  SpireFloorStay.currentFloorIndex[entity] = 0;
+  SpireFloorStay.isAtSummit[entity] = 0;
 
   addComponent(world, Speed, entity);
   Speed.value[entity] = stats.speed;

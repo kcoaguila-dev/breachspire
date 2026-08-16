@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, SpireFloorStay, FSMState, FSMStateValues } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getWallDamageStage } from "./CampSiegeSystem";
 
@@ -8,7 +8,8 @@ export type RenderGameObject =
   | Phaser.GameObjects.Sprite
   | Phaser.GameObjects.Rectangle
   | Phaser.GameObjects.Container
-  | Phaser.GameObjects.Image;
+  | Phaser.GameObjects.Image
+  | Phaser.GameObjects.Graphics;
 
 export type SpriteMap = Map<number, RenderGameObject>;
 
@@ -45,6 +46,9 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
 
   // Create UI elements
   const unitHpGraphicsMap = new Map<number, Phaser.GameObjects.Graphics>();
+  const unitPieGraphicsMap = new Map<number, Phaser.GameObjects.Graphics>();
+
+  const spireFloorStayQuery = defineQuery([Position, SpireFloorStay, FSMState, Health]);
 
   return (world: IWorld) => {
     // 1. Units
@@ -174,6 +178,65 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       if (hpGraphics) {
         hpGraphics.destroy();
         unitHpGraphicsMap.delete(eid);
+      }
+
+      const pieGraphics = unitPieGraphicsMap.get(eid);
+      if (pieGraphics) {
+        pieGraphics.destroy();
+        unitPieGraphicsMap.delete(eid);
+      }
+    }
+
+    // Pie timers
+    const towerUnits = spireFloorStayQuery(world);
+    // Cleanup exited
+    for (const [eid, pieGraphics] of unitPieGraphicsMap.entries()) {
+      if (!hasComponent(world, SpireFloorStay, eid) || Health.current[eid] <= 0) {
+         pieGraphics.destroy();
+         unitPieGraphicsMap.delete(eid);
+      }
+    }
+
+    for (let i = 0; i < towerUnits.length; i++) {
+      const eid = towerUnits[i];
+      if (Health.current[eid] <= 0) continue;
+
+      const currentFloor = SpireFloorStay.currentFloorIndex[eid];
+      const isAtSummit = SpireFloorStay.isAtSummit[eid] === 1;
+      const state = FSMState.state[eid];
+
+      let pieGraphics = unitPieGraphicsMap.get(eid);
+
+      if (currentFloor >= 1 && !isAtSummit && (state === FSMStateValues.ENGAGE_TARGET || state === FSMStateValues.SUMMIT_SIEGE)) {
+         if (!pieGraphics) {
+            pieGraphics = scene.add.graphics();
+            unitPieGraphicsMap.set(eid, pieGraphics);
+         }
+
+         pieGraphics.clear();
+
+         const currentTimer = SpireFloorStay.currentTimer[eid];
+         const maxTimer = SpireFloorStay.maxDuration[eid];
+         const progressRatio = Math.max(0, currentTimer / maxTimer);
+
+         let color = 0x00ff00; // green
+         if (progressRatio <= 0.25) {
+            color = 0xff0000; // red
+         } else if (progressRatio <= 0.5) {
+            color = 0xffff00; // yellow
+         }
+
+         pieGraphics.fillStyle(color, 1);
+         const startAngle = Phaser.Math.DegToRad(-90);
+         const endAngle = startAngle + Phaser.Math.DegToRad(360 * progressRatio);
+         pieGraphics.slice(Position.x[eid], Position.y[eid] - 30, 8, startAngle, endAngle, false);
+         pieGraphics.fillPath();
+
+      } else {
+         if (pieGraphics) {
+            pieGraphics.destroy();
+            unitPieGraphicsMap.delete(eid);
+         }
       }
     }
 

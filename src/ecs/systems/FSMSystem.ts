@@ -50,7 +50,7 @@ export function createFSMSystem() {
             FSMState.targetEntity[eid] = closestEnemy;
         }
 
-      } else if (state === FSMStateValues.ENGAGE_TARGET) {
+      } else if (state === FSMStateValues.ENGAGE_TARGET || state === FSMStateValues.SUMMIT_SIEGE) {
         const targetEid = FSMState.targetEntity[eid];
 
         // If target is dead or invalid, go back to IDLE
