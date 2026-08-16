@@ -4,12 +4,12 @@ import { FactionValues, CombatTypeValues } from "../ecs/components";
 export function getUnitTextureKey(faction: number, combatType: number, isFlying: boolean, role?: number): string {
     if (faction === FactionValues.Hero) {
         if (role === 0) return "peasant_unit"; // Peasant
-        if (role === 1) return "peasant_unit"; // Builder (maybe reuse peasant or give builder skin) - wait let's use peasant
+        if (role === 1) return "peasant_unit"; // Builder
         if (isFlying) return "unit_valkyrie";
-        if (combatType === CombatTypeValues.Melee) return "unit_knight";
+        if (combatType === CombatTypeValues.Melee) return "steed_commander";
         if (combatType === CombatTypeValues.Ranged) return "unit_archer";
         if (combatType === CombatTypeValues.Magic) return "unit_mage";
-        return "unit_knight"; // fallback
+        return "steed_commander"; // fallback
     } else {
         if (combatType === CombatTypeValues.Melee) return "unit_troll";
         if (combatType === CombatTypeValues.Ranged) return "unit_goblin";
@@ -25,6 +25,7 @@ export class TextureGenerator {
         this.generateMountains(scene, "bg_mountains");
         this.generateTrees(scene, "bg_trees");
         this.generatePixelBg(scene, "ground_tile", 64, 64, "#8B4513", "#5C4033");
+        this.generateCobblestoneBank(scene, "ground_cobblestone_bank");
 
         // Camp
         this.generateCampCore(scene, "camp_core_hearth");
@@ -59,6 +60,7 @@ export class TextureGenerator {
         this.generateGoblin(scene, "unit_goblin");
         this.generateTroll(scene, "unit_troll");
         this.generateCultist(scene, "unit_cultist");
+        this.generateSteedCommander(scene, "steed_commander");
     }
 
     private static generateWallFoundationMound(scene: Phaser.Scene, key: string) {
@@ -77,14 +79,50 @@ export class TextureGenerator {
         graphics.destroy();
     }
 
+    private static generateSteedCommander(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        // Steed Body
+        graphics.fillStyle(0xC0C0C0, 1); // Armored barding
+        graphics.fillRect(4, 16, 24, 12);
+        // Steed Legs
+        graphics.fillStyle(0x808080, 1);
+        graphics.fillRect(6, 28, 4, 4);
+        graphics.fillRect(22, 28, 4, 4);
+        // Steed Head
+        graphics.fillStyle(0xC0C0C0, 1);
+        graphics.fillRect(24, 8, 8, 8);
+
+        // Commander Body
+        graphics.fillStyle(0x00FFFF, 1); // Cyan cloak
+        graphics.fillRect(10, 8, 10, 10);
+        // Commander Head
+        graphics.fillStyle(0xFFCCB6, 1); // Face
+        graphics.fillRect(12, 2, 6, 6);
+        // Monarch Crown
+        graphics.fillStyle(0xFFD700, 1);
+        graphics.fillRect(12, 0, 6, 2);
+        graphics.fillRect(12, -2, 2, 2);
+        graphics.fillRect(16, -2, 2, 2);
+
+        graphics.generateTexture(key, 32, 32);
+        graphics.destroy();
+    }
+
     private static generateToolHammerStand(scene: Phaser.Scene, key: string) {
         const graphics = scene.make.graphics({ x: 0, y: 0 });
+        // Richer stand
+        graphics.fillStyle(0x5C4033, 1); // Darker wood base
+        graphics.fillRect(6, 20, 20, 12);
+        graphics.fillStyle(0x8B4513, 1); // Wood stand
+        graphics.fillRect(14, 10, 4, 10);
+        // Anvil/Forge look
+        graphics.fillStyle(0x2F4F4F, 1);
+        graphics.fillRect(8, 20, 16, 8);
+        // Hammer
+        graphics.fillStyle(0xB0C4DE, 1); // Steel head
+        graphics.fillRect(10, 4, 12, 6);
         graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(8, 16, 16, 16); // Stand
-        graphics.fillStyle(0x95a5a6, 1);
-        graphics.fillRect(10, 4, 12, 6); // Hammer head
-        graphics.fillStyle(0x5C4033, 1);
-        graphics.fillRect(14, 10, 4, 10); // Hammer handle
+        graphics.fillRect(14, 10, 4, 10);
         graphics.generateTexture(key, 32, 32);
         graphics.destroy();
     }
@@ -92,9 +130,17 @@ export class TextureGenerator {
     private static generateToolBowStand(scene: Phaser.Scene, key: string) {
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(8, 16, 16, 16); // Stand
-        graphics.fillStyle(0xd35400, 1);
-        graphics.fillRect(14, 0, 4, 20); // Bow
+        graphics.fillRect(8, 16, 16, 16);
+        // Archery target
+        graphics.fillStyle(0xFFFFFF, 1);
+        graphics.fillCircle(16, 10, 8);
+        graphics.fillStyle(0xFF0000, 1);
+        graphics.fillCircle(16, 10, 4);
+        // Bow
+        graphics.fillStyle(0x5C4033, 1); // Dark wood bow
+        graphics.beginPath();
+        graphics.arc(24, 16, 10, -Math.PI / 2, Math.PI / 2);
+        graphics.strokePath();
         graphics.generateTexture(key, 32, 32);
         graphics.destroy();
     }
@@ -103,10 +149,13 @@ export class TextureGenerator {
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         graphics.fillStyle(0x8B4513, 1);
         graphics.fillRect(8, 16, 16, 16); // Stand
-        graphics.fillStyle(0xecf0f1, 1);
-        graphics.fillRect(14, 0, 4, 16); // Sword blade
-        graphics.fillStyle(0xf1c40f, 1);
-        graphics.fillRect(10, 16, 12, 2); // Sword hilt
+        // Armor rack look
+        graphics.fillStyle(0xA9A9A9, 1);
+        graphics.fillRect(10, 8, 12, 10); // Chainmail
+        graphics.fillStyle(0xB0C4DE, 1); // Steel blade
+        graphics.fillRect(14, 0, 4, 16);
+        graphics.fillStyle(0xFFD700, 1); // Gold hilt
+        graphics.fillRect(10, 16, 12, 2);
         graphics.generateTexture(key, 32, 32);
         graphics.destroy();
     }
@@ -203,20 +252,46 @@ export class TextureGenerator {
         graphics.destroy();
     }
 
+    private static generateCobblestoneBank(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        const c1 = Phaser.Display.Color.HexStringToColor("#696969").color; // Dim gray
+        const c2 = Phaser.Display.Color.HexStringToColor("#808080").color; // Gray
+        const c3 = Phaser.Display.Color.HexStringToColor("#A9A9A9").color; // Dark gray
+
+        for (let y = 0; y < 64; y += 16) {
+            for (let x = 0; x < 64; x += 16) {
+                const r = Math.random();
+                graphics.fillStyle(r < 0.33 ? c1 : (r < 0.66 ? c2 : c3), 1);
+                // Draw rounded cobblestones
+                graphics.fillRoundedRect(x + 2, y + 2, 12, 12, 4);
+            }
+        }
+        graphics.generateTexture(key, 64, 64);
+        graphics.destroy();
+    }
+
     private static generateTrees(scene: Phaser.Scene, key: string) {
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         const c1 = 0x228B22;
         const c2 = 0x006400;
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 40; i++) {
             const x = Math.random() * 800;
-            const height = 100 + Math.random() * 100;
+            const height = 120 + Math.random() * 80;
             const y = 200; // bottom
 
+            // Layered pine trees
             graphics.fillStyle((Math.random() > 0.5) ? c1 : c2, 1);
             graphics.beginPath();
-            graphics.moveTo(x - 20, y);
+            graphics.moveTo(x - 15, y);
             graphics.lineTo(x, y - height);
+            graphics.lineTo(x + 15, y);
+            graphics.fillPath();
+
+            // Second layer of branches
+            graphics.beginPath();
+            graphics.moveTo(x - 20, y);
+            graphics.lineTo(x, y - height * 0.6);
             graphics.lineTo(x + 20, y);
             graphics.fillPath();
         }
@@ -233,16 +308,16 @@ export class TextureGenerator {
     }
 
     private static generateSky(scene: Phaser.Scene, key: string, width: number, height: number) {
-        // Sky from 0 to 650
+        // Sky from 0 to 650 (Dusk/Sunset)
         const gradientTexture = scene.textures.createCanvas(key, width, height);
         if (gradientTexture) {
             const context = gradientTexture.getContext();
             const grd = context.createLinearGradient(0, 0, 0, 650);
-            grd.addColorStop(0, "#87CEEB");
-            grd.addColorStop(1, "#1E90FF");
+            grd.addColorStop(0, "#8A2BE2"); // Deep Purple
+            grd.addColorStop(0.5, "#CD5C5C"); // Indian Red
+            grd.addColorStop(1, "#FF7F50"); // Coral
             context.fillStyle = grd;
             context.fillRect(0, 0, width, 650);
-            // Black below 650 is fine or transparent, we'll draw subterranean later in DemoScene or here
             gradientTexture.refresh();
         }
     }
@@ -263,12 +338,14 @@ export class TextureGenerator {
 
     private static generateMountains(scene: Phaser.Scene, key: string) {
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        graphics.fillStyle(0x607B8B, 1);
+        graphics.fillStyle(0x2F4F4F, 1); // Dark slate gray titan silhouettes
         graphics.beginPath();
         graphics.moveTo(0, 300);
-        graphics.lineTo(200, 50);
-        graphics.lineTo(400, 300);
-        graphics.lineTo(600, 100);
+        graphics.lineTo(150, 100);
+        graphics.lineTo(250, 150);
+        graphics.lineTo(400, 50);
+        graphics.lineTo(550, 200);
+        graphics.lineTo(700, 80);
         graphics.lineTo(800, 300);
         graphics.fillPath();
         graphics.generateTexture(key, 800, 300);
@@ -277,22 +354,38 @@ export class TextureGenerator {
 
     private static generateCampCore(scene: Phaser.Scene, key: string) {
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Tent
-        graphics.fillStyle(0x8B4513, 1);
+        // Nordic Longhouse (Great Hall)
+        graphics.fillStyle(0x8B4513, 1); // Wooden walls
+        graphics.fillRect(8, 24, 48, 40);
+
+        // Golden straw-thatched roof
+        graphics.fillStyle(0xDAA520, 1);
         graphics.beginPath();
-        graphics.moveTo(16, 64);
-        graphics.lineTo(32, 16);
-        graphics.lineTo(48, 64);
+        graphics.moveTo(0, 24);
+        graphics.lineTo(32, 0);
+        graphics.lineTo(64, 24);
         graphics.fillPath();
 
-        // Hearth
-        graphics.fillStyle(0x333333, 1);
-        graphics.fillRect(20, 50, 24, 14);
-        // Fire / Core
-        graphics.fillStyle(0xe67e22, 1);
-        graphics.fillCircle(32, 44, 8);
-        graphics.fillStyle(0x55efc4, 1);
-        graphics.fillCircle(32, 44, 4);
+        // Timber cross-gables
+        graphics.lineStyle(2, 0x5C4033, 1);
+        graphics.beginPath();
+        graphics.moveTo(24, 8);
+        graphics.lineTo(40, 24);
+        graphics.moveTo(40, 8);
+        graphics.lineTo(24, 24);
+        graphics.strokePath();
+
+        // Hanging purple heraldry banner
+        graphics.fillStyle(0x800080, 1);
+        graphics.fillRect(28, 24, 8, 16);
+
+        // Stone hearth brazier emitting amber light
+        graphics.fillStyle(0x808080, 1);
+        graphics.fillRect(40, 48, 12, 16);
+        graphics.fillStyle(0xFFBF00, 1); // Amber glow
+        graphics.fillCircle(46, 44, 6);
+        graphics.fillStyle(0xFF4500, 1); // Orange-red core
+        graphics.fillCircle(46, 44, 3);
 
         graphics.generateTexture(key, 64, 64);
         graphics.destroy();

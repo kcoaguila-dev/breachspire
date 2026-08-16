@@ -134,15 +134,16 @@ constructor() {
     const spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     const numpad0Key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.NUMPAD_ZERO);
     const enterKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+    const shiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     const f2Key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F2);
 
-    this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey, numpad0Key, enterKey);
+    this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey, numpad0Key, enterKey, shiftKey);
     this.climbingSystem = createClimbingSystem();
     this.splitCameraSystem = createSplitCameraSystem(this);
 
     try {
       // Load Data from public directory
-      const knightData = await loadUnitData('/data/heroes/knight.json');
+      const knightData = await loadUnitData('/data/heroes/commander.json');
       // For P2 we can reuse knightData or load an archer if available. We'll use knightData for now if no archer.
       // But let's check if archer exists. If it fails, fallback to knight.
       let p2Data = knightData;
@@ -186,11 +187,29 @@ constructor() {
       this.add.tileSprite(sw / 2, 600, sw, 1200, "bg_sky").setScrollFactor(0).setDepth(-10);
       this.bgMountains = this.add.tileSprite(sw / 2, centerY - 100, sw, 300, "bg_mountains").setScrollFactor(0).setDepth(-9);
       this.bgTrees = this.add.tileSprite(sw / 2, centerY - 40, sw, 200, "bg_trees").setScrollFactor(0).setDepth(-8);
-      this.add.tileSprite(worldWidth / 2, centerY + 32, worldWidth, 64, "ground_tile").setScrollFactor(1.0).setDepth(0);
+      this.add.tileSprite(worldWidth / 2, centerY + 32, worldWidth, 64, "ground_cobblestone_bank").setScrollFactor(1.0).setDepth(0);
       this.add.rectangle(worldWidth / 2, 650 + 64 + (1200 - (650 + 64)) / 2, worldWidth, 1200 - (650 + 64), 0x332211).setScrollFactor(1.0).setDepth(0);
 
       // Center the camera on the avatar
       this.cameras.main.centerOn(coreX, centerY);
+
+      // Secondary camera for water reflection
+      const reflectionCamera = this.cameras.add(0, 650, 3200, 250);
+      reflectionCamera.setAlpha(0.35);
+      reflectionCamera.setZoom(1, -1);
+      reflectionCamera.scrollY = 650;
+      // Also match the bounds and zoom of main camera
+      reflectionCamera.setBounds(0, 0, 3200, 1200);
+      // We will sync scrollX in update()
+      this.events.on('update', (time: number) => {
+        reflectionCamera.scrollX = this.cameras.main.scrollX;
+        // The reflection camera should always focus on the same vertical baseline inverted
+        reflectionCamera.scrollY = 650;
+
+        // Add subtle wave ripple offsets
+        reflectionCamera.scrollX += Math.sin(time / 500) * 4;
+        reflectionCamera.scrollY += Math.cos(time / 400) * 2;
+      });
 
       createGameStateEntity(world);
       createDayNightEntity(world);

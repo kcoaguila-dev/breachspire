@@ -83,6 +83,18 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
         sprite.setFlipX(Velocity.x[eid] < 0);
 
+        // Sprint dust particle
+        if (Math.abs(Velocity.x[eid]) > 250 && Math.random() < 0.2) {
+            const dust = scene.add.rectangle(Position.x[eid], Position.y[eid] + 16, 4, 4, 0xDDDDDD);
+            scene.tweens.add({
+                targets: dust,
+                y: '-=10',
+                alpha: 0,
+                duration: 400,
+                onComplete: () => dust.destroy()
+            });
+        }
+
         if (Health.current[eid] <= 0) {
             sprite.setAlpha(0.2); // Dead visually
         } else {
@@ -198,6 +210,21 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
         sprite.setPosition(Position.x[eid], Position.y[eid]);
         const time = scene.time.now;
+
+        // Hearth Smoke Particles
+        if (Math.random() < 0.15) {
+            const smoke = scene.add.rectangle(Position.x[eid] + 16, Position.y[eid] - 32, 6, 6, 0x808080);
+            smoke.setAlpha(0.6);
+            scene.tweens.add({
+                targets: smoke,
+                y: '-=40',
+                x: '+=10',
+                alpha: 0,
+                scale: 2,
+                duration: 1500,
+                onComplete: () => smoke.destroy()
+            });
+        }
 
         // Diegetic Visuals based on Health
         const hpRatio = Math.max(0, Health.current[eid] / Health.max[eid]);
