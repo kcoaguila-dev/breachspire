@@ -80,7 +80,7 @@ export function createUnitEntity(
   return entity;
 }
 
-import { GameStateComponent, GameStateValues, InvasionSpawner } from "./components";
+import { GameStateComponent, GameStateValues, InvasionSpawner, DayNightCycle } from "./components";
 
 export function createGameStateEntity(world: IWorld): number {
   const entity = addEntity(world);
@@ -231,4 +231,13 @@ export function setPlayerControlled(world: IWorld, entity: number, playerId: num
   InputStateComponent.up[entity] = 0;
   InputStateComponent.down[entity] = 0;
   InputStateComponent.attack[entity] = 0;
+}
+
+export function createDayNightEntity(world: IWorld): number {
+  const entity = addEntity(world);
+  addComponent(world, DayNightCycle, entity);
+  DayNightCycle.timeOfDay[entity] = 0;
+  DayNightCycle.dayNumber[entity] = 1;
+  DayNightCycle.isNight[entity] = 0;
+  return entity;
 }

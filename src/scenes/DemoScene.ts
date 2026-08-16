@@ -1,5 +1,6 @@
+import { createDayNightSystem } from "../ecs/systems/DayNightSystem";
 import Phaser from "phaser";
-import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled } from "../ecs/world";
+import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity } from "../ecs/world";
 import { SpireSideValues } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
@@ -39,6 +40,7 @@ export class DemoScene extends Phaser.Scene {
   private renderSyncSystem!: ReturnType<typeof createRenderSyncSystem>;
 
   private monsterSpawnSystem!: ReturnType<typeof createMonsterSpawnSystem>;
+  private dayNightSystem!: ReturnType<typeof createDayNightSystem>;
   private campSiegeSystem!: ReturnType<typeof createCampSiegeSystem>;
   private floorCollapseSystem!: ReturnType<typeof createFloorCollapseSystem>;
   private gameStateSystem!: ReturnType<typeof createGameStateSystem>;
@@ -76,6 +78,7 @@ export class DemoScene extends Phaser.Scene {
     this.commanderSupportSystem = createCommanderSupportSystem();
     this.spireGrowthSystem = createSpireGrowthSystem();
     this.renderSyncSystem = createRenderSyncSystem(this, this.spriteMap);
+    this.dayNightSystem = createDayNightSystem(45000, 30000); // 45s day, 30s night
 
     this.campSiegeSystem = createCampSiegeSystem();
     this.floorCollapseSystem = createFloorCollapseSystem();
@@ -122,7 +125,12 @@ export class DemoScene extends Phaser.Scene {
       const campConfig = await loadCampConfig('/data/camp/camp_config.json');
       const spireConfig = await loadSpireConfig('/data/spires/spire_config.json');
 
-      this.monsterSpawnSystem = createMonsterSpawnSystem(goblinData);
+      let trollData = goblinData;
+      let archerData = goblinData;
+      try { trollData = await loadUnitData('/data/monsters/troll.json'); } catch(e) {}
+      try { archerData = await loadUnitData('/data/monsters/archer.json'); } catch(e) {}
+
+      this.monsterSpawnSystem = createMonsterSpawnSystem(goblinData, archerData, trollData); // Actually p2Data might be archer. Let's load archer explicitly for monsters if we can.
       this.coopSystem = createCoopSystem(f2Key, p2Data);
 
       const centerY = 650;
@@ -132,18 +140,20 @@ export class DemoScene extends Phaser.Scene {
 
       // Add Parallax Backgrounds
       const sw = this.scale.width;
-      const sh = this.scale.height;
+      // const sh = this.scale.height;
       const worldWidth = 3200;
 
-      this.add.tileSprite(sw / 2, sh / 2, sw, sh, "bg_sky").setScrollFactor(0).setDepth(-10);
-      this.bgMountains = this.add.tileSprite(sw / 2, sh - 220, sw, 300, "bg_mountains").setScrollFactor(0).setDepth(-9);
-      this.bgTrees = this.add.tileSprite(sw / 2, sh - 140, sw, 200, "bg_trees").setScrollFactor(0).setDepth(-8);
+      this.add.tileSprite(sw / 2, 600, sw, 1200, "bg_sky").setScrollFactor(0).setDepth(-10);
+      this.bgMountains = this.add.tileSprite(sw / 2, centerY - 100, sw, 300, "bg_mountains").setScrollFactor(0).setDepth(-9);
+      this.bgTrees = this.add.tileSprite(sw / 2, centerY - 40, sw, 200, "bg_trees").setScrollFactor(0).setDepth(-8);
       this.add.tileSprite(worldWidth / 2, centerY + 32, worldWidth, 64, "ground_tile").setScrollFactor(1.0).setDepth(0);
+      this.add.rectangle(worldWidth / 2, 650 + 64 + (1200 - (650 + 64)) / 2, worldWidth, 1200 - (650 + 64), 0x332211).setScrollFactor(1.0).setDepth(0);
 
       // Center the camera on the avatar
       this.cameras.main.centerOn(coreX, centerY);
 
       createGameStateEntity(world);
+      createDayNightEntity(world);
 
       // Coop Entity
       const coopEid = addEntity(world);
@@ -213,6 +223,7 @@ export class DemoScene extends Phaser.Scene {
     this.deathSystem(world); // Remove non-leader units/walls if dead
 
     // M3 logic
+    this.dayNightSystem(world, delta);
     this.monsterSpawnSystem(world, delta);
     this.floorCollapseSystem(world, delta);
     this.gameStateSystem(world, delta);

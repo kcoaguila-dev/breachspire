@@ -1,9 +1,11 @@
 import { defineQuery, IWorld } from "bitecs";
-import { InvasionSpawner, SpireComponent, Position } from "../components";
+import { InvasionSpawner, SpireComponent, Position, DayNightCycle } from "../components";
 import { createUnitEntity } from "../world";
+import { computeWaveComposition } from "./DayNightSystem";
 import { UnitStats } from "../../data/schemas";
 
 const spawnerQuery = defineQuery([InvasionSpawner, SpireComponent, Position]);
+const dayNightQuery = defineQuery([DayNightCycle]);
 
 // ─────────────────────────────────────────────────────
 // EXPORTED PURE LOGIC — testable by Vitest
@@ -23,8 +25,14 @@ export function shouldSpawnWave(timer: number, cooldown: number): boolean {
 // ─────────────────────────────────────────────────────
 // SYSTEM FACTORY
 // ─────────────────────────────────────────────────────
-export function createMonsterSpawnSystem(monsterData: UnitStats) {
+export function createMonsterSpawnSystem(monsterData: UnitStats, archerData?: UnitStats, trollData?: UnitStats) {
   return (world: IWorld, delta: number): IWorld => {
+    const timeEids = dayNightQuery(world);
+    const isNight = timeEids.length > 0 ? DayNightCycle.isNight[timeEids[0]] === 1 : true;
+    const dayNumber = timeEids.length > 0 ? DayNightCycle.dayNumber[timeEids[0]] : 1;
+
+    // Only spawn during night
+    if (!isNight) return world;
     const spawners = spawnerQuery(world);
 
     for (let i = 0; i < spawners.length; i++) {
@@ -40,15 +48,38 @@ export function createMonsterSpawnSystem(monsterData: UnitStats) {
 
       if (shouldSpawnWave(timer, cooldown)) {
         timer = 0;
-        const waveSize = InvasionSpawner.waveSize[eid];
+        const spireFloors = SpireComponent.floorCount[eid];
+        const composition = computeWaveComposition(dayNumber, spireFloors);
 
-        // Spires are spawners. Spawn monsters at the Spire's position (or slightly offset)
         const baseX = Position.x[eid];
         const baseY = Position.y[eid];
 
-        for (let j = 0; j < waveSize; j++) {
-           const spawnX = baseX + (j * 10) * (SpireComponent.side[eid] === 0 ? 1 : -1); // Spread out slightly
+        let spawnOffset = 0;
+        const dir = SpireComponent.side[eid] === 0 ? 1 : -1;
+
+        // Goblins
+        for (let j = 0; j < composition.goblinCount; j++) {
+           const spawnX = baseX + (spawnOffset * 10) * dir;
            createUnitEntity(world, monsterData, spawnX, baseY);
+           spawnOffset++;
+        }
+
+        // Archers
+        if (archerData) {
+            for (let j = 0; j < composition.archerCount; j++) {
+               const spawnX = baseX + (spawnOffset * 10) * dir;
+               createUnitEntity(world, archerData, spawnX, baseY);
+               spawnOffset++;
+            }
+        }
+
+        // Trolls
+        if (trollData) {
+            for (let j = 0; j < composition.trollCount; j++) {
+               const spawnX = baseX + (spawnOffset * 10) * dir;
+               createUnitEntity(world, trollData, spawnX, baseY);
+               spawnOffset++;
+            }
         }
       }
 

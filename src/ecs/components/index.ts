@@ -213,3 +213,13 @@ export const DestructionEvent = defineComponent({
   y: Types.f32,
   type: Types.ui8, // 0 = Floor Collapse, 1 = Wall Breach
 });
+
+// ─────────────────────────────────────────────────────
+// Phase 8 Components
+// ─────────────────────────────────────────────────────
+
+export const DayNightCycle = defineComponent({
+  timeOfDay: Types.f32,
+  dayNumber: Types.ui16,
+  isNight: Types.ui8,
+});
