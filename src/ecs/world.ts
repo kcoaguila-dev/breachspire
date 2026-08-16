@@ -17,6 +17,8 @@ import {
   FloorComponent,
   CampCoreComponent,
   CampWallComponent,
+  PlayerControlled,
+  InputStateComponent,
 } from "./components";
 
 export const world = createWorld();
@@ -201,4 +203,16 @@ export function createFloorEntity(
   FloorComponent.active[entity] = 1;
 
   return entity;
+}
+
+export function setPlayerControlled(world: IWorld, entity: number): void {
+  addComponent(world, PlayerControlled, entity);
+  PlayerControlled.isControlled[entity] = 1;
+
+  addComponent(world, InputStateComponent, entity);
+  InputStateComponent.left[entity] = 0;
+  InputStateComponent.right[entity] = 0;
+  InputStateComponent.up[entity] = 0;
+  InputStateComponent.down[entity] = 0;
+  InputStateComponent.attack[entity] = 0;
 }

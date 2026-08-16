@@ -117,3 +117,19 @@ export const CampWallComponent = defineComponent({
   hp: Types.f32,
   maxHp: Types.f32,
 });
+
+// ─────────────────────────────────────────────────────
+// M4 Components
+// ─────────────────────────────────────────────────────
+
+export const PlayerControlled = defineComponent({
+  isControlled: Types.ui8,
+});
+
+export const InputStateComponent = defineComponent({
+  left: Types.ui8,
+  right: Types.ui8,
+  up: Types.ui8,
+  down: Types.ui8,
+  attack: Types.ui8,
+});
