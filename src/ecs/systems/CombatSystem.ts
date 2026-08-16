@@ -70,7 +70,7 @@ export function createCombatSystem() {
           const baseDamage = Attack.power[eid];
           const finalDamage = baseDamage * multiplier;
 
-          Health.current[targetEid] -= finalDamage;
+          Health.current[targetEid] = Math.max(0, Health.current[targetEid] - finalDamage);
           // console.log(`Entity ${eid} attacks ${targetEid} for ${finalDamage} damage! (${Health.current[targetEid]} HP remaining)`);
 
           attackCooldowns.set(eid, BASE_COOLDOWN);
