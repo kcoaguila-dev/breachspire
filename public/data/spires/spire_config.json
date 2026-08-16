@@ -1,0 +1,8 @@
+{
+  "startingDarkEnergy": 0,
+  "darkEnergyRate": 2,
+  "floorGrowthCost": 50,
+  "maxFloors": 10,
+  "crystalMaxHP": 500,
+  "initialFloors": 1
+}
