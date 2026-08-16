@@ -188,6 +188,7 @@ export const InputStateComponent = defineComponent({
   up: Types.ui8,
   down: Types.ui8,
   attack: Types.ui8,
+  isSprinting: Types.ui8,
 });
 
 // ─────────────────────────────────────────────────────

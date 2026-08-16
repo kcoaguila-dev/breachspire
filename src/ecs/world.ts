@@ -231,6 +231,7 @@ export function setPlayerControlled(world: IWorld, entity: number, playerId: num
   InputStateComponent.up[entity] = 0;
   InputStateComponent.down[entity] = 0;
   InputStateComponent.attack[entity] = 0;
+  InputStateComponent.isSprinting[entity] = 0;
 }
 
 export function createDayNightEntity(world: IWorld): number {

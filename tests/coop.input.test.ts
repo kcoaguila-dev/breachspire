@@ -4,10 +4,10 @@ import { canDropInPlayer2 } from '../src/ecs/systems/CoopSystem';
 
 describe('Coop Input System', () => {
   it('should calculate independent velocities for Player 1 and Player 2', () => {
-    const p1Input = { left: true, right: false, up: false, down: false }; // P1 moving left
-    const p2Input = { left: false, right: true, up: false, down: false }; // P2 moving right
+    const p1Input = { left: true, right: false, up: false, down: false, isSprinting: false }; // P1 moving left
+    const p2Input = { left: false, right: true, up: false, down: false, isSprinting: false }; // P2 moving right
 
-    const { p1Velocity, p2Velocity } = computeCoopInput(p1Input, p2Input, 100, 150);
+    const { p1Velocity, p2Velocity } = computeCoopInput(p1Input, p2Input, 100, 150, 1.0);
 
     expect(p1Velocity.vx).toBe(-100);
     expect(p1Velocity.vy).toBe(0);
@@ -17,10 +17,10 @@ describe('Coop Input System', () => {
   });
 
   it('should normalize diagonal movement independently', () => {
-    const p1Input = { left: true, right: false, up: true, down: false };
-    const p2Input = { left: false, right: false, up: false, down: false };
+    const p1Input = { left: true, right: false, up: true, down: false, isSprinting: false };
+    const p2Input = { left: false, right: false, up: false, down: false, isSprinting: false };
 
-    const { p1Velocity, p2Velocity } = computeCoopInput(p1Input, p2Input, 100, 100);
+    const { p1Velocity, p2Velocity } = computeCoopInput(p1Input, p2Input, 100, 100, 1.0);
 
     expect(p1Velocity.vx).toBeCloseTo(-70.71, 2);
     expect(p1Velocity.vy).toBeCloseTo(-70.71, 2);

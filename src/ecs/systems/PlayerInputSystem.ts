@@ -4,33 +4,40 @@ import { PlayerControlled, InputStateComponent, Velocity, Speed, Health } from "
 const playerQuery = defineQuery([PlayerControlled, InputStateComponent, Velocity, Speed, Health]);
 
 // Pure logic for testing
+export function computeSprintVelocity(
+  input: { left: boolean; right: boolean; up: boolean; down: boolean; isSprinting: boolean },
+  baseSpeed: number,
+  sprintMultiplier: number
+): { vx: number; vy: number } {
+  let dx = 0;
+  let dy = 0;
+
+  if (input.left) dx -= 1;
+  if (input.right) dx += 1;
+  if (input.up) dy -= 1;
+  if (input.down) dy += 1;
+
+  const currentSpeed = input.isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
+
+  if (dx !== 0 && dy !== 0) {
+    const length = Math.sqrt(dx * dx + dy * dy);
+    dx /= length;
+    dy /= length;
+  }
+
+  return { vx: dx * currentSpeed, vy: dy * currentSpeed };
+}
+
 export function computeCoopInput(
-  p1Input: { left: boolean; right: boolean; up: boolean; down: boolean },
-  p2Input: { left: boolean; right: boolean; up: boolean; down: boolean },
+  p1Input: { left: boolean; right: boolean; up: boolean; down: boolean; isSprinting: boolean },
+  p2Input: { left: boolean; right: boolean; up: boolean; down: boolean; isSprinting: boolean },
   p1Speed: number,
-  p2Speed: number
+  p2Speed: number,
+  sprintMultiplier: number
 ): { p1Velocity: { vx: number; vy: number }; p2Velocity: { vx: number; vy: number } } {
-  const getVelocity = (input: { left: boolean; right: boolean; up: boolean; down: boolean }, speed: number) => {
-    let dx = 0;
-    let dy = 0;
-
-    if (input.left) dx -= 1;
-    if (input.right) dx += 1;
-    if (input.up) dy -= 1;
-    if (input.down) dy += 1;
-
-    if (dx !== 0 && dy !== 0) {
-      const length = Math.sqrt(dx * dx + dy * dy);
-      dx /= length;
-      dy /= length;
-    }
-
-    return { vx: dx * speed, vy: dy * speed };
-  };
-
   return {
-    p1Velocity: getVelocity(p1Input, p1Speed),
-    p2Velocity: getVelocity(p2Input, p2Speed),
+    p1Velocity: computeSprintVelocity(p1Input, p1Speed, sprintMultiplier),
+    p2Velocity: computeSprintVelocity(p2Input, p2Speed, sprintMultiplier),
   };
 }
 
@@ -39,8 +46,13 @@ export function createPlayerInputSystem(
   wasd: any,
   spaceKey: Phaser.Input.Keyboard.Key,
   numpad0Key: Phaser.Input.Keyboard.Key,
-  enterKey: Phaser.Input.Keyboard.Key
+  enterKey: Phaser.Input.Keyboard.Key,
+  shiftKey: Phaser.Input.Keyboard.Key,
+  numpadEnterKey: Phaser.Input.Keyboard.Key,
+  rightShiftKey: Phaser.Input.Keyboard.Key
 ) {
+  const SPRINT_MULTIPLIER = 380 / 220; // 1.727
+
   return (world: IWorld, _delta: number): IWorld => {
     const entities = playerQuery(world);
 
@@ -50,7 +62,7 @@ export function createPlayerInputSystem(
 
       const playerId = PlayerControlled.playerId[eid];
 
-      let left = false, right = false, up = false, down = false, attack = false;
+      let left = false, right = false, up = false, down = false, attack = false, isSprinting = false;
 
       if (playerId === 1) {
         left = wasd.A.isDown;
@@ -58,12 +70,14 @@ export function createPlayerInputSystem(
         up = wasd.W.isDown;
         down = wasd.S.isDown;
         attack = spaceKey.isDown;
+        isSprinting = shiftKey.isDown;
       } else if (playerId === 2) {
         left = cursors.left.isDown;
         right = cursors.right.isDown;
         up = cursors.up.isDown;
         down = cursors.down.isDown;
         attack = numpad0Key.isDown || enterKey.isDown;
+        isSprinting = numpadEnterKey.isDown || rightShiftKey.isDown;
       }
 
       InputStateComponent.left[eid] = left ? 1 : 0;
@@ -71,9 +85,14 @@ export function createPlayerInputSystem(
       InputStateComponent.up[eid] = up ? 1 : 0;
       InputStateComponent.down[eid] = down ? 1 : 0;
       InputStateComponent.attack[eid] = attack ? 1 : 0;
+      InputStateComponent.isSprinting[eid] = isSprinting ? 1 : 0;
 
       const speed = Speed.value[eid];
-      const { p1Velocity } = computeCoopInput({ left, right, up, down }, { left: false, right: false, up: false, down: false }, speed, 0);
+      const { p1Velocity } = computeCoopInput(
+        { left, right, up, down, isSprinting },
+        { left: false, right: false, up: false, down: false, isSprinting: false },
+        speed, 0, SPRINT_MULTIPLIER
+      );
 
       Velocity.x[eid] = p1Velocity.vx;
       Velocity.y[eid] = p1Velocity.vy;

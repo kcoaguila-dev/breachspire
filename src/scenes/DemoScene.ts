@@ -115,9 +115,12 @@ export class DemoScene extends Phaser.Scene {
     const spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     const numpad0Key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.NUMPAD_ZERO);
     const enterKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+    const shiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+    const numpadEnterKey = this.input.keyboard!.addKey(108); // 108 is numpad enter keycode fallback
+    const rightShiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     const f2Key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F2);
 
-    this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey, numpad0Key, enterKey);
+    this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey, numpad0Key, enterKey, shiftKey, numpadEnterKey, rightShiftKey);
     this.splitCameraSystem = createSplitCameraSystem(this);
 
     try {
