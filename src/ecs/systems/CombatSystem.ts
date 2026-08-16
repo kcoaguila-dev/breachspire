@@ -1,5 +1,5 @@
-import { defineQuery, IWorld, addEntity, addComponent } from "bitecs";
-import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent } from "../components";
+import { defineQuery, IWorld, addEntity, addComponent, hasComponent } from "bitecs";
+import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole } from "../components";
 
 const combatQuery = defineQuery([Health, Attack, CombatTypeComponent, FSMState, Position]);
 
@@ -67,7 +67,15 @@ export function createCombatSystem() {
           const defenderType = CombatTypeComponent.type[targetEid];
 
           const multiplier = getCombatMultiplier(attackerType, defenderType);
-          const baseDamage = Attack.power[eid];
+          let baseDamage = Attack.power[eid];
+
+          if (hasComponent(world, UnitRole, eid)) {
+            const lvl = UnitRole.level[eid];
+            if (lvl === 2) baseDamage *= 1.3;
+            if (lvl >= 3) baseDamage *= 1.7;
+            UnitRole.xp[eid] += 10;
+          }
+
           const finalDamage = baseDamage * multiplier;
 
           Health.current[targetEid] = Math.max(0, Health.current[targetEid] - finalDamage);

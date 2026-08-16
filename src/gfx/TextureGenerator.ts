@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import { FactionValues, CombatTypeValues } from "../ecs/components";
 
-export function getUnitTextureKey(faction: number, combatType: number, isFlying: boolean): string {
+export function getUnitTextureKey(faction: number, combatType: number, isFlying: boolean, role?: number): string {
     if (faction === FactionValues.Hero) {
+        if (role === 0) return "peasant_unit"; // Peasant
+        if (role === 1) return "peasant_unit"; // Builder (maybe reuse peasant or give builder skin) - wait let's use peasant
         if (isFlying) return "unit_valkyrie";
         if (combatType === CombatTypeValues.Melee) return "unit_knight";
         if (combatType === CombatTypeValues.Ranged) return "unit_archer";
@@ -27,6 +29,7 @@ export class TextureGenerator {
         // Camp
         this.generateCampCore(scene, "camp_core_hearth");
         this.generateRect(scene, "camp_wall_wood", 32, 128, "#8B4513");
+        this.generateWallFoundationMound(scene, "wall_foundation_mound");
         this.generateWallStonePristine(scene, "wall_stage_1_pristine");
         this.generateWallStoneCracked(scene, "wall_stage_2_cracked");
         this.generateWallStoneCrumbling(scene, "wall_stage_3_crumbling");
@@ -40,7 +43,13 @@ export class TextureGenerator {
         this.generateRect(scene, "spire_barricade_gate", 32, 64, "#4B0082");
         this.generateDarkCrystal(scene, "spire_dark_crystal");
 
+        // Recruitment & Tool Stands
+        this.generateToolHammerStand(scene, "tool_hammer_stand");
+        this.generateToolBowStand(scene, "tool_bow_stand");
+        this.generateToolSwordStand(scene, "tool_sword_stand");
+
         // Units
+        this.generatePeasantUnit(scene, "peasant_unit");
         this.generateKnight(scene, "unit_knight");
         this.generateArcher(scene, "unit_archer");
         this.generateMage(scene, "unit_mage");
@@ -49,6 +58,68 @@ export class TextureGenerator {
         this.generateGoblin(scene, "unit_goblin");
         this.generateTroll(scene, "unit_troll");
         this.generateCultist(scene, "unit_cultist");
+    }
+
+    private static generateWallFoundationMound(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x654321, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 128);
+        graphics.lineTo(16, 110);
+        graphics.lineTo(32, 128);
+        graphics.fillPath();
+
+        graphics.fillStyle(0xa0a0a0, 1);
+        graphics.fillRect(14, 96, 4, 16);
+
+        graphics.generateTexture(key, 32, 128);
+        graphics.destroy();
+    }
+
+    private static generateToolHammerStand(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x8B4513, 1);
+        graphics.fillRect(8, 16, 16, 16); // Stand
+        graphics.fillStyle(0x95a5a6, 1);
+        graphics.fillRect(10, 4, 12, 6); // Hammer head
+        graphics.fillStyle(0x5C4033, 1);
+        graphics.fillRect(14, 10, 4, 10); // Hammer handle
+        graphics.generateTexture(key, 32, 32);
+        graphics.destroy();
+    }
+
+    private static generateToolBowStand(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x8B4513, 1);
+        graphics.fillRect(8, 16, 16, 16); // Stand
+        graphics.fillStyle(0xd35400, 1);
+        graphics.fillRect(14, 0, 4, 20); // Bow
+        graphics.generateTexture(key, 32, 32);
+        graphics.destroy();
+    }
+
+    private static generateToolSwordStand(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x8B4513, 1);
+        graphics.fillRect(8, 16, 16, 16); // Stand
+        graphics.fillStyle(0xecf0f1, 1);
+        graphics.fillRect(14, 0, 4, 16); // Sword blade
+        graphics.fillStyle(0xf1c40f, 1);
+        graphics.fillRect(10, 16, 12, 2); // Sword hilt
+        graphics.generateTexture(key, 32, 32);
+        graphics.destroy();
+    }
+
+    private static generatePeasantUnit(scene: Phaser.Scene, key: string) {
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        // Face Shadow
+        graphics.fillStyle(0x1e372e, 1);
+        graphics.fillRect(10, 6, 4, 4);
+        // Body (rags)
+        graphics.fillStyle(0x8B4513, 1);
+        graphics.fillRect(8, 12, 8, 8);
+        graphics.generateTexture(key, 24, 24);
+        graphics.destroy();
     }
 
     private static generateWallStonePristine(scene: Phaser.Scene, key: string) {
