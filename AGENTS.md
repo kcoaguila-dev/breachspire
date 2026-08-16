@@ -392,40 +392,50 @@ main                    <- stable, always passing tests
 
 ## 10. Vertical Slice Roadmap
 
-### M1 — Foundation (DONE — PR #1)
-- bitECS + Zod + Phaser 3 wiring
+### ✅ M1 — Foundation (DONE)
+- bitECS + Zod + Phaser 4.2.1 WebGL wiring
 - Knight vs Goblin demo
-- RPS combat multipliers (Vitest covered)
-- Schema validation (Vitest covered)
+- RPS combat multipliers & test coverage
 
-### M2 — World Primitives (NEXT)
-New components: `FloorComponent`, `CampComponent`, `GateComponent`
-New schemas: `FloorDataSchema`, `CampDataSchema`
-New JSON: `public/data/floors/floor_0{1..3}.json`
-New factories: `createFloorEntity`, `createCampEntity`
-New system: `DeathSystem` (removes entities with `Health.current <= 0`)
+### ✅ M2 — Living Twin-Spires & Camp World Primitives (DONE)
+- Central Camp (Light Aether Core + Left/Right Camp Walls)
+- Twin Spires (Left & Right Spires accumulating Dark Energy to grow floors)
+- Schemas & Loaders for CampConfig and SpireConfig
 
-### M3 — Dual-Front Siege Loop
-New systems: `MonsterSpawnSystem`, `FloorCollapseSystem`, `OutflowThrottleSystem`, `CampSiegeSystem`
-Key mechanic: each cleared floor must produce a VISIBLE throttle in spawn rate.
-Pure functions to extract + test: `computeSpawnCooldown`, `isFloorClearable`, `applyWallDamage`
+### ✅ M3 — Dual-Front Siege & Floor-Collapse Loop (DONE)
+- MonsterSpawnSystem (spawns throttled by cleared floors)
+- CampSiegeSystem (monsters attack walls; breach detection)
+- FloorCollapseSystem (destroying floor barricades collapses floors & cuts spawns)
+- GameStateSystem (Victory / Defeat evaluation)
 
-### M4 — Hero / Commander Split
-New components: `PlayerControlled` (tag), `CommanderTag` (tag), `RosterSlot`
-New systems: `PlayerInputSystem`, `LeaderDeathSystem`
-New heroes: `warrior.json`, `archer.json`, `mage.json`, `commander.json`
-Anti-pattern: leader death triggers soft-fail RETREAT, never instant run-over.
+### ✅ M4 — Hero / Commander Split & Action Controls (DONE)
+- PlayerInputSystem (WASD/Arrows/Space action hero controls)
+- CameraFollowSystem (smooth lerp camera across camp & spires)
+- CommanderSupportSystem (Rally Flag, Wall Repair pulse, Aether Surge)
+- LeaderDeathSystem (Soft-fail retreat to Camp Core on 0 HP)
+- Archetypes: Warrior, Archer, Mage, Commander, Troll, Dark Archer, Cultist
 
-### M5 — Flying Unit (Option B)
-New components: `CanReachElevated` (tag), `FlightEnergy`
-New system: `FlightEnergySystem`
-New hero: `valkyrie.json` — low HP (permanent risk lever, never buff this)
-Recharge: ONLY on cleared floors, never at base camp.
+### ✅ M5 — Flying Hero & Alcove Threat System (DONE)
+- Valkyrie flying hero archetype (`canReachElevated: true`)
+- Alcove Nests & NestTargetingSystem
+- FlightEnergySystem (recharge ONLY on cleared floors, never at base camp)
 
-### M6 — Meta-Progression Between Runs
-New module: `src/persistence/RunStateManager.ts`
-New data: `public/data/meta/camp_upgrades.json`
-Persistence: localStorage (no server needed for itch.io)
+### ✅ M6 — Camp Meta-Progression & Persistence (DONE)
+- RunStateManager (`localStorage` serialization with fallback)
+- Camp upgrades tree (`public/data/meta/camp_upgrades.json`)
+- MetaProgressionSystem applying starting wall HP, energy rate, and hero bonuses
+
+---
+
+### 🔲 Phase 7 — Audio/Visual Presentation & Polish (NEXT)
+- Sprite sheets & animations for heroes and monsters
+- Combat VFX (attack trails, floor collapse rumble particles, edge-screen damage alerts)
+- Audio pipeline (SFX for attacks, wall impacts, aether collection, background music)
+
+### 🔲 Phase 8 — In-Game HUD & itch.io Deployment
+- HUD (Light Energy gauge, Spire height meters, Wall HP indicators)
+- Title screen & Run summary / Upgrade shop menu
+- GitHub Actions automated deployment to itch.io via Butler
 
 ---
 
