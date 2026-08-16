@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TextureGenerator } from "../gfx/TextureGenerator";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -10,6 +11,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
+    TextureGenerator.generateAll(this);
     this.scene.start("TitleScene");
   }
 }
