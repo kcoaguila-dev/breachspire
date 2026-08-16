@@ -30,14 +30,14 @@ test.describe('Breachspire Game Flow', () => {
 
     // Ensure the game logic has initialized TitleScene canvas click
     // Note: It's hard to click a Phaser text object in canvas directly via DOM.
-    // The requirement says: "Click 'Start Raid', verify transition to DemoScene, verify 0 JavaScript console errors."
+    // The requirement says: "Click 'Start Raid', verify transition to GameScene, verify 0 JavaScript console errors."
     // We can simulate a click on the center of the canvas since TitleScene just listens for any input pointerdown.
     const canvas = page.locator('canvas');
     await expect(canvas).toBeVisible();
 
     await canvas.click();
 
-    // Give some time for DemoScene to load and system to run
+    // Give some time for GameScene to load and system to run
     await page.waitForTimeout(2000);
 
     // Verify there are no javascript console errors

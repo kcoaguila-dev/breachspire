@@ -8,12 +8,12 @@ const campQuery = defineQuery([CampCoreComponent]);
 // ─────────────────────────────────────────────────────
 export function computeEnergyGain(
   currentEnergy: number,
-  ratePerSec: number,
-  maxEnergy: number,
-  deltaMs: number
+  _ratePerSec: number,
+  _maxEnergy: number,
+  _deltaMs: number
 ): number {
-  const gained = ratePerSec * (deltaMs / 1000);
-  return Math.min(currentEnergy + gained, maxEnergy);
+  // Passive energy gain is disabled per requirements (Aether motes replace it)
+  return currentEnergy;
 }
 
 // ─────────────────────────────────────────────────────

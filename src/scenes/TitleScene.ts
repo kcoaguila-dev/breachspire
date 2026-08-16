@@ -23,7 +23,7 @@ export class TitleScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     startBtn.on('pointerdown', () => {
-      this.scene.start("DemoScene");
+      this.scene.start("GameScene");
     });
     startBtn.on('pointerover', () => startBtn.setStyle({ color: '#ffea00' }));
     startBtn.on('pointerout', () => startBtn.setStyle({ color: '#ffffff' }));

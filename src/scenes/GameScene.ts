@@ -31,8 +31,10 @@ import { createBuildingSystem } from "../ecs/systems/BuildingSystem";
 import { createRecruitmentSystem } from "../ecs/systems/RecruitmentSystem";
 import { createProgressionXPSystem } from "../ecs/systems/ProgressionXPSystem";
 import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateManager";
+import { createAetherSpawningSystem } from "../ecs/systems/AetherSpawningSystem";
+import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSystem";
 
-export class DemoScene extends Phaser.Scene {
+export class GameScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
   private movementSystem!: ReturnType<typeof createMovementSystem>;
   private combatSystem!: ReturnType<typeof createCombatSystem>;
@@ -57,6 +59,8 @@ export class DemoScene extends Phaser.Scene {
   private buildingSystem!: ReturnType<typeof createBuildingSystem>;
   private recruitmentSystem!: ReturnType<typeof createRecruitmentSystem>;
   private progressionXPSystem!: ReturnType<typeof createProgressionXPSystem>;
+  private aetherSpawningSystem!: ReturnType<typeof createAetherSpawningSystem>;
+  private aetherCollectionSystem!: ReturnType<typeof createAetherCollectionSystem>;
 
 
   private screenAlertEid!: number;
@@ -77,7 +81,7 @@ export class DemoScene extends Phaser.Scene {
   private audioManager!: AudioManager;
   private prevIsNight: number = -1;
 constructor() {
-    super("DemoScene");
+    super("GameScene");
   }
 
   async create() {
@@ -140,6 +144,8 @@ constructor() {
     this.playerInputSystem = createPlayerInputSystem(cursors, wasd, spaceKey, numpad0Key, enterKey, shiftKey);
     this.climbingSystem = createClimbingSystem();
     this.splitCameraSystem = createSplitCameraSystem(this);
+    this.aetherSpawningSystem = createAetherSpawningSystem();
+    this.aetherCollectionSystem = createAetherCollectionSystem(this.audioManager);
 
     try {
       // Load Data from public directory
@@ -188,7 +194,6 @@ constructor() {
       this.bgMountains = this.add.tileSprite(sw / 2, centerY - 100, sw, 300, "bg_mountains").setScrollFactor(0).setDepth(-9);
       this.bgTrees = this.add.tileSprite(sw / 2, centerY - 40, sw, 200, "bg_trees").setScrollFactor(0).setDepth(-8);
       this.add.tileSprite(worldWidth / 2, centerY + 32, worldWidth, 64, "ground_cobblestone_bank").setScrollFactor(1.0).setDepth(0);
-      this.add.rectangle(worldWidth / 2, 650 + 64 + (1200 - (650 + 64)) / 2, worldWidth, 1200 - (650 + 64), 0x332211).setScrollFactor(1.0).setDepth(0);
 
       // Center the camera on the avatar
       this.cameras.main.centerOn(coreX, centerY);
@@ -253,7 +258,7 @@ constructor() {
       createUnitEntity(world, goblinData, coreX + 200, centerY);
 
       this.isReady = true;
-      console.log("DemoScene ready");
+      console.log("GameScene ready");
     } catch (e) {
       console.error("Failed to load game data:", e);
     }
@@ -273,6 +278,9 @@ constructor() {
 
     // Process input first
     this.playerInputSystem(world, delta);
+
+    this.aetherSpawningSystem(world, delta);
+    this.aetherCollectionSystem(world, delta);
 
     // Kingdom Building & Recruitment Systems
     this.buildingSystem(world, delta);
@@ -342,6 +350,16 @@ constructor() {
   private handleGameOver(isVictory: boolean, world: any) {
     this.isGameOver = true;
 
+    if (!isVictory) {
+      // Freeze entities (handled by isGameOver = true returning early in update loop)
+      // Flash screen red
+      this.cameras.main.flash(1000, 255, 0, 0);
+      // Play defeat stinger
+      this.audioManager.playDefeatStinger();
+    } else {
+      this.audioManager.playVictoryStinger();
+    }
+
     // Save state
     const saveState = loadCampSaveState();
     saveState.runCount += 1;
@@ -363,7 +381,7 @@ constructor() {
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
-    const text = isVictory ? "VICTORY" : "DEFEAT";
+    const text = isVictory ? "VICTORY" : "DEFEAT - THE HEARTH HAS FALLEN";
     const color = isVictory ? "#00ff00" : "#ff0000";
 
     const titleText = this.add.text(centerX, centerY - 50, text, {

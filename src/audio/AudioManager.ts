@@ -160,6 +160,10 @@ export class AudioManager {
     osc.stop(time + 0.5);
   }
 
+  public playAetherCollect() {
+    this.playAetherChime(); // Reusing the chime logic or similar
+  }
+
   // SFX Helper
   private playTone(frequency: number, type: OscillatorType, duration: number, volume: number = 0.5) {
     if (this.ctx.state === 'suspended') {

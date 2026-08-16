@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getWallDamageStage } from "./CampSiegeSystem";
 import { getAmbientLightingColor } from "./DayNightSystem";
@@ -9,7 +9,8 @@ export type RenderGameObject =
   | Phaser.GameObjects.Sprite
   | Phaser.GameObjects.Rectangle
   | Phaser.GameObjects.Container
-  | Phaser.GameObjects.Image;
+  | Phaser.GameObjects.Image
+  | Phaser.GameObjects.Arc;
 
 export type SpriteMap = Map<number, RenderGameObject>;
 
@@ -41,6 +42,12 @@ const poiQueryEnter = enterQuery(poiQuery);
 const stateQuery = defineQuery([GameStateComponent]);
 
 const levelUpEventQuery = defineQuery([LevelUpEvent]);
+
+const moteQuery = defineQuery([AetherMoteComponent, Position]);
+const moteQueryEnter = enterQuery(moteQuery);
+const moteQueryExit = exitQuery(moteQuery);
+
+const aetherCollectEventQuery = defineQuery([AetherCollectEvent]);
 
 export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap) {
   let victoryBanner: Phaser.GameObjects.Text | null = null;
@@ -138,7 +145,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
 
       if (hpGraphics) {
         hpGraphics.clear();
-        if (Health.current[eid] > 0) {
+        if (Health.current[eid] > 0 && Health.current[eid] < Health.max[eid]) {
           const w = 32;
           const h = 4;
           const x = Position.x[eid] - w / 2;
@@ -155,27 +162,12 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
           // Fill
           hpGraphics.fillStyle(fillColor, 1.0);
           hpGraphics.fillRect(x, y, w * hpRatio, h);
+        }
 
-          // Aura for flying units
-          if (hasComponent(world, CanReachElevated, eid)) {
-            hpGraphics.lineStyle(2, 0x00ffff, 0.5);
-            hpGraphics.strokeCircle(Position.x[eid], Position.y[eid], 20);
-          }
-
-          // RPS Badge
-          const combatType = CombatTypeComponent.type[eid];
-          const badgeX = x + w / 2;
-          const badgeY = y - 8;
-          hpGraphics.fillStyle(0x000000, 0.5);
-          hpGraphics.fillCircle(badgeX, badgeY, 6);
-          if (combatType === CombatTypeValues.Melee) {
-            hpGraphics.fillStyle(0xc0c0c0, 1.0); // Silver sword
-          } else if (combatType === CombatTypeValues.Ranged) {
-            hpGraphics.fillStyle(0x2ecc71, 1.0); // Green bow
-          } else {
-            hpGraphics.fillStyle(0x9b59b6, 1.0); // Purple magic
-          }
-          hpGraphics.fillCircle(badgeX, badgeY, 4);
+        // Always draw aura for flying units if alive
+        if (Health.current[eid] > 0 && hasComponent(world, CanReachElevated, eid)) {
+          hpGraphics.lineStyle(2, 0x00ffff, 0.5);
+          hpGraphics.strokeCircle(Position.x[eid], Position.y[eid], 20);
         }
       }
     }
@@ -358,6 +350,78 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], texture);
         sprite.setOrigin(0.5, 1);
         spriteMap.set(eid, sprite);
+    }
+
+    // --- Motes ---
+    const motesEntered = moteQueryEnter(world);
+    for (let i = 0; i < motesEntered.length; i++) {
+        const eid = motesEntered[i];
+        // Bobbing glowing mote
+        const sprite = scene.add.circle(Position.x[eid], Position.y[eid], 4, 0x00ffff, 0.8);
+        spriteMap.set(eid, sprite);
+
+        // Add a gentle floating tween
+        scene.tweens.add({
+            targets: sprite,
+            y: '-=10',
+            duration: 1000 + Math.random() * 500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+    }
+    const motes = moteQuery(world);
+    for (let i = 0; i < motes.length; i++) {
+        const eid = motes[i];
+        const sprite = spriteMap.get(eid);
+        if (sprite && sprite instanceof Phaser.GameObjects.Arc) {
+            // we override tweens if position changes drastically (magnet pull)
+            // but for simple bob we might just apply position and let tween add offset if we wanted to be perfectly precise.
+            // For now just set x, y will be manipulated by tween mostly but we update it if it's pulled.
+            // To allow tween + magnetic pull to co-exist cleanly, we can just sync X and let tween handle Y local offset,
+            // or just set position directly.
+            sprite.x = Position.x[eid];
+            // If it's being pulled (distance from tween center is far), we can sync Y too.
+            // Actually, just syncing x and y directly will override the tween, which is fine during magnet pull.
+            // We'll sync both. The tween will try to adjust Y relative to its current Y.
+            if (Math.abs(sprite.y - Position.y[eid]) > 15) {
+                sprite.y = Position.y[eid];
+            }
+        }
+    }
+    const motesExited = moteQueryExit(world);
+    for (let i = 0; i < motesExited.length; i++) {
+        const eid = motesExited[i];
+        const sprite = spriteMap.get(eid);
+        if (sprite) {
+            sprite.destroy();
+            spriteMap.delete(eid);
+        }
+    }
+
+    // --- Aether Collect Events ---
+    const collectEvents = aetherCollectEventQuery(world);
+    for (let i = 0; i < collectEvents.length; i++) {
+        const eid = collectEvents[i];
+        const tx = AetherCollectEvent.x[eid];
+        const ty = AetherCollectEvent.y[eid];
+
+        // Golden sparkle burst
+        for (let p = 0; p < 5; p++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 30 + 10;
+            const flare = scene.add.circle(tx, ty, 2, 0xffea55, 1);
+            scene.tweens.add({
+                targets: flare,
+                x: tx + Math.cos(angle) * speed,
+                y: ty + Math.sin(angle) * speed,
+                alpha: 0,
+                duration: 500,
+                onComplete: () => flare.destroy()
+            });
+        }
+
+        removeEntity(world, eid);
     }
 
     // --- 4.7 Level Up Events ---
