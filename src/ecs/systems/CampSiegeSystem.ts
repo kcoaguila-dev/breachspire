@@ -20,6 +20,15 @@ export function isWallBreached(currentWallHp: number): boolean {
   return currentWallHp <= 0;
 }
 
+export function getWallDamageStage(currentHp: number, maxHp: number): number {
+  if (currentHp <= 0) return 4;
+  const ratio = currentHp / maxHp;
+  if (ratio > 0.75) return 1;
+  if (ratio > 0.50) return 2;
+  if (ratio > 0.25) return 3;
+  return 4;
+}
+
 // ─────────────────────────────────────────────────────
 // SYSTEM FACTORY
 // ─────────────────────────────────────────────────────

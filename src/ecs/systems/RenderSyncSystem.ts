@@ -1,6 +1,7 @@
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent } from "bitecs";
 import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, CombatTypeValues } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
+import { getWallDamageStage } from "./CampSiegeSystem";
 
 export type RenderGameObject =
   | Phaser.GameObjects.Sprite
@@ -33,8 +34,6 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
   let defeatBanner: Phaser.GameObjects.Text | null = null;
 
   // Create UI elements
-  // We'll attach text to the spriteMap but text objects aren't rects. We can use standard scene elements.
-  const wallHpTexts = new Map<number, Phaser.GameObjects.Text>();
   const unitHpGraphicsMap = new Map<number, Phaser.GameObjects.Graphics>();
 
   return (world: IWorld) => {
@@ -154,34 +153,35 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     const wallsEntered = campWallQueryEnter(world);
     for (let i = 0; i < wallsEntered.length; i++) {
       const eid = wallsEntered[i];
-      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "camp_wall_stone");
+      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "wall_stage_1_pristine");
       spriteMap.set(eid, sprite);
-
-      const hpText = scene.add.text(Position.x[eid] - 20, Position.y[eid] - 80, `HP: ${Health.current[eid]}`, { color: '#ffffff' });
-      wallHpTexts.set(eid, hpText);
     }
     const walls = campWallQuery(world);
     for (let i = 0; i < walls.length; i++) {
       const eid = walls[i];
       const sprite = spriteMap.get(eid);
-      const hpText = wallHpTexts.get(eid);
 
       if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
         sprite.setPosition(Position.x[eid], Position.y[eid]);
-        const healthRatio = Health.current[eid] / Health.max[eid];
-        if (Health.current[eid] <= 0) {
-          sprite.setAlpha(0.2);
-        } else if (healthRatio < 0.5) {
-          sprite.setTint(0xffaaaa); // visually degrade by tinting red-ish
-        } else {
-          sprite.clearTint();
-          sprite.setAlpha(1.0);
-        }
-      }
+        const currentHp = Health.current[eid];
+        const maxHp = Health.max[eid];
 
-      if (hpText) {
-          hpText.setText(`HP: ${Health.current[eid]}`);
-          hpText.setPosition(Position.x[eid] - 20, Position.y[eid] - 80);
+        if (currentHp <= 0) {
+            sprite.setTexture("wall_rubble_collapsed");
+            sprite.setAlpha(0.8);
+            sprite.clearTint();
+        } else {
+            const stage = getWallDamageStage(currentHp, maxHp);
+            let textureKey = "wall_stage_1_pristine";
+            if (stage === 1) textureKey = "wall_stage_1_pristine";
+            else if (stage === 2) textureKey = "wall_stage_2_cracked";
+            else if (stage === 3) textureKey = "wall_stage_3_crumbling";
+            else if (stage === 4) textureKey = "wall_stage_4_critical";
+
+            sprite.setTexture(textureKey);
+            sprite.setAlpha(1.0);
+            sprite.clearTint();
+        }
       }
     }
 

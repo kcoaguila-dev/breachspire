@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "dev": "vite",
     "build": "tsc && vite build"
   },
@@ -26,6 +27,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.1",

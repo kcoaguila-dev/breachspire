@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyWallDamage, isWallBreached } from '../src/ecs/systems/CampSiegeSystem';
+import { applyWallDamage, isWallBreached, getWallDamageStage } from '../src/ecs/systems/CampSiegeSystem';
 
 describe('CampSiegeSystem — Pure Logic', () => {
   it('should apply damage and clamp at 0', () => {
@@ -13,5 +13,17 @@ describe('CampSiegeSystem — Pure Logic', () => {
     expect(isWallBreached(-10)).toBe(true);
     expect(isWallBreached(1)).toBe(false);
     expect(isWallBreached(100)).toBe(false);
+  });
+
+  it('should return correct wall damage stage', () => {
+    expect(getWallDamageStage(100, 100)).toBe(1);
+    expect(getWallDamageStage(76, 100)).toBe(1);
+    expect(getWallDamageStage(75, 100)).toBe(2);
+    expect(getWallDamageStage(51, 100)).toBe(2);
+    expect(getWallDamageStage(50, 100)).toBe(3);
+    expect(getWallDamageStage(26, 100)).toBe(3);
+    expect(getWallDamageStage(25, 100)).toBe(4);
+    expect(getWallDamageStage(1, 100)).toBe(4);
+    expect(getWallDamageStage(0, 100)).toBe(4);
   });
 });
