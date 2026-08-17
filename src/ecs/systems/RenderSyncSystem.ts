@@ -20,7 +20,7 @@ const unitQuery = defineQuery([Position, FactionTag, Health, Velocity]); // Comb
 const unitQueryEnter = enterQuery(unitQuery);
 const unitQueryExit = exitQuery(unitQuery);
 
-const campCoreQuery = defineQuery([Position, CampCoreComponent, Health]);
+const campCoreQuery = defineQuery([Position, CampCoreComponent]);
 const campCoreQueryEnter = enterQuery(campCoreQuery);
 
 const campWallQuery = defineQuery([Position, CampWallComponent, Health]);
@@ -75,6 +75,26 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
 
       const textureId = getUnitTextureKey(faction, combatType, isFlying, role);
       const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], textureId);
+
+      // Display at exactly 2× the source pixel size → each pixel becomes a 2×2 block
+      // Source sizes: heroes=48px, troll=64px, goblin/cultist=40px, commander=64px
+      let displayW = 96; // default: 48px × 2
+      let displayH = 96;
+      if (combatType === 0 && faction === FactionValues.Monster) {
+        // Troll: 64px source × 2
+        displayW = 128; displayH = 128;
+      } else if (combatType === 2 && faction === FactionValues.Monster) {
+        // Cultist: 40px source × 2
+        displayW = 80; displayH = 80;
+      } else if (combatType === 1 && faction === FactionValues.Monster) {
+        // Goblin archer / dark archer: 40px source × 2
+        displayW = 80; displayH = 80;
+      } else if (role === undefined && faction === FactionValues.Hero && hasComponent(world, CombatTypeComponent, eid) && CombatTypeComponent.type[eid] === 0) {
+        // Commander (melee hero, steed): 64px source × 2
+        displayW = 128; displayH = 128;
+      }
+      sprite.setDisplaySize(displayW, displayH);
+
       spriteMap.set(eid, sprite);
 
       const hpGraphics = scene.add.graphics();
@@ -194,7 +214,15 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     const coresEntered = campCoreQueryEnter(world);
     for (let i = 0; i < coresEntered.length; i++) {
       const eid = coresEntered[i];
-      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "camp_core_hearth");
+      // Use real crystal art if available, otherwise fall back to programmatic hearth
+      const coreTexture = scene.textures.exists("light_aether_crystal")
+        ? "light_aether_crystal"
+        : "camp_core_hearth";
+      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], coreTexture);
+      // Crystal: 128px source × 1.5 = 192 screen pixels but
+      // reduced to 96px so it reads as a centrepiece without dominating the view
+      sprite.setDisplaySize(96, 96);
+      sprite.setDepth(1);
       spriteMap.set(eid, sprite);
     }
     const cores = campCoreQuery(world);
@@ -220,26 +248,23 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             });
         }
 
-        // Diegetic Visuals based on Health
-        const hpRatio = Math.max(0, Health.current[eid] / Health.max[eid]);
+        // Diegetic Visuals — gentle glowing pulse based on light energy
+        const energyRatio = Math.max(0, Math.min(1, CampCoreComponent.lightEnergy[eid] / CampCoreComponent.maxEnergy[eid]));
+        const pulseScale = 1.0 + Math.sin(time / 600) * 0.04;
+        sprite.setScale(pulseScale);
 
-        if (hpRatio > 0.5) {
-            // High HP: flickers intensely
-            const scale = 1.0 + Math.sin(time / 150) * 0.15 * hpRatio;
-            sprite.setScale(scale);
+        if (energyRatio > 0.5) {
             sprite.setAlpha(1.0);
             sprite.clearTint();
-        } else if (hpRatio > 0) {
-            // Low HP: dims and cracks
-            const scale = 0.9 + Math.sin(time / 300) * 0.05;
-            sprite.setScale(scale);
-            sprite.setAlpha(0.7 + 0.3 * hpRatio);
-            sprite.setTint(0xffaaaa);
+        } else if (energyRatio > 0.2) {
+            // Draining: slightly warm tint
+            sprite.setAlpha(0.85);
+            sprite.setTint(0xffd080);
         } else {
-            // Critical/Dead: darkens
-            sprite.setScale(0.8);
-            sprite.setAlpha(0.4);
-            sprite.setTint(0x555555);
+            // Critical: red danger pulse
+            const danger = 0.6 + Math.sin(time / 150) * 0.4;
+            sprite.setAlpha(danger);
+            sprite.setTint(0xff4422);
         }
       }
     }

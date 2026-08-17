@@ -18,6 +18,13 @@ export function getUnitTextureKey(faction: number, combatType: number, isFlying:
     }
 }
 
+// Unit texture keys loaded from real sprite sheets by BootScene
+const SPRITE_SHEET_KEYS = new Set([
+    "unit_knight", "unit_archer", "unit_mage", "unit_valkyrie",
+    "steed_commander", "unit_goblin", "unit_troll", "unit_cultist",
+    "camp_core_hearth", "light_aether_crystal",
+]);
+
 export class TextureGenerator {
     static generateAll(scene: Phaser.Scene) {
         // Environment Parallax
@@ -27,7 +34,7 @@ export class TextureGenerator {
         this.generatePixelBg(scene, "ground_tile", 64, 64, "#8B4513", "#5C4033");
         this.generateCobblestoneBank(scene, "ground_cobblestone_bank");
 
-        // Camp
+        // Camp — only generate hearth programmatically if real crystal wasn't loaded
         this.generateCampCore(scene, "camp_core_hearth");
         this.generateRect(scene, "camp_wall_wood", 32, 128, "#8B4513");
         this.generateWallFoundationMound(scene, "wall_foundation_mound");
@@ -50,17 +57,23 @@ export class TextureGenerator {
         this.generateToolBowStand(scene, "tool_bow_stand");
         this.generateToolSwordStand(scene, "tool_sword_stand");
 
-        // Units
+        // Peasant (no real sprite sheet for this one yet)
         this.generatePeasantUnit(scene, "peasant_unit");
+
+        // Units — skip if already loaded from sprite sheet by BootScene
         this.generateKnight(scene, "unit_knight");
         this.generateArcher(scene, "unit_archer");
         this.generateMage(scene, "unit_mage");
         this.generateValkyrie(scene, "unit_valkyrie");
-
         this.generateGoblin(scene, "unit_goblin");
         this.generateTroll(scene, "unit_troll");
         this.generateCultist(scene, "unit_cultist");
         this.generateSteedCommander(scene, "steed_commander");
+    }
+
+    // Returns true if the key should use a real sprite sheet instead of the programmatic fallback
+    static isRealSprite(scene: Phaser.Scene, key: string): boolean {
+        return SPRITE_SHEET_KEYS.has(key) && scene.textures.exists(key);
     }
 
     private static generateWallFoundationMound(scene: Phaser.Scene, key: string) {
@@ -370,7 +383,14 @@ export class TextureGenerator {
     }
 
     private static generateCampCore(scene: Phaser.Scene, key: string) {
+        // If real crystal sprite was loaded by BootScene, use that instead
         if (scene.textures.exists(key)) return;
+        if (scene.textures.exists("light_aether_crystal")) {
+            // Alias: use the crystal image as the camp core texture
+            const crystalImg = scene.textures.get("light_aether_crystal");
+            scene.textures.addImage(key, crystalImg.getSourceImage() as HTMLImageElement);
+            return;
+        }
         const graphics = scene.make.graphics({ x: 0, y: 0 });
         // Nordic Longhouse (Great Hall)
         graphics.fillStyle(0x8B4513, 1); // Wooden walls

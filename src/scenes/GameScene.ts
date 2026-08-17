@@ -139,6 +139,9 @@ constructor() {
     // Set Map Bounds (3200x1200)
     this.physics?.world.setBounds(0, 0, 3200, 1200); // Optional if physics exists
     this.cameras.main.setBounds(0, 0, 3200, 1200);
+    // Zoom: Kingdom Two Crowns-style — at 2× zoom each world pixel = 2 screen pixels
+    // Characters at 80-128px display = 40-64 actual pixels * 2 = perfect chunky pixel art
+    this.cameras.main.setZoom(2.0);
 
     // Setup Inputs
     const cursors = this.input.keyboard!.createCursorKeys();
@@ -193,16 +196,37 @@ constructor() {
 
       // Camp Core at 1600
       const coreX = 1600;
-
-      // Add Parallax Backgrounds
       const sw = this.scale.width;
-      // const sh = this.scale.height;
       const worldWidth = 3200;
 
-      this.add.tileSprite(sw / 2, 600, sw, 1200, "bg_sky").setScrollFactor(0).setDepth(-10);
-      this.bgMountains = this.add.tileSprite(sw / 2, centerY - 100, sw, 300, "bg_mountains").setScrollFactor(0).setDepth(-9);
-      this.bgTrees = this.add.tileSprite(sw / 2, centerY - 40, sw, 200, "bg_trees").setScrollFactor(0).setDepth(-8);
-      this.add.tileSprite(worldWidth / 2, centerY + 32, worldWidth, 64, "ground_cobblestone_bank").setScrollFactor(1.0).setDepth(0);
+      // ── Backgrounds ─────────────────────────────────────────────────────────
+      // At zoom 2×, world y=650 (centerY) maps to screen y≈360 (viewport centre).
+      // The ground cobblestone is at world y=682 → screen y≈424.
+      // All scrollFactor(0) objects use SCREEN coordinates, so position them
+      // explicitly to stay above the ground line.
+      const sh = this.scale.height;
+
+      // Sky — full screen, fixed
+      this.add.tileSprite(sw / 2, sh / 2, sw, sh, "bg_sky")
+        .setScrollFactor(0).setDepth(-10);
+
+      // Mountains — upper 60 % of screen
+      this.bgMountains = this.add.tileSprite(sw / 2, sh * 0.32, sw, sh * 0.55, "bg_mountains")
+        .setScrollFactor(0).setDepth(-9);
+
+      // Trees — just above the ground, capped so they don't bleed below
+      this.bgTrees = this.add.tileSprite(sw / 2, sh * 0.46, sw, sh * 0.35, "bg_trees")
+        .setScrollFactor(0).setDepth(-8);
+
+      // Cobblestone ground band (world-space, scrolls with camera)
+      this.add.tileSprite(worldWidth / 2, centerY + 32, worldWidth, 64, "ground_cobblestone_bank")
+        .setScrollFactor(1.0).setDepth(0);
+
+      // Solid earth fill — covers everything below the cobblestone so no
+      // background art bleeds through the ground.
+      this.add.rectangle(worldWidth / 2, centerY + 250, worldWidth, 500, 0x1a0e06)
+        .setScrollFactor(1.0).setDepth(0);
+
 
       // Center the camera on the avatar
       this.cameras.main.centerOn(coreX, centerY);
@@ -210,7 +234,7 @@ constructor() {
       // Secondary camera for water reflection
       const reflectionCamera = this.cameras.add(0, 650, 3200, 250);
       reflectionCamera.setAlpha(0.35);
-      reflectionCamera.setZoom(1, -1);
+      reflectionCamera.setZoom(2, -2);
       reflectionCamera.scrollY = 650;
       // Also match the bounds and zoom of main camera
       reflectionCamera.setBounds(0, 0, 3200, 1200);
