@@ -1,7 +1,9 @@
 import { defineQuery, IWorld, addEntity, addComponent, hasComponent } from "bitecs";
-import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole, PlayerControlled } from "../components";
+import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole, PlayerControlled, GameStateComponent, GameStateValues } from "../components";
+import { shouldLeaderDieFromAttack } from "./GameStateSystem";
 
 const combatQuery = defineQuery([Health, Attack, CombatTypeComponent, FSMState, Position]);
+const stateQuery = defineQuery([GameStateComponent]);
 
 // Multiplier constants
 const ADVANTAGE_MULTIPLIER = 1.5;
@@ -81,7 +83,17 @@ export function createCombatSystem() {
 
           const finalDamage = baseDamage * multiplier;
 
-          Health.current[targetEid] = Math.max(0, Health.current[targetEid] - finalDamage);
+          if (hasComponent(world, PlayerControlled, targetEid)) {
+            if (shouldLeaderDieFromAttack(true, finalDamage)) {
+               Health.current[targetEid] = 0;
+               const states = stateQuery(world);
+               if (states.length > 0) {
+                 GameStateComponent.state[states[0]] = GameStateValues.DEFEAT;
+               }
+            }
+          } else {
+            Health.current[targetEid] = Math.max(0, Health.current[targetEid] - finalDamage);
+          }
 
           // AUDIO: We can't easily play audio here because we don't have audioManager,
           // but we can spawn an AudioEvent or just rely on the feedback system playing

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getWallDamageStage } from "./CampSiegeSystem";
 import { getAmbientLightingColor } from "./DayNightSystem";
@@ -145,29 +145,31 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
 
       if (hpGraphics) {
         hpGraphics.clear();
-        if (Health.current[eid] > 0 && Health.current[eid] < Health.max[eid]) {
-          const w = 32;
-          const h = 4;
-          const x = Position.x[eid] - w / 2;
-          const y = Position.y[eid] - 24;
+        if (!hasComponent(world, PlayerControlled, eid)) {
+          if (Health.current[eid] > 0 && Health.current[eid] < Health.max[eid]) {
+            const w = 32;
+            const h = 4;
+            const x = Position.x[eid] - w / 2;
+            const y = Position.y[eid] - 24;
 
-          const hpRatio = Math.max(0, Health.current[eid] / Health.max[eid]);
-          const faction = FactionTag.faction[eid];
-          const fillColor = faction === FactionValues.Hero ? 0x00ff00 : 0xff0000;
+            const hpRatio = Math.max(0, Health.current[eid] / Health.max[eid]);
+            const faction = FactionTag.faction[eid];
+            const fillColor = faction === FactionValues.Hero ? 0x00ff00 : 0xff0000;
 
-          // Background
-          hpGraphics.fillStyle(0x000000, 0.8);
-          hpGraphics.fillRect(x, y, w, h);
+            // Background
+            hpGraphics.fillStyle(0x000000, 0.8);
+            hpGraphics.fillRect(x, y, w, h);
 
-          // Fill
-          hpGraphics.fillStyle(fillColor, 1.0);
-          hpGraphics.fillRect(x, y, w * hpRatio, h);
-        }
+            // Fill
+            hpGraphics.fillStyle(fillColor, 1.0);
+            hpGraphics.fillRect(x, y, w * hpRatio, h);
+          }
 
-        // Always draw aura for flying units if alive
-        if (Health.current[eid] > 0 && hasComponent(world, CanReachElevated, eid)) {
-          hpGraphics.lineStyle(2, 0x00ffff, 0.5);
-          hpGraphics.strokeCircle(Position.x[eid], Position.y[eid], 20);
+          // Always draw aura for flying units if alive
+          if (Health.current[eid] > 0 && hasComponent(world, CanReachElevated, eid)) {
+            hpGraphics.lineStyle(2, 0x00ffff, 0.5);
+            hpGraphics.strokeCircle(Position.x[eid], Position.y[eid], 20);
+          }
         }
       }
     }
@@ -512,7 +514,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             }
         } else if (state === GameStateValues.DEFEAT) {
             if (!defeatBanner) {
-                defeatBanner = scene.add.text(400, 200, "DEFEAT!", { fontSize: '64px', color: '#ff0000' }).setOrigin(0.5);
+                defeatBanner = scene.add.text(400, 200, "DEFEAT - THE COMMANDER HAS FALLEN", { fontSize: '64px', color: '#ff0000' }).setOrigin(0.5);
             }
         }
     }
