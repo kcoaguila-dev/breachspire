@@ -178,13 +178,13 @@ test.describe('Breachspire Game Flow - Leader & Replay E2E', () => {
         const scene = game.scene.scenes.find((s: any) => s.scene.key === 'GameScene');
         if (scene) {
             const originalSpireDirector = scene.spireDirectorSystem;
-            scene.spireDirectorSystem = (worldObj: any, delta: number) => {
+            scene.spireDirectorSystem = (worldObj: any, _delta: number) => {
                 // Pass a massive delta (500s) to build energy and spawn mobs
                 return originalSpireDirector(worldObj, 500000);
             };
 
             const originalDayNight = scene.dayNightSystem;
-            scene.dayNightSystem = (worldObj: any, delta: number) => {
+            scene.dayNightSystem = (worldObj: any, _delta: number) => {
                 return originalDayNight(worldObj, 50000);
             };
         }
