@@ -15,6 +15,7 @@ import { createDeathSystem } from "../ecs/systems/DeathSystem";
 import { createCampEnergySystem } from "../ecs/systems/CampEnergySystem";
 import { createSpireGrowthSystem } from "../ecs/systems/SpireGrowthSystem";
 import { createMonsterSpawnSystem } from "../ecs/systems/MonsterSpawnSystem";
+import { createSpireDirectorSystem } from "../ecs/systems/SpireDirectorSystem";
 import { createCampSiegeSystem } from "../ecs/systems/CampSiegeSystem";
 import { createFloorCollapseSystem } from "../ecs/systems/FloorCollapseSystem";
 import { createGameStateSystem } from "../ecs/systems/GameStateSystem";
@@ -47,6 +48,7 @@ export class GameScene extends Phaser.Scene {
   private renderSyncSystem!: ReturnType<typeof createRenderSyncSystem>;
 
   private monsterSpawnSystem!: ReturnType<typeof createMonsterSpawnSystem>;
+  private spireDirectorSystem!: ReturnType<typeof createSpireDirectorSystem>;
   private dayNightSystem!: ReturnType<typeof createDayNightSystem>;
   private campSiegeSystem!: ReturnType<typeof createCampSiegeSystem>;
   private floorCollapseSystem!: ReturnType<typeof createFloorCollapseSystem>;
@@ -184,6 +186,7 @@ constructor() {
       };
 
       this.monsterSpawnSystem = createMonsterSpawnSystem(goblinData, archerData, trollData); // Actually p2Data might be archer. Let's load archer explicitly for monsters if we can.
+      this.spireDirectorSystem = createSpireDirectorSystem();
       this.coopSystem = createCoopSystem(f2Key, p2Data);
 
       const centerY = 650;
@@ -261,7 +264,14 @@ constructor() {
       setPlayerControlled(world, knightEntity, 1);
       CoopStateComponent.player1Eid[coopEid] = knightEntity;
 
-      createUnitEntity(world, goblinData, coreX + 200, centerY);
+      // Explicitly checking import.meta.env for Vite instead of process.env
+      if (import.meta.env.DEV) {
+        (window as any).__breachspire = {
+            world,
+            InvasionSpawner: (await import("../ecs/components")).InvasionSpawner,
+            SpireComponent: (await import("../ecs/components")).SpireComponent
+        };
+      }
 
       this.isReady = true;
       console.log("GameScene ready");
@@ -303,8 +313,9 @@ constructor() {
 
     // M3 logic
     this.dayNightSystem(world, delta);
-    this.monsterSpawnSystem(world, delta);
     this.floorCollapseSystem(world, delta);
+    this.spireDirectorSystem(world, delta);
+    this.monsterSpawnSystem(world, delta);
     this.gameStateSystem(world, delta);
 
     this.campEnergySystem(world, delta);

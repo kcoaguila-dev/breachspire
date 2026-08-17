@@ -135,4 +135,83 @@ test.describe('Breachspire Game Flow - Leader & Replay E2E', () => {
     }
   });
 
+  test('Test 4: Clean Wilderness Start', async ({ page }) => {
+    await page.goto('/');
+
+    const canvas = page.locator('canvas');
+    await expect(canvas).toBeVisible();
+    await canvas.click();
+
+    await page.waitForTimeout(1000);
+
+    const goblinsInCamp = await page.evaluate(() => {
+        const game = (window as any).__PHASER_GAME__;
+        const scene = game.scene.scenes.find((s: any) => s.scene.key === 'GameScene');
+        if (!scene) return -1;
+
+        let count = 0;
+        scene.children.list.forEach((child: any) => {
+            if (child.type === 'Sprite' && child.texture && child.texture.key === 'goblin') {
+                if (child.x > 1200 && child.x < 2000) {
+                    count++;
+                }
+            }
+        });
+        return count;
+    });
+
+    expect(goblinsInCamp).toBe(0);
+  });
+
+  test('Test 5: Spire Dark Energy AI', async ({ page }) => {
+    await page.goto('/');
+
+    const canvas = page.locator('canvas');
+    await expect(canvas).toBeVisible();
+    await canvas.click();
+
+    await page.waitForTimeout(1000);
+
+    // Fast-forward time to simulate night and dark energy accumulation
+    await page.evaluate(() => {
+        const game = (window as any).__PHASER_GAME__;
+        const scene = game.scene.scenes.find((s: any) => s.scene.key === 'GameScene');
+        if (scene) {
+            const originalSpireDirector = scene.spireDirectorSystem;
+            scene.spireDirectorSystem = (worldObj: any, _delta: number) => {
+                // Pass a massive delta (500s) to build energy and spawn mobs
+                return originalSpireDirector(worldObj, 500000);
+            };
+
+            const originalDayNight = scene.dayNightSystem;
+            scene.dayNightSystem = (worldObj: any, _delta: number) => {
+                return originalDayNight(worldObj, 50000);
+            };
+        }
+    });
+
+    // Wait a brief moment to allow the systems to process the huge delta
+    await page.waitForTimeout(500);
+
+    // Verify SpireDirectorSystem made decisions by checking InvasionSpawner counts directly
+    const pendingEnemyCount = await page.evaluate(() => {
+        const breachspire = (window as any).__breachspire;
+        if (!breachspire) return 0;
+
+        const { InvasionSpawner } = breachspire;
+        let totalPending = 0;
+
+        // Count pending trolls or archers across all spires
+        for (let i = 0; i < InvasionSpawner.pendingTrolls.length; i++) {
+            totalPending += InvasionSpawner.pendingTrolls[i] || 0;
+            totalPending += InvasionSpawner.pendingArchers[i] || 0;
+            totalPending += InvasionSpawner.pendingGoblins[i] || 0;
+        }
+
+        return totalPending;
+    });
+
+    // We expect a massive influx of pending enemies after 500 seconds of accumulated dark energy
+    expect(pendingEnemyCount).toBeGreaterThan(0);
+  });
 });

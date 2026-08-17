@@ -1,7 +1,6 @@
 import { defineQuery, IWorld } from "bitecs";
 import { InvasionSpawner, SpireComponent, Position, DayNightCycle } from "../components";
 import { createUnitEntity } from "../world";
-import { computeWaveComposition } from "./DayNightSystem";
 import { UnitStats } from "../../data/schemas";
 
 const spawnerQuery = defineQuery([InvasionSpawner, SpireComponent, Position]);
@@ -31,19 +30,13 @@ export function createMonsterSpawnSystem(monsterData: UnitStats, archerData?: Un
   return (world: IWorld, delta: number): IWorld => {
     const timeEids = dayNightQuery(world);
     const isNight = timeEids.length > 0 ? DayNightCycle.isNight[timeEids[0]] === 1 : true;
-    const dayNumber = timeEids.length > 0 ? DayNightCycle.dayNumber[timeEids[0]] : 1;
     const spawners = spawnerQuery(world);
 
-    // If it just turned night, populate pending spawns
+    // If it just turned night, update wasNight (spawns now populated by SpireDirectorSystem)
     if (isNight && !wasNight) {
       for (let i = 0; i < spawners.length; i++) {
         const eid = spawners[i];
         if (SpireComponent.isAlive[eid] === 0) continue;
-        const spireFloors = SpireComponent.floorCount[eid];
-        const composition = computeWaveComposition(dayNumber, spireFloors);
-        InvasionSpawner.pendingGoblins[eid] += composition.goblinCount;
-        InvasionSpawner.pendingArchers[eid] += composition.archerCount;
-        InvasionSpawner.pendingTrolls[eid] += composition.trollCount;
         InvasionSpawner.timer[eid] = InvasionSpawner.spawnCooldown[eid]; // Force immediate spawn of first squad
       }
     }

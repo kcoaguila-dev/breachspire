@@ -14,6 +14,10 @@ export function isLeaderDead(playerHp: number): boolean {
   return playerHp <= 0;
 }
 
+export function shouldLeaderDieFromAttack(isPlayer: boolean, damageTaken: number): boolean {
+  return isPlayer && damageTaken > 0;
+}
+
 export function evaluateGameState(coreHp: number, leftSpireAlive: boolean, rightSpireAlive: boolean, leaderDead: boolean = false): GameStateValues {
   if (coreHp <= 0 || leaderDead) {
       return GameStateValues.DEFEAT;
