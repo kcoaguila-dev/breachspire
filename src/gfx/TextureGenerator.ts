@@ -3,18 +3,18 @@ import { FactionValues, CombatTypeValues } from "../ecs/components";
 
 export function getUnitTextureKey(faction: number, combatType: number, isFlying: boolean, role?: number): string {
     if (faction === FactionValues.Hero) {
-        if (role === 0) return "peasant_unit"; // Peasant
-        if (role === 1) return "peasant_unit"; // Builder
-        if (isFlying) return "unit_valkyrie";
-        if (combatType === CombatTypeValues.Melee) return "steed_commander";
-        if (combatType === CombatTypeValues.Ranged) return "unit_archer";
-        if (combatType === CombatTypeValues.Magic) return "unit_mage";
-        return "steed_commander"; // fallback
+        if (role === 0) return "peasant_unit"; // Peasant — no anim sheet yet
+        if (role === 1) return "peasant_unit"; // Builder — no anim sheet yet
+        if (isFlying)                               return "anim_valkyrie";
+        if (combatType === CombatTypeValues.Melee)  return "anim_commander";
+        if (combatType === CombatTypeValues.Ranged) return "anim_archer";
+        if (combatType === CombatTypeValues.Magic)  return "anim_mage";
+        return "anim_commander";
     } else {
-        if (combatType === CombatTypeValues.Melee) return "unit_troll";
-        if (combatType === CombatTypeValues.Ranged) return "unit_goblin";
-        if (combatType === CombatTypeValues.Magic) return "unit_cultist";
-        return "unit_goblin";
+        if (combatType === CombatTypeValues.Melee)  return "anim_troll";
+        if (combatType === CombatTypeValues.Ranged) return "anim_goblin";
+        if (combatType === CombatTypeValues.Magic)  return "anim_cultist";
+        return "anim_goblin";
     }
 }
 

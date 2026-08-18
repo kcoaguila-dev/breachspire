@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
 import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
+import { getAnimBaseKey } from "../../gfx/AnimationKeys";
 import { getWallDamageStage } from "./CampSiegeSystem";
 import { getAmbientLightingColor } from "./DayNightSystem";
 
@@ -76,24 +77,13 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       const textureId = getUnitTextureKey(faction, combatType, isFlying, role);
       const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], textureId);
 
-      // Display at exactly 2× the source pixel size → each pixel becomes a 2×2 block
-      // Source sizes: heroes=48px, troll=64px, goblin/cultist=40px, commander=64px
-      let displayW = 96; // default: 48px × 2
-      let displayH = 96;
-      if (combatType === 0 && faction === FactionValues.Monster) {
-        // Troll: 64px source × 2
-        displayW = 128; displayH = 128;
-      } else if (combatType === 2 && faction === FactionValues.Monster) {
-        // Cultist: 40px source × 2
-        displayW = 80; displayH = 80;
-      } else if (combatType === 1 && faction === FactionValues.Monster) {
-        // Goblin archer / dark archer: 40px source × 2
-        displayW = 80; displayH = 80;
-      } else if (role === undefined && faction === FactionValues.Hero && hasComponent(world, CombatTypeComponent, eid) && CombatTypeComponent.type[eid] === 0) {
-        // Commander (melee hero, steed): 64px source × 2
-        displayW = 128; displayH = 128;
-      }
-      sprite.setDisplaySize(displayW, displayH);
+      // Display at exactly 2× the source frame size → each pixel becomes a 2×2 block at camera zoom 2×
+      // 48px-frame sheets (archer, mage, valkyrie, goblin, cultist) → 96×96
+      // 64px-frame sheets (commander, troll)                        → 128×128
+      const textureKey = getUnitTextureKey(faction, combatType, isFlying, role);
+      const isLargeFrame = textureKey === "anim_commander" || textureKey === "anim_troll";
+      const displaySize = isLargeFrame ? 128 : 96;
+      sprite.setDisplaySize(displaySize, displaySize);
 
       spriteMap.set(eid, sprite);
 
@@ -108,7 +98,36 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       const hpGraphics = unitHpGraphicsMap.get(eid);
 
       if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
-        sprite.setFlipX(Velocity.x[eid] < 0);
+        const velX    = Velocity.x[eid];
+        const faction = FactionTag.faction[eid];
+        const isDead  = Health.current[eid] <= 0;
+        const isMoving = Math.abs(velX) > 5 || Math.abs(Velocity.y[eid]) > 5;
+
+        // ── Animation playback ─────────────────────────────────────────────────
+        // Read combatType + isFlying to resolve the anim base key, then play
+        // idle or walk. Only switch when key changes to avoid resetting mid-cycle.
+        if (!isDead) {
+          const combatType = hasComponent(world, CombatTypeComponent, eid)
+            ? CombatTypeComponent.type[eid] : 0;
+          const isFlying = hasComponent(world, CanReachElevated, eid);
+          const base = getAnimBaseKey(faction, combatType, isFlying);
+          const targetAnim = isMoving ? `${base}_walk` : `${base}_idle`;
+
+          if (sprite.anims.currentAnim?.key !== targetAnim && scene.anims.exists(targetAnim)) {
+            sprite.anims.play(targetAnim);
+          }
+        }
+
+        // ── FlipX: mirror sprite to face movement direction ────────────────────
+        // Heroes default face RIGHT → flip when moving LEFT  (velX < 0)
+        // Monsters default face LEFT → flip when moving RIGHT (velX > 0)
+        if (Math.abs(velX) > 5) {
+          if (faction === FactionValues.Hero) {
+            sprite.setFlipX(velX < 0);
+          } else {
+            sprite.setFlipX(velX > 0);
+          }
+        }
 
         // Sprint dust particle
         if (Math.abs(Velocity.x[eid]) > 250 && Math.random() < 0.2) {

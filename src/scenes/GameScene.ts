@@ -35,6 +35,8 @@ import { createProgressionXPSystem } from "../ecs/systems/ProgressionXPSystem";
 import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateManager";
 import { createAetherSpawningSystem } from "../ecs/systems/AetherSpawningSystem";
 import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSystem";
+import { ANIM_DEFS } from "../gfx/AnimationKeys";
+
 
 export class GameScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
@@ -192,6 +194,29 @@ constructor() {
       this.spireDirectorSystem = createSpireDirectorSystem();
       this.coopSystem = createCoopSystem(f2Key, p2Data);
 
+      // ── Register Animations (wiring only — no gameplay logic) ────────────────
+      // Frames 0-3 = idle, frames 4-7 = walk (matches the generated sprite sheets)
+      for (const def of ANIM_DEFS) {
+        if (!this.textures.exists(def.key)) continue;
+        // Avoid re-creating animations on scene restart
+        if (!this.anims.exists(`${def.key}_idle`)) {
+          this.anims.create({
+            key: `${def.key}_idle`,
+            frames: this.anims.generateFrameNumbers(def.key, { start: 0, end: 3 }),
+            frameRate: def.frameRate,
+            repeat: -1,
+          });
+        }
+        if (!this.anims.exists(`${def.key}_walk`)) {
+          this.anims.create({
+            key: `${def.key}_walk`,
+            frames: this.anims.generateFrameNumbers(def.key, { start: 4, end: 7 }),
+            frameRate: def.frameRate + 2,
+            repeat: -1,
+          });
+        }
+      }
+
       const centerY = 650;
 
       // Camp Core at 1600
@@ -289,13 +314,12 @@ constructor() {
       CoopStateComponent.player1Eid[coopEid] = knightEntity;
 
       // Explicitly checking import.meta.env for Vite instead of process.env
-      if (import.meta.env.DEV) {
-        (window as any).__breachspire = {
-            world,
-            InvasionSpawner: (await import("../ecs/components")).InvasionSpawner,
-            SpireComponent: (await import("../ecs/components")).SpireComponent
-        };
-      }
+      // Exposed unconditionally so E2E tests can always inspect ECS state
+      (window as any).__breachspire = {
+          world,
+          InvasionSpawner: (await import("../ecs/components")).InvasionSpawner,
+          SpireComponent: (await import("../ecs/components")).SpireComponent
+      };
 
       this.isReady = true;
       console.log("GameScene ready");
