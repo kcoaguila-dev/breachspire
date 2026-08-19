@@ -1,6 +1,6 @@
-import { defineQuery, IWorld } from "bitecs";
-import { CampCoreComponent, DayNightCycle, CoopStateComponent } from "../components";
-import { formatEnergyText } from "../../ui/HUDState";
+import { defineQuery, IWorld, hasComponent } from "bitecs";
+import { CampCoreComponent, DayNightCycle, CoopStateComponent, CampStockComponent } from "../components";
+import { formatResourceHUDText } from "../../ui/HUDState";
 import Phaser from "phaser";
 
 const coreQuery = defineQuery([CampCoreComponent]);
@@ -11,9 +11,9 @@ export function createHUDSystem(scene: Phaser.Scene) {
   // Setup Phaser UI elements
   const uiElements: Phaser.GameObjects.GameObject[] = [];
 
-  // Core Energy Text: Top-Left, crisp arcade pixel font, sharp black outline, NO background shadow box
-  const coreEnergyText = scene.add.text(30, 20, 'Energy: 0/0', {
-    fontSize: '20px',
+  // Core Energy & Resources Text: Top-Left, crisp arcade pixel font, sharp black outline, NO background shadow box
+  const coreEnergyText = scene.add.text(30, 20, '⚡ Energy: 0/0  |  🪵 Wood: 0  |  ⛏️ Iron: 0', {
+    fontSize: '18px',
     fontFamily: 'monospace',
     color: '#ffea00',
     stroke: '#000000',
@@ -67,13 +67,19 @@ export function createHUDSystem(scene: Phaser.Scene) {
         const isNight = DayNightCycle.isNight[eid] === 1;
         dayNightText.setText(isNight ? `🌙 Night ${dayNum}` : `☀️ Day ${dayNum}`);
     }
-    // 1. Update Core Energy
+    // 1. Update Core Energy & Resources
     const cores = coreQuery(world);
     if (cores.length > 0) {
       const coreEid = cores[0];
       const energy = CampCoreComponent.lightEnergy[coreEid];
       const max = CampCoreComponent.maxEnergy[coreEid];
-      coreEnergyText.setText(formatEnergyText(energy, max));
+      let wood = 0;
+      let iron = 0;
+      if (hasComponent(world, CampStockComponent, coreEid)) {
+        wood = CampStockComponent.wood[coreEid];
+        iron = CampStockComponent.iron[coreEid];
+      }
+      coreEnergyText.setText(formatResourceHUDText(energy, max, wood, iron));
     }
 
     return world;

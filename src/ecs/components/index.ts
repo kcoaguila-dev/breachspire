@@ -165,10 +165,24 @@ export const GameStateComponent = defineComponent({
   state: Types.ui8,
 });
 
+export enum WallTierValues {
+  PalisadeWood = 1,
+  MasonryStone = 2,
+  IronSpikes = 3,
+}
+
 export const CampWallComponent = defineComponent({
   side: Types.ui8, // 0 = Left, 1 = Right
   hp: Types.f32,
   maxHp: Types.f32,
+  tier: Types.ui8, // 1 = Wood (60 HP), 2 = Stone (120 HP), 3 = Iron Spikes (200 HP)
+});
+
+export const WatchtowerComponent = defineComponent({
+  occupiedArcherEid: Types.eid,
+  level: Types.ui8,
+  rangeBonus: Types.f32,
+  attackSpeedBonus: Types.f32,
 });
 
 // ─────────────────────────────────────────────────────
@@ -186,8 +200,22 @@ export const CoopStateComponent = defineComponent({
   player2Eid: Types.eid,
 });
 
+export enum PoiTypeValues {
+  AetherShrine = 0,
+  Outpost = 1,
+  ScoutingRuin = 2,
+  VagrantCamp = 3,
+  HammerStand = 4,
+  BowStand = 5,
+  SwordStand = 6,
+  WatchtowerFoundation = 7,
+}
+
 export const WildernessPoiComponent = defineComponent({
-  poiType: Types.ui8, // 0 = Aether Shrine, 1 = Outpost, 2 = Scouting Ruin, 3 = VagrantCamp, 4 = HammerStand, 5 = BowStand, 6 = SwordStand
+  poiType: Types.ui8, // Use PoiTypeValues
+  cost: Types.f32,
+  isUnlocked: Types.ui8,
+  respawnTimer: Types.f32,
   x: Types.f32,
 });
 
@@ -213,6 +241,9 @@ export enum BlueprintStateValues {
 export const WallBlueprint = defineComponent({
   state: Types.ui8,
   cost: Types.f32,
+  woodCost: Types.ui16,
+  ironCost: Types.ui16,
+  targetTier: Types.ui8,
   progress: Types.f32,
   targetWallEid: Types.eid,
 });

@@ -1,6 +1,7 @@
 import { defineQuery, IWorld, addEntity, addComponent, hasComponent } from "bitecs";
-import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole, PlayerControlled, GameStateComponent, GameStateValues } from "../components";
+import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole, PlayerControlled, GameStateComponent, GameStateValues, CampWallComponent } from "../components";
 import { shouldLeaderDieFromAttack } from "./GameStateSystem";
+import { calculateThornsDamage } from "./BuildingSystem";
 
 const combatQuery = defineQuery([Health, Attack, CombatTypeComponent, FSMState, Position]);
 const stateQuery = defineQuery([GameStateComponent]);
@@ -93,6 +94,15 @@ export function createCombatSystem() {
             }
           } else {
             Health.current[targetEid] = Math.max(0, Health.current[targetEid] - finalDamage);
+
+            // Thorns reflection for Tier 3 Iron Spiked walls
+            if (hasComponent(world, CampWallComponent, targetEid)) {
+              const tier = CampWallComponent.tier[targetEid];
+              const thorns = calculateThornsDamage(tier, finalDamage);
+              if (thorns > 0) {
+                Health.current[eid] = Math.max(0, Health.current[eid] - thorns);
+              }
+            }
           }
 
           // AUDIO: We can't easily play audio here because we don't have audioManager,

@@ -1,6 +1,6 @@
 import { createDayNightSystem } from "../ecs/systems/DayNightSystem";
 import Phaser from "phaser";
-import { world, createUnitEntity, createCampCoreEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity, createHarvestableNodeEntity } from "../ecs/world";
+import { world, createUnitEntity, createCampCoreEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity, createHarvestableNodeEntity, createWatchtowerEntity } from "../ecs/world";
 import { SpireSideValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, UnitRole, RoleValues, WallBlueprint, BlueprintStateValues, CoopStateComponent, WildernessPoiComponent, GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent, InvasionSpawner, SpireComponent } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
@@ -33,6 +33,7 @@ import { createProgressionXPSystem } from "../ecs/systems/ProgressionXPSystem";
 import { createAetherSpawningSystem } from "../ecs/systems/AetherSpawningSystem";
 import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSystem";
 import { createHarvestingSystem } from "../ecs/systems/HarvestingSystem";
+import { createWatchtowerSystem } from "../ecs/systems/WatchtowerSystem";
 import { ANIM_DEFS } from "../gfx/AnimationKeys";
 
 
@@ -65,6 +66,7 @@ export class GameScene extends Phaser.Scene {
   private aetherSpawningSystem!: ReturnType<typeof createAetherSpawningSystem>;
   private aetherCollectionSystem!: ReturnType<typeof createAetherCollectionSystem>;
   private harvestingSystem!: ReturnType<typeof createHarvestingSystem>;
+  private watchtowerSystem!: ReturnType<typeof createWatchtowerSystem>;
   private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
   private audioManager!: AudioManager;
 
@@ -177,6 +179,7 @@ export class GameScene extends Phaser.Scene {
     this.aetherSpawningSystem = createAetherSpawningSystem();
     this.aetherCollectionSystem = createAetherCollectionSystem(this.audioManager);
     this.harvestingSystem = createHarvestingSystem();
+    this.watchtowerSystem = createWatchtowerSystem();
 
     try {
       // Load all game data via validated loaders
@@ -387,6 +390,10 @@ export class GameScene extends Phaser.Scene {
       spawnNode(1, 400, 700, 2, 5);
       spawnNode(1, 2500, 2800, 2, 5);
 
+      // Watchtowers behind inner defenses
+      createWatchtowerEntity(world, 1340, centerY);
+      createWatchtowerEntity(world, 1860, centerY);
+
       // Spawn Player 1 (Commander)
       const knightEntity = createUnitEntity(world, commanderData, 1480, centerY);
       setPlayerControlled(world, knightEntity, 1);
@@ -428,6 +435,7 @@ export class GameScene extends Phaser.Scene {
     // Kingdom Building & Recruitment Systems
     this.buildingSystem(world, delta);
     this.harvestingSystem(world, delta);
+    this.watchtowerSystem(world, delta);
     this.recruitmentSystem(world, delta);
     this.progressionXPSystem(world, delta);
 

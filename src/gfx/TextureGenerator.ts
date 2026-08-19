@@ -76,26 +76,223 @@ export class TextureGenerator {
         // Harvestable nodes
         this.generatePineTree(scene, "node_pine_tree");
         this.generateIronOre(scene, "node_iron_ore");
+
+        // Tiered Walls & Structures
+        this.generateWoodPalisade(scene, "wall_wood_palisade");
+        this.generateIronSpikedWall(scene, "wall_iron_spikes");
+        this.generateWatchtower(scene, "watchtower_structure");
     }
 
     private static generatePineTree(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.add.graphics();
-        graphics.fillStyle(0x006400, 1);
-        graphics.fillRect(8, 0, 16, 48); // Leaves
-        graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(12, 48, 8, 16); // Trunk
-        graphics.generateTexture(key, 32, 64);
+
+        // Trunk (48x96)
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(20, 56, 8, 40);
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(22, 56, 4, 40);
+
+        // Layered Pine Foliage (Bottom to Top)
+        const layers = [
+            { y: 52, w: 44, h: 22, color: 0x1b5e20 },
+            { y: 36, w: 36, h: 20, color: 0x2e7d32 },
+            { y: 22, w: 28, h: 18, color: 0x388e3c },
+            { y: 6,  w: 18, h: 18, color: 0x43a047 },
+        ];
+
+        for (const l of layers) {
+            graphics.fillStyle(l.color, 1);
+            graphics.beginPath();
+            graphics.moveTo(24 - l.w / 2, l.y + l.h);
+            graphics.lineTo(24, l.y);
+            graphics.lineTo(24 + l.w / 2, l.y + l.h);
+            graphics.closePath();
+            graphics.fillPath();
+
+            // Foliage highlight
+            graphics.fillStyle(0x81c784, 0.6);
+            graphics.fillRect(24 - l.w / 4, l.y + 6, l.w / 2, 2);
+        }
+
+        graphics.generateTexture(key, 48, 96);
         graphics.destroy();
     }
 
     private static generateIronOre(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.add.graphics();
-        graphics.fillStyle(0xA9A9A9, 1);
-        graphics.fillRect(0, 16, 32, 16);
-        graphics.fillRect(4, 8, 24, 8);
-        graphics.generateTexture(key, 32, 32);
+
+        // Dark Granite Rock Base (40x32)
+        graphics.fillStyle(0x263238, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 32);
+        graphics.lineTo(6, 12);
+        graphics.lineTo(20, 4);
+        graphics.lineTo(34, 10);
+        graphics.lineTo(40, 32);
+        graphics.closePath();
+        graphics.fillPath();
+
+        // Mid-tone Stone Facets
+        graphics.fillStyle(0x455a64, 1);
+        graphics.fillRect(8, 14, 24, 14);
+        graphics.fillStyle(0x607d8b, 1);
+        graphics.fillRect(12, 8, 16, 10);
+
+        // Metallic Silver / Iron Ore Veins
+        graphics.fillStyle(0xcfd8dc, 1);
+        graphics.fillRect(10, 16, 6, 4);
+        graphics.fillRect(22, 12, 8, 5);
+        graphics.fillRect(16, 22, 10, 4);
+
+        // Metallic Sparkle / Gleam Highlights
+        graphics.fillStyle(0xffffff, 1);
+        graphics.fillRect(12, 17, 2, 2);
+        graphics.fillRect(25, 13, 2, 2);
+        graphics.fillRect(18, 23, 2, 2);
+
+        graphics.generateTexture(key, 40, 32);
+        graphics.destroy();
+    }
+
+    private static generateWoodPalisade(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+
+        // Vertical Log Stakes (48x64)
+        for (let x = 0; x < 48; x += 8) {
+            graphics.fillStyle(0x3e2723, 1);
+            graphics.fillRect(x, 8, 8, 56);
+            graphics.fillStyle(0x5d4037, 1);
+            graphics.fillRect(x + 1, 9, 6, 54);
+            graphics.fillStyle(0x8d6e63, 1);
+            graphics.fillRect(x + 2, 10, 2, 50);
+
+            // Sharpened Log Tips
+            graphics.fillStyle(0x5d4037, 1);
+            graphics.beginPath();
+            graphics.moveTo(x, 8);
+            graphics.lineTo(x + 4, 0);
+            graphics.lineTo(x + 8, 8);
+            graphics.closePath();
+            graphics.fillPath();
+        }
+
+        // Horizontal Oak Cross-Beams & Rope Bindings
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(0, 20, 48, 6);
+        graphics.fillRect(0, 44, 48, 6);
+        graphics.fillStyle(0xd7ccc8, 1);
+        graphics.fillRect(8, 20, 4, 6);
+        graphics.fillRect(24, 20, 4, 6);
+        graphics.fillRect(40, 20, 4, 6);
+
+        graphics.generateTexture(key, 48, 64);
+        graphics.destroy();
+    }
+
+    private static generateIronSpikedWall(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+
+        // Fortified Stone Base (48x80)
+        graphics.fillStyle(0x263238, 1);
+        graphics.fillRect(0, 16, 48, 64);
+        graphics.fillStyle(0x37474f, 1);
+        graphics.fillRect(2, 18, 44, 60);
+
+        // Iron Plating Sheets
+        graphics.fillStyle(0x546e7a, 1);
+        graphics.fillRect(6, 24, 36, 48);
+        graphics.fillStyle(0x78909c, 1);
+        graphics.fillRect(8, 26, 32, 44);
+
+        // Heavy Iron Rivets
+        graphics.fillStyle(0x263238, 1);
+        for (let y = 28; y <= 66; y += 12) {
+            graphics.fillRect(10, y, 3, 3);
+            graphics.fillRect(35, y, 3, 3);
+            graphics.fillStyle(0xffffff, 0.8);
+            graphics.fillRect(10, y, 1, 1);
+            graphics.fillRect(35, y, 1, 1);
+            graphics.fillStyle(0x263238, 1);
+        }
+
+        // Row of Jagged Iron Spikes on Front Parapet (Reflects Thorns Damage)
+        for (let x = 4; x < 48; x += 10) {
+            graphics.fillStyle(0x263238, 1);
+            graphics.beginPath();
+            graphics.moveTo(x - 3, 16);
+            graphics.lineTo(x + 2, 0);
+            graphics.lineTo(x + 7, 16);
+            graphics.closePath();
+            graphics.fillPath();
+
+            graphics.fillStyle(0xb0bec5, 1);
+            graphics.beginPath();
+            graphics.moveTo(x - 1, 15);
+            graphics.lineTo(x + 2, 2);
+            graphics.lineTo(x + 5, 15);
+            graphics.closePath();
+            graphics.fillPath();
+
+            graphics.fillStyle(0xffffff, 1);
+            graphics.fillRect(x + 1, 2, 2, 4);
+        }
+
+        graphics.generateTexture(key, 48, 80);
+        graphics.destroy();
+    }
+
+    private static generateWatchtower(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+
+        // 4 Timber Support Pillars (48x96)
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(4, 36, 6, 60);
+        graphics.fillRect(38, 36, 6, 60);
+
+        // Diagonal Cross Braces
+        graphics.lineStyle(2, 0x4e342e, 1);
+        graphics.beginPath();
+        graphics.moveTo(6, 40);
+        graphics.lineTo(42, 90);
+        graphics.moveTo(42, 40);
+        graphics.lineTo(6, 90);
+        graphics.strokePath();
+
+        // Central Wooden Ladder
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(20, 36, 2, 60);
+        graphics.fillRect(26, 36, 2, 60);
+        for (let y = 40; y < 96; y += 8) {
+            graphics.fillRect(20, y, 8, 2);
+        }
+
+        // Elevated Archer Sniper Platform (Perch at y=36)
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(0, 32, 48, 6);
+        graphics.fillStyle(0x8d6e63, 1);
+        graphics.fillRect(2, 33, 44, 4);
+
+        // Platform Safety Railing
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(0, 20, 4, 12);
+        graphics.fillRect(44, 20, 4, 12);
+        graphics.fillRect(0, 20, 48, 3);
+
+        // Thatched Straw Roof Canopy
+        graphics.fillStyle(0xda9100, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 14);
+        graphics.lineTo(24, 0);
+        graphics.lineTo(48, 14);
+        graphics.closePath();
+        graphics.fillPath();
+
+        graphics.generateTexture(key, 48, 96);
         graphics.destroy();
     }
 

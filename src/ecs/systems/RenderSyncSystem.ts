@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled, HarvestableNode, HarvestableNodeValues, HarvestableStateValues } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled, HarvestableNode, HarvestableNodeValues, HarvestableStateValues, WallTierValues, WatchtowerComponent } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getAnimBaseKey } from "../../gfx/AnimationKeys";
 import { getWallDamageStage } from "./CampSiegeSystem";
@@ -26,6 +26,10 @@ const campCoreQueryEnter = enterQuery(campCoreQuery);
 
 const campWallQuery = defineQuery([Position, CampWallComponent, Health]);
 const campWallQueryEnter = enterQuery(campWallQuery);
+
+const watchtowerQuery = defineQuery([Position, WatchtowerComponent]);
+const watchtowerQueryEnter = enterQuery(watchtowerQuery);
+const watchtowerQueryExit = exitQuery(watchtowerQuery);
 
 const spireQuery = defineQuery([Position, SpireComponent, Health]);
 const spireQueryEnter = enterQuery(spireQuery);
@@ -305,17 +309,51 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             sprite.setAlpha(0.8);
             sprite.clearTint();
         } else {
-            const stage = getWallDamageStage(currentHp, maxHp);
-            let textureKey = "wall_stage_1_pristine";
-            if (stage === 1) textureKey = "wall_stage_1_pristine";
-            else if (stage === 2) textureKey = "wall_stage_2_cracked";
-            else if (stage === 3) textureKey = "wall_stage_3_crumbling";
-            else if (stage === 4) textureKey = "wall_stage_4_critical";
+            const tier = CampWallComponent.tier[eid] || WallTierValues.PalisadeWood;
+            if (tier === WallTierValues.PalisadeWood) {
+                sprite.setTexture("wall_wood_palisade");
+            } else if (tier === WallTierValues.IronSpikes) {
+                sprite.setTexture("wall_iron_spikes");
+            } else {
+                const stage = getWallDamageStage(currentHp, maxHp);
+                let textureKey = "wall_stage_1_pristine";
+                if (stage === 1) textureKey = "wall_stage_1_pristine";
+                else if (stage === 2) textureKey = "wall_stage_2_cracked";
+                else if (stage === 3) textureKey = "wall_stage_3_crumbling";
+                else if (stage === 4) textureKey = "wall_stage_4_critical";
 
-            sprite.setTexture(textureKey);
+                sprite.setTexture(textureKey);
+            }
             sprite.setAlpha(1.0);
             sprite.clearTint();
         }
+      }
+    }
+
+    // --- Watchtowers ---
+    const watchtowersEntered = watchtowerQueryEnter(world);
+    for (let i = 0; i < watchtowersEntered.length; i++) {
+      const eid = watchtowersEntered[i];
+      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "watchtower_structure");
+      sprite.setOrigin(0.5, 1);
+      sprite.setDepth(12);
+      spriteMap.set(eid, sprite);
+    }
+    const watchtowersExit = watchtowerQueryExit(world);
+    for (let i = 0; i < watchtowersExit.length; i++) {
+      const eid = watchtowersExit[i];
+      const sprite = spriteMap.get(eid);
+      if (sprite) {
+        sprite.destroy();
+        spriteMap.delete(eid);
+      }
+    }
+    const watchtowers = watchtowerQuery(world);
+    for (let i = 0; i < watchtowers.length; i++) {
+      const eid = watchtowers[i];
+      const sprite = spriteMap.get(eid);
+      if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
+        sprite.setPosition(Position.x[eid], Position.y[eid]);
       }
     }
 

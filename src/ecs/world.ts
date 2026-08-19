@@ -25,6 +25,7 @@ import {
   CanReachElevated,
   FlightEnergyComponent,
   FloorDefenderComponent,
+  WatchtowerComponent,
 } from "./components";
 
 export const world = createWorld();
@@ -293,5 +294,19 @@ export function createDayNightEntity(world: IWorld): number {
   DayNightCycle.timeOfDay[entity] = 0;
   DayNightCycle.dayNumber[entity] = 1;
   DayNightCycle.isNight[entity] = 0;
+  return entity;
+}
+
+export function createWatchtowerEntity(world: IWorld, x: number, y: number): number {
+  const entity = addEntity(world);
+  addComponent(world, Position, entity);
+  Position.x[entity] = x;
+  Position.y[entity] = y;
+
+  addComponent(world, WatchtowerComponent, entity);
+  WatchtowerComponent.occupiedArcherEid[entity] = 0;
+  WatchtowerComponent.level[entity] = 1;
+  WatchtowerComponent.rangeBonus[entity] = 1.5;
+  WatchtowerComponent.attackSpeedBonus[entity] = 1.3;
   return entity;
 }

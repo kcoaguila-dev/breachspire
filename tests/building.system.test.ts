@@ -47,8 +47,8 @@ describe('Building System', () => {
     const buildingSystem = createBuildingSystem();
     buildingSystem(world, 16);
 
-    // Verify 10 Aether deducted and blueprint set to ORDERED
-    expect(CampCoreComponent.lightEnergy[coreEid]).toBe(40);
+    // Verify 5 Aether deducted and blueprint set to ORDERED
+    expect(CampCoreComponent.lightEnergy[coreEid]).toBe(45);
     expect(WallBlueprint.state[bpEid]).toBe(BlueprintStateValues.ORDERED);
   });
 
@@ -91,7 +91,7 @@ describe('Building System', () => {
     // Blueprint component is removed and stone wall instantiated with HP
     expect(hasComponent(world, WallBlueprint, bpEid)).toBe(false);
     expect(hasComponent(world, CampWallComponent, bpEid)).toBe(true);
-    expect(CampWallComponent.hp[bpEid]).toBe(100);
-    expect(Health.current[bpEid]).toBe(100);
+    expect(CampWallComponent.hp[bpEid]).toBe(60);
+    expect(Health.current[bpEid]).toBe(60);
   });
 });

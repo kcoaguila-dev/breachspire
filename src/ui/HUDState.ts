@@ -4,6 +4,14 @@ export function formatEnergyText(current: number, max: number): string {
   return `Energy: ${c}/${m}`;
 }
 
+export function formatResourceHUDText(energy: number, maxEnergy: number, wood: number, iron: number): string {
+  const e = Math.max(0, Math.floor(energy));
+  const m = Math.max(0, Math.floor(maxEnergy));
+  const w = Math.max(0, Math.floor(wood));
+  const i = Math.max(0, Math.floor(iron));
+  return `⚡ Energy: ${e}/${m}  |  🪵 Wood: ${w}  |  ⛏️ Iron: ${i}`;
+}
+
 export function calculateBarFill(current: number, max: number): number {
   if (max <= 0) return 0;
   if (current <= 0) return 0;

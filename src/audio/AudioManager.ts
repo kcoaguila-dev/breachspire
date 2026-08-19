@@ -267,6 +267,23 @@ export class AudioManager {
     setTimeout(() => this.playTone(1600, 'sine', 0.4, 0.3), 100);
   }
 
+  public playChop() {
+    this.playTone(180, 'square', 0.08, 0.4);
+  }
+
+  public playPickaxe() {
+    this.playTone(2200, 'triangle', 0.05, 0.3);
+    setTimeout(() => this.playTone(1800, 'sine', 0.1, 0.2), 30);
+  }
+
+  public playTreeFalling() {
+    this.playCollapse();
+  }
+
+  public playHammer() {
+    this.playTone(400, 'triangle', 0.06, 0.35);
+  }
+
   public playVictoryStinger() {
     this.playTone(440, 'square', 0.2);
     setTimeout(() => this.playTone(554, 'square', 0.2), 200);
