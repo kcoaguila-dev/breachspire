@@ -120,12 +120,19 @@ export function createWatchtowerSystem() {
             // Case A: Unbuilt Foundation Rubble -> Order Construction
             if (state === TowerStateValues.RUBBLE) {
               const cost = computeTowerUpgradeCost(0)!;
-              const curAether = CampCoreComponent.lightEnergy[coreEid];
+              const pEnergy = PlayerControlled.energy[pEid] || 0;
+              const cEnergy = CampCoreComponent.lightEnergy[coreEid] || 0;
+              const curAether = Math.max(pEnergy, cEnergy);
               const curWood = hasComponent(world, CampStockComponent, coreEid) ? CampStockComponent.wood[coreEid] : 0;
 
               if (curAether >= cost.aether && curWood >= cost.wood) {
                 interactionCooldowns.set(pEid, 300);
-                CampCoreComponent.lightEnergy[coreEid] -= cost.aether;
+                if (PlayerControlled.energy[pEid] >= cost.aether) {
+                  PlayerControlled.energy[pEid] -= cost.aether;
+                }
+                if (CampCoreComponent.lightEnergy[coreEid] >= cost.aether) {
+                  CampCoreComponent.lightEnergy[coreEid] -= cost.aether;
+                }
                 if (hasComponent(world, CampStockComponent, coreEid)) {
                   CampStockComponent.wood[coreEid] -= cost.wood;
                 }
@@ -149,11 +156,12 @@ export function createWatchtowerSystem() {
                 // Check if already stationed in a tower
                 let isStationed = false;
                 for (let ot = 0; ot < towers.length; ot++) {
-                  const oEid = towers[ot];
+                  const otEid = towers[ot];
                   if (
-                    WatchtowerComponent.archer1Eid[oEid] === uEid ||
-                    WatchtowerComponent.archer2Eid[oEid] === uEid ||
-                    WatchtowerComponent.archer3Eid[oEid] === uEid
+                    WatchtowerComponent.archer1Eid[otEid] === uEid ||
+                    WatchtowerComponent.archer2Eid[otEid] === uEid ||
+                    WatchtowerComponent.archer3Eid[otEid] === uEid ||
+                    WatchtowerComponent.occupiedArcherEid[otEid] === uEid
                   ) {
                     isStationed = true;
                     break;
@@ -188,13 +196,20 @@ export function createWatchtowerSystem() {
             else if (state === TowerStateValues.COMPLETED && garrison >= maxG) {
               const cost = computeTowerUpgradeCost(tier);
               if (cost) {
-                const curAether = CampCoreComponent.lightEnergy[coreEid];
+                const pEnergy = PlayerControlled.energy[pEid] || 0;
+                const cEnergy = CampCoreComponent.lightEnergy[coreEid] || 0;
+                const curAether = Math.max(pEnergy, cEnergy);
                 const curWood = hasComponent(world, CampStockComponent, coreEid) ? CampStockComponent.wood[coreEid] : 0;
                 const curIron = hasComponent(world, CampStockComponent, coreEid) ? CampStockComponent.iron[coreEid] : 0;
 
                 if (curAether >= cost.aether && curWood >= cost.wood && curIron >= cost.iron) {
                   interactionCooldowns.set(pEid, 300);
-                  CampCoreComponent.lightEnergy[coreEid] -= cost.aether;
+                  if (PlayerControlled.energy[pEid] >= cost.aether) {
+                    PlayerControlled.energy[pEid] -= cost.aether;
+                  }
+                  if (CampCoreComponent.lightEnergy[coreEid] >= cost.aether) {
+                    CampCoreComponent.lightEnergy[coreEid] -= cost.aether;
+                  }
                   if (hasComponent(world, CampStockComponent, coreEid)) {
                     CampStockComponent.wood[coreEid] -= cost.wood;
                     CampStockComponent.iron[coreEid] -= cost.iron;

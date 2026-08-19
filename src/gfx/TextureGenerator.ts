@@ -40,8 +40,9 @@ export class TextureGenerator {
         this.generatePixelBg(scene, "ground_tile", 64, 64, "#8B4513", "#5C4033");
         this.generateCobblestoneBank(scene, "ground_cobblestone_bank");
 
-        // Camp — only generate hearth programmatically if real crystal wasn't loaded
-        this.generateCampCore(scene, "camp_core_hearth");
+        // Camp — Grand Nordic Castle Keep & Great Hall (Kingdom Two Crowns Scale)
+        this.generateGrandCastleKeep(scene, "grand_castle_keep");
+        this.generateGrandCastleKeep(scene, "camp_core_hearth");
         this.generateRect(scene, "camp_wall_wood", 32, 128, "#8B4513");
         this.generateWallFoundationMound(scene, "wall_foundation_mound");
         this.generateWallStonePristine(scene, "wall_stage_1_pristine");
@@ -1062,149 +1063,442 @@ export class TextureGenerator {
     private static generateToolHammerStand(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Wooden workbench
+        // 96 x 96 px Grand Builder Workshop (Kingdom Two Crowns Scale)
+
+        // 1. High Banner Mast (x = 12..16, y = 4..80)
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(12, 4, 4, 80);
+        graphics.fillStyle(0xd4af37, 1);
+        graphics.fillRect(10, 2, 8, 4);
+
+        // Hanging Hammer Banner (Royal Blue & Gold, with White Hammer)
+        graphics.fillStyle(0x192a56, 1);
+        graphics.fillRect(16, 8, 28, 42);
+        graphics.fillStyle(0xd4af37, 1);
+        graphics.fillRect(16, 8, 28, 3);
+        graphics.fillRect(16, 47, 28, 3);
+        graphics.fillRect(41, 8, 3, 42);
+        // Hammer Heraldry on Banner
+        graphics.fillStyle(0xf5f6fa, 1);
+        graphics.fillRect(26, 16, 10, 6);
+        graphics.fillRect(29, 22, 4, 16);
+
+        // 2. Timber Shelter Roof (x = 36..92, y = 30..46)
+        graphics.fillStyle(0x271912, 1);
+        graphics.fillRect(36, 32, 56, 14);
         graphics.fillStyle(0x5c3a21, 1);
-        graphics.fillRect(4, 18, 24, 12);
-        // Anvil
-        graphics.fillStyle(0x3a4048, 1);
-        graphics.fillRect(8, 12, 16, 6);
-        graphics.fillRect(10, 8, 12, 4);
-        // Hammer
-        graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(18, 4, 3, 10);
-        graphics.fillStyle(0xb0c4de, 1);
-        graphics.fillRect(15, 2, 9, 4);
-        graphics.generateTexture(key, 32, 32);
+        graphics.fillRect(38, 30, 52, 12);
+        graphics.fillStyle(0x8d5b32, 1);
+        for (let s = 0; s < 5; s++) {
+            graphics.fillRect(40 + s * 10, 32, 8, 8);
+        }
+
+        // Support Wooden Posts
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(40, 44, 5, 44);
+        graphics.fillRect(84, 44, 5, 44);
+
+        // 3. Heavy Carpenter Workbench & Tool Rack (y = 60..88)
+        graphics.fillStyle(0x4a2c11, 1);
+        graphics.fillRect(44, 64, 42, 24);
+        graphics.fillStyle(0x6b4423, 1);
+        graphics.fillRect(46, 62, 38, 8);
+
+        // Heavy Iron Anvil on Stone Block
+        graphics.fillStyle(0x2f3640, 1);
+        graphics.fillRect(48, 54, 14, 10);
+        graphics.fillStyle(0x718093, 1);
+        graphics.fillRect(46, 52, 18, 5);
+
+        // 3 Warhammers / Mallets Hanging on Tool Pegs
+        for (let h = 0; h < 3; h++) {
+            const hx = 68 + h * 6;
+            // Wooden Handle
+            graphics.fillStyle(0x8B4513, 1);
+            graphics.fillRect(hx + 2, 46, 2, 16);
+            // Steel Mallet Head
+            graphics.fillStyle(0xdcdde1, 1);
+            graphics.fillRect(hx, 44, 6, 5);
+        }
+
+        // Foundation Timber Base (y = 88..96)
+        graphics.fillStyle(0x2f3640, 1);
+        graphics.fillRect(8, 88, 82, 8);
+
+        graphics.generateTexture(key, 96, 96);
         graphics.destroy();
     }
 
     private static generateToolBowStand(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Wooden rack
-        graphics.fillStyle(0x5c3a21, 1);
-        graphics.fillRect(6, 14, 20, 16);
-        // Archery target board
-        graphics.fillStyle(0xf0ece1, 1);
-        graphics.fillCircle(16, 10, 8);
-        graphics.fillStyle(0xcc2222, 1);
-        graphics.fillCircle(16, 10, 5);
-        graphics.fillStyle(0xffea00, 1);
-        graphics.fillCircle(16, 10, 2);
-        // Bow leaning
-        graphics.lineStyle(2, 0x8b5a2b, 1);
-        graphics.beginPath();
-        graphics.moveTo(24, 6);
-        graphics.lineTo(28, 22);
-        graphics.strokePath();
-        graphics.generateTexture(key, 32, 32);
+        // 96 x 96 px Grand Archery Range & Fletcher (Kingdom Two Crowns Scale)
+
+        // 1. High Banner Mast (x = 12..16, y = 4..80)
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(12, 4, 4, 80);
+        graphics.fillStyle(0xd4af37, 1);
+        graphics.fillRect(10, 2, 8, 4);
+
+        // Hanging Bow Banner (Forest Green & Gold, with Golden Bow)
+        graphics.fillStyle(0x1e3799, 1);
+        graphics.fillRect(16, 8, 28, 42);
+        graphics.fillStyle(0xd4af37, 1);
+        graphics.fillRect(16, 8, 28, 3);
+        graphics.fillRect(16, 47, 28, 3);
+        graphics.fillRect(41, 8, 3, 42);
+        // Bow Heraldry on Banner
+        graphics.fillStyle(0xf1c40f, 1);
+        graphics.fillRect(25, 16, 3, 20);
+        graphics.fillRect(28, 18, 4, 3);
+        graphics.fillRect(28, 31, 4, 3);
+        graphics.fillRect(32, 21, 3, 10);
+
+        // 2. Archery Target Hay Bale with Red Bullseye (x = 64, y = 52, r = 18)
+        graphics.fillStyle(0x271912, 1);
+        graphics.fillRect(66, 68, 6, 20); // Tripod Legs
+        graphics.fillRect(56, 72, 4, 16);
+        graphics.fillRect(76, 72, 4, 16);
+
+        // Straw Round Bale
+        graphics.fillStyle(0xdfe6e9, 1);
+        graphics.fillCircle(68, 54, 18);
+        graphics.fillStyle(0xd63031, 1);
+        graphics.fillCircle(68, 54, 14);
+        graphics.fillStyle(0xf5f6fa, 1);
+        graphics.fillCircle(68, 54, 10);
+        graphics.fillStyle(0xd63031, 1);
+        graphics.fillCircle(68, 54, 6);
+        graphics.fillStyle(0xf1c40f, 1);
+        graphics.fillCircle(68, 54, 2); // Gold Bullseye Center!
+
+        // 3. Wooden Fletcher Bow Rack with Recurve Bows (x = 36..54, y = 46..88)
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(36, 46, 4, 42);
+        graphics.fillRect(52, 46, 4, 42);
+        graphics.fillRect(36, 48, 20, 4);
+
+        // Curved Longbows Leaning on Rack
+        graphics.fillStyle(0x8b5a2b, 1);
+        graphics.fillRect(40, 52, 3, 32);
+        graphics.fillRect(46, 52, 3, 32);
+
+        // Quiver Barrel Full of Arrows
+        graphics.fillStyle(0x4a2c11, 1);
+        graphics.fillRect(38, 70, 14, 18);
+        graphics.fillStyle(0x2ed573, 1); // Green Fletching Feathers
+        graphics.fillRect(40, 64, 3, 6);
+        graphics.fillRect(44, 62, 3, 8);
+        graphics.fillRect(48, 65, 3, 5);
+
+        // Foundation Base
+        graphics.fillStyle(0x2f3640, 1);
+        graphics.fillRect(8, 88, 82, 8);
+
+        graphics.generateTexture(key, 96, 96);
         graphics.destroy();
     }
 
     private static generateToolSwordStand(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Wooden weapon rack
+        // 96 x 96 px Grand Knight Armory & Forge (Kingdom Two Crowns Scale)
+
+        // 1. High Banner Mast (x = 12..16, y = 4..80)
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(12, 4, 4, 80);
+        graphics.fillStyle(0xd4af37, 1);
+        graphics.fillRect(10, 2, 8, 4);
+
+        // Hanging Sword Banner (Crimson Red & Gold, with Silver Sword)
+        graphics.fillStyle(0x800000, 1);
+        graphics.fillRect(16, 8, 28, 42);
+        graphics.fillStyle(0xd4af37, 1);
+        graphics.fillRect(16, 8, 28, 3);
+        graphics.fillRect(16, 47, 28, 3);
+        graphics.fillRect(41, 8, 3, 42);
+        // Sword Heraldry on Banner
+        graphics.fillStyle(0xf5f6fa, 1);
+        graphics.fillRect(29, 14, 3, 24);
+        graphics.fillStyle(0xf1c40f, 1);
+        graphics.fillRect(26, 32, 9, 3);
+        graphics.fillRect(29, 35, 3, 4);
+
+        // 2. Weapon Rack with Steel Broadswords and Knight Shields
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(42, 40, 48, 6);
+        graphics.fillRect(44, 46, 5, 42);
+        graphics.fillRect(84, 46, 5, 42);
+
+        // Polished Broadswords
+        for (let s = 0; s < 3; s++) {
+            const sx = 52 + s * 8;
+            graphics.fillStyle(0xdcdde1, 1);
+            graphics.fillRect(sx, 44, 3, 34);
+            graphics.fillStyle(0xf1c40f, 1);
+            graphics.fillRect(sx - 2, 70, 7, 3);
+        }
+
+        // Royal Painted Knight Shield
+        graphics.fillStyle(0x2f3542, 1);
+        graphics.fillRect(72, 54, 14, 22);
+        graphics.fillStyle(0xff4757, 1);
+        graphics.fillRect(73, 55, 12, 20);
+        graphics.fillStyle(0xffffff, 1);
+        graphics.fillRect(78, 55, 2, 20);
+        graphics.fillRect(73, 63, 12, 2);
+
+        // Foundation Base
+        graphics.fillStyle(0x2f3640, 1);
+        graphics.fillRect(8, 88, 82, 8);
+
+        graphics.generateTexture(key, 96, 96);
+        graphics.destroy();
+    }
+
+    private static generateGrandCastleKeep(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        // 240 x 160 px Grand Nordic Castle Keep & Great Hall (Kingdom Two Crowns Scale)
+
+        // 1. High Wooden Palisade Fortification Backdrop (y = 30..140)
+        graphics.fillStyle(0x2c1d11, 1);
+        graphics.fillRect(10, 36, 220, 114);
+        graphics.fillStyle(0x4a2e18, 1);
+        for (let log = 0; log < 22; log++) {
+            graphics.fillRect(12 + log * 10, 34, 8, 116);
+            graphics.fillStyle(0x382210, 1);
+            graphics.fillRect(12 + log * 10, 30, 8, 6); // Pointed Log Palisade Tips!
+            graphics.fillStyle(0x4a2e18, 1);
+        }
+
+        // 2. Heavy Granite & Stone Masonry Base (y = 110..155)
+        graphics.fillStyle(0x1e272e, 1);
+        graphics.fillRect(24, 110, 192, 45);
+        graphics.fillStyle(0x353b48, 1);
+        for (let row = 0; row < 4; row++) {
+            const y = 114 + row * 10;
+            const offset = (row % 2) * 12;
+            for (let col = 0; col < 8; col++) {
+                graphics.fillRect(28 + col * 24 + offset, y, 20, 8);
+            }
+        }
+
+        // 3. Timber Castle Great Hall Structure (x = 48..192, y = 30..114)
         graphics.fillStyle(0x5c3a21, 1);
-        graphics.fillRect(6, 14, 20, 16);
-        // Shield
-        graphics.fillStyle(0x335588, 1);
-        graphics.fillCircle(12, 16, 6);
-        graphics.fillStyle(0xffea00, 1);
-        graphics.fillRect(11, 12, 2, 8);
-        // Sword
-        graphics.fillStyle(0xddeeff, 1);
-        graphics.fillRect(20, 2, 3, 18);
-        graphics.fillStyle(0xffea00, 1);
-        graphics.fillRect(17, 18, 9, 2);
-        graphics.generateTexture(key, 32, 32);
+        graphics.fillRect(52, 42, 136, 72);
+        // Vertical Heavy Timber Studs
+        graphics.fillStyle(0x3e2723, 1);
+        for (let stud = 0; stud < 8; stud++) {
+            graphics.fillRect(52 + stud * 19, 42, 6, 72);
+        }
+
+        // 4. Steep Pitched Timber Gabled Roof with Apex Cross (x = 30..210, y = 0..44)
+        graphics.fillStyle(0x271912, 1);
+        graphics.beginPath();
+        graphics.moveTo(30, 44);
+        graphics.lineTo(120, 6);
+        graphics.lineTo(210, 44);
+        graphics.closePath();
+        graphics.fillPath();
+
+        graphics.fillStyle(0x8d5b32, 1);
+        graphics.beginPath();
+        graphics.moveTo(34, 42);
+        graphics.lineTo(120, 10);
+        graphics.lineTo(206, 42);
+        graphics.closePath();
+        graphics.fillPath();
+
+        // Shingle Layer Details
+        graphics.fillStyle(0x5c3a21, 1);
+        for (let layer = 0; layer < 4; layer++) {
+            const y = 16 + layer * 7;
+            const inset = (4 - layer) * 18;
+            graphics.fillRect(40 + inset, y, 160 - inset * 2, 3);
+        }
+
+        // Roof Peak Cross Pinnacle
+        graphics.fillStyle(0xd4af37, 1);
+        graphics.fillRect(118, 0, 4, 14);
+        graphics.fillRect(114, 4, 12, 4);
+
+        // 5. Open Arched Main Portal with Glowing Stone Fire Hearth Inside (x = 94..146, y = 74..148)
+        graphics.fillStyle(0x1e1208, 1);
+        graphics.fillRect(94, 76, 52, 72);
+        // Archway Top
+        graphics.beginPath();
+        graphics.arc(120, 76, 26, Math.PI, 0);
+        graphics.fillPath();
+
+        // Cozy Warm Fire Hearth Ambient Glow Inside
+        graphics.fillStyle(0xffb142, 0.85);
+        graphics.fillCircle(120, 114, 22);
+        graphics.fillStyle(0xff5252, 0.95);
+        graphics.fillCircle(120, 118, 14);
+        graphics.fillStyle(0xffd32a, 1);
+        graphics.fillCircle(120, 120, 8);
+
+        // Firepit Stone Surround & Logs
+        graphics.fillStyle(0x57606f, 1);
+        graphics.fillRect(104, 132, 32, 8);
+        graphics.fillStyle(0x2f3542, 1);
+        graphics.fillRect(108, 126, 24, 6);
+
+        // 6. Royal Hanging Banners on Hall Walls
+        // Left Purple Royal Banner
+        graphics.fillStyle(0x6c5ce7, 1);
+        graphics.fillRect(64, 56, 18, 38);
+        graphics.fillStyle(0xf1c40f, 1);
+        graphics.fillRect(64, 56, 18, 3);
+        graphics.fillRect(64, 91, 18, 3);
+        graphics.fillRect(72, 64, 2, 20);
+
+        // Right Purple Royal Banner
+        graphics.fillStyle(0x6c5ce7, 1);
+        graphics.fillRect(158, 56, 18, 38);
+        graphics.fillStyle(0xf1c40f, 1);
+        graphics.fillRect(158, 56, 18, 3);
+        graphics.fillRect(158, 91, 18, 3);
+        graphics.fillRect(166, 64, 2, 20);
+
+        // Wall Sconce Torches
+        graphics.fillStyle(0x1e272e, 1);
+        graphics.fillRect(86, 78, 3, 10);
+        graphics.fillRect(151, 78, 3, 10);
+        graphics.fillStyle(0xffa502, 1);
+        graphics.fillCircle(87, 76, 4);
+        graphics.fillCircle(152, 76, 4);
+
+        // Ground Grass/Cobblestone Trim
+        graphics.fillStyle(0x2ed573, 1);
+        graphics.fillRect(6, 152, 228, 8);
+
+        graphics.generateTexture(key, 240, 160);
         graphics.destroy();
     }
 
     private static generateVagrantUnit(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Dusty/Paler Skin
+        // 32 x 48 px Sleek Medieval Vagrant (Kingdom Two Crowns proportions)
+
+        // Head & Skin (Pale, weary traveler)
         graphics.fillStyle(0xdfba96, 1);
-        graphics.fillRect(12, 7, 8, 8);
-        // Messy ragged dark grey hair
-        graphics.fillStyle(0x3e3e3e, 1);
-        graphics.fillRect(11, 4, 10, 4);
-        graphics.fillRect(10, 6, 3, 5);
-        // Eyes (slumped/weary)
-        graphics.fillStyle(0x1a1a1a, 1);
-        graphics.fillRect(17, 10, 2, 2);
-        // Ragged grayish/drab tunic
-        graphics.fillStyle(0x757575, 1);
-        graphics.fillRect(10, 15, 12, 9);
-        // Patch / dirt on tunic
-        graphics.fillStyle(0x546e7a, 1);
-        graphics.fillRect(12, 17, 3, 3);
-        // Frayed rope belt
-        graphics.fillStyle(0x424242, 1);
-        graphics.fillRect(10, 20, 12, 2);
-        // Bare dusty legs / frayed hem
-        graphics.fillStyle(0x8d6e63, 1);
-        graphics.fillRect(11, 24, 4, 6);
-        graphics.fillRect(17, 24, 4, 6);
-        graphics.generateTexture(key, 32, 32);
+        graphics.fillRect(12, 8, 8, 8);
+
+        // Dark Ragged Hair & Stubble
+        graphics.fillStyle(0x2f3640, 1);
+        graphics.fillRect(11, 6, 10, 4);
+        graphics.fillRect(10, 8, 3, 6);
+
+        // Weary Dark Eyes
+        graphics.fillStyle(0x1e272e, 1);
+        graphics.fillRect(17, 11, 2, 2);
+
+        // Ragged Ash-Grey Tunic
+        graphics.fillStyle(0x718093, 1);
+        graphics.fillRect(10, 16, 12, 14);
+        // Patches
+        graphics.fillStyle(0x4b6584, 1);
+        graphics.fillRect(12, 20, 3, 3);
+
+        // Frayed Rope Belt
+        graphics.fillStyle(0x353b48, 1);
+        graphics.fillRect(10, 24, 12, 2);
+
+        // Legs / Frayed Hem & Dusty Boots
+        graphics.fillStyle(0x57606f, 1);
+        graphics.fillRect(11, 30, 4, 12);
+        graphics.fillRect(17, 30, 4, 12);
+        graphics.fillStyle(0x2f3542, 1);
+        graphics.fillRect(10, 42, 5, 4);
+        graphics.fillRect(17, 42, 5, 4);
+
+        graphics.generateTexture(key, 32, 48);
         graphics.destroy();
     }
 
     private static generatePeasantUnit(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Head / Skin
+        // 32 x 48 px Sleek Citizen Peasant (Vibrant Kingdom Peasant)
+
+        // Head & Skin
         graphics.fillStyle(0xf5cda0, 1);
-        graphics.fillRect(12, 6, 8, 8);
-        // Cap
+        graphics.fillRect(12, 8, 8, 8);
+
+        // Brown Hair & Citizen Cap
         graphics.fillStyle(0x4a3728, 1);
-        graphics.fillRect(11, 4, 10, 4);
-        // Eyes
+        graphics.fillRect(11, 5, 10, 5);
+        graphics.fillRect(10, 7, 3, 6);
+
+        // Lively Dark Eyes
         graphics.fillStyle(0x1a1a1a, 1);
-        graphics.fillRect(17, 9, 2, 2);
-        // Tunic (peasant brown/green)
-        graphics.fillStyle(0x5c7a42, 1);
-        graphics.fillRect(10, 14, 12, 10);
-        // Belt
-        graphics.fillStyle(0x332211, 1);
-        graphics.fillRect(10, 19, 12, 2);
-        // Legs / Boots
-        graphics.fillStyle(0x3b2b1d, 1);
-        graphics.fillRect(11, 24, 4, 6);
-        graphics.fillRect(17, 24, 4, 6);
-        graphics.generateTexture(key, 32, 32);
+        graphics.fillRect(17, 11, 2, 2);
+
+        // Vibrant Forest Green Peasant Tunic
+        graphics.fillStyle(0x20bf6b, 1);
+        graphics.fillRect(10, 16, 12, 14);
+
+        // Leather Belt & Pouch
+        graphics.fillStyle(0x4b2c11, 1);
+        graphics.fillRect(10, 24, 12, 3);
+        graphics.fillStyle(0xd4af37, 1);
+        graphics.fillRect(16, 24, 3, 4);
+
+        // Trousers & Leather Boots
+        graphics.fillStyle(0x3867d6, 1);
+        graphics.fillRect(11, 30, 4, 12);
+        graphics.fillRect(17, 30, 4, 12);
+        graphics.fillStyle(0x4b2c11, 1);
+        graphics.fillRect(10, 42, 5, 4);
+        graphics.fillRect(17, 42, 5, 4);
+
+        graphics.generateTexture(key, 32, 48);
         graphics.destroy();
     }
 
     private static generateBuilderUnit(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Head / Skin
+        // 32 x 48 px Master Builder (Orange Shirt, Apron, Hammer)
+
+        // Head & Skin
         graphics.fillStyle(0xf5cda0, 1);
-        graphics.fillRect(12, 6, 8, 8);
-        // Yellow builder hardcap
-        graphics.fillStyle(0xe5a93b, 1);
-        graphics.fillRect(10, 3, 12, 5);
-        // Eyes
+        graphics.fillRect(12, 8, 8, 8);
+
+        // Carpenter Yellow Headband / Hardcap
+        graphics.fillStyle(0xf7b731, 1);
+        graphics.fillRect(10, 5, 12, 5);
+
+        // Determined Eyes
         graphics.fillStyle(0x1a1a1a, 1);
-        graphics.fillRect(17, 9, 2, 2);
-        // Heavy work shirt (orange/brown)
-        graphics.fillStyle(0xd35400, 1);
-        graphics.fillRect(10, 13, 12, 11);
-        // Leather Tool Apron
+        graphics.fillRect(17, 11, 2, 2);
+
+        // Orange Work Tunic
+        graphics.fillStyle(0xeb3b5a, 1);
+        graphics.fillRect(10, 16, 12, 14);
+
+        // Heavy Leather Mason's Apron
         graphics.fillStyle(0x795548, 1);
-        graphics.fillRect(12, 15, 8, 9);
-        // Heavy Hammer held in hand
+        graphics.fillRect(12, 18, 8, 12);
+
+        // Sturdy Builder Hammer in Hand
         graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(22, 6, 3, 14);
-        graphics.fillStyle(0xb0c4de, 1);
-        graphics.fillRect(19, 4, 9, 5);
-        // Legs / Boots
+        graphics.fillRect(22, 14, 3, 18);
+        graphics.fillStyle(0xdcdde1, 1);
+        graphics.fillRect(19, 12, 9, 6);
+
+        // Heavy Pants & Steel-Toe Boots
         graphics.fillStyle(0x2d3436, 1);
-        graphics.fillRect(11, 24, 4, 6);
-        graphics.fillRect(17, 24, 4, 6);
-        graphics.generateTexture(key, 32, 32);
+        graphics.fillRect(11, 30, 4, 12);
+        graphics.fillRect(17, 30, 4, 12);
+        graphics.fillStyle(0x4b2c11, 1);
+        graphics.fillRect(10, 42, 5, 4);
+        graphics.fillRect(17, 42, 5, 4);
+
+        graphics.generateTexture(key, 32, 48);
         graphics.destroy();
     }
 
@@ -1499,53 +1793,6 @@ export class TextureGenerator {
         graphics.lineTo(800, 300);
         graphics.fillPath();
         graphics.generateTexture(key, 800, 300);
-        graphics.destroy();
-    }
-
-    private static generateCampCore(scene: Phaser.Scene, key: string) {
-        // If real crystal sprite was loaded by BootScene, use that instead
-        if (scene.textures.exists(key)) return;
-        if (scene.textures.exists("light_aether_crystal")) {
-            // Alias: use the crystal image as the camp core texture
-            const crystalImg = scene.textures.get("light_aether_crystal");
-            scene.textures.addImage(key, crystalImg.getSourceImage() as HTMLImageElement);
-            return;
-        }
-        const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Nordic Longhouse (Great Hall)
-        graphics.fillStyle(0x8B4513, 1); // Wooden walls
-        graphics.fillRect(8, 24, 48, 40);
-
-        // Golden straw-thatched roof
-        graphics.fillStyle(0xDAA520, 1);
-        graphics.beginPath();
-        graphics.moveTo(0, 24);
-        graphics.lineTo(32, 0);
-        graphics.lineTo(64, 24);
-        graphics.fillPath();
-
-        // Timber cross-gables
-        graphics.lineStyle(2, 0x5C4033, 1);
-        graphics.beginPath();
-        graphics.moveTo(24, 8);
-        graphics.lineTo(40, 24);
-        graphics.moveTo(40, 8);
-        graphics.lineTo(24, 24);
-        graphics.strokePath();
-
-        // Hanging purple heraldry banner
-        graphics.fillStyle(0x800080, 1);
-        graphics.fillRect(28, 24, 8, 16);
-
-        // Stone hearth brazier emitting amber light
-        graphics.fillStyle(0x808080, 1);
-        graphics.fillRect(40, 48, 12, 16);
-        graphics.fillStyle(0xFFBF00, 1); // Amber glow
-        graphics.fillCircle(46, 44, 6);
-        graphics.fillStyle(0xFF4500, 1); // Orange-red core
-        graphics.fillCircle(46, 44, 3);
-
-        graphics.generateTexture(key, 64, 64);
         graphics.destroy();
     }
 

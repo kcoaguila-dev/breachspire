@@ -52,7 +52,11 @@ export function createRecruitmentSystem() {
             else if (poiType === 6) cost = 20; // Sword Stand -> Knight
             else continue;
 
-            if (canAffordRecruitment(CampCoreComponent.lightEnergy[coreEid], cost)) {
+            const pEnergy = PlayerControlled.energy[pEid] || 0;
+            const cEnergy = CampCoreComponent.lightEnergy[coreEid] || 0;
+            const availableEnergy = Math.max(pEnergy, cEnergy);
+
+            if (canAffordRecruitment(availableEnergy, cost)) {
               if (poiType === 3) {
                 // Find nearest unrecruited vagrant sitting at the portal
                 let targetVagrant = -1;
@@ -70,7 +74,12 @@ export function createRecruitmentSystem() {
 
                 if (targetVagrant !== -1) {
                   interactionCooldowns.set(pEid, 300);
-                  CampCoreComponent.lightEnergy[coreEid] -= cost;
+                  if (PlayerControlled.energy[pEid] >= cost) {
+                    PlayerControlled.energy[pEid] -= cost;
+                  }
+                  if (CampCoreComponent.lightEnergy[coreEid] >= cost) {
+                    CampCoreComponent.lightEnergy[coreEid] -= cost;
+                  }
                   // Recruited! Convert from Grayish Vagrant to Vibrant Green Citizen
                   UnitRole.role[targetVagrant] = RoleValues.PEASANT;
                   Health.current[targetVagrant] = 50;
@@ -94,7 +103,12 @@ export function createRecruitmentSystem() {
 
                 if (targetPeasant !== -1) {
                   interactionCooldowns.set(pEid, 300);
-                  CampCoreComponent.lightEnergy[coreEid] -= cost;
+                  if (PlayerControlled.energy[pEid] >= cost) {
+                    PlayerControlled.energy[pEid] -= cost;
+                  }
+                  if (CampCoreComponent.lightEnergy[coreEid] >= cost) {
+                    CampCoreComponent.lightEnergy[coreEid] -= cost;
+                  }
 
                   if (poiType === 4) {
                     UnitRole.role[targetPeasant] = RoleValues.BUILDER;

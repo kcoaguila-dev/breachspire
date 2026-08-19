@@ -147,7 +147,10 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             let displaySize = 96;
             if (expectedTexture === "anim_commander" || expectedTexture === "steed_commander") displaySize = 140;
             else if (expectedTexture === "anim_troll" || expectedTexture === "unit_troll") displaySize = 128;
-            else if (expectedTexture === "anim_goblin" || expectedTexture === "anim_cultist" || expectedTexture === "peasant_unit" || expectedTexture === "builder_unit" || expectedTexture === "unit_vagrant") displaySize = 80;
+            else if (expectedTexture === "peasant_unit" || expectedTexture === "builder_unit" || expectedTexture === "unit_vagrant") {
+              displaySize = 56;
+            }
+            else if (expectedTexture === "anim_goblin" || expectedTexture === "anim_cultist") displaySize = 80;
             else if (expectedTexture === "unit_aether_slime") displaySize = 36;
             sprite.setDisplaySize(displaySize, displaySize);
             if (expectedTexture.startsWith("anim_") && scene.anims.exists(`${expectedTexture}_idle`)) {
@@ -239,15 +242,14 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       }
     }
 
-    // 2. Camp Core
+    // 2. Camp Core (Grand Nordic Castle Keep & Great Hall)
     const coresEntered = campCoreQueryEnter(world);
     for (let i = 0; i < coresEntered.length; i++) {
       const eid = coresEntered[i];
-      const coreTexture = scene.textures.exists("light_aether_crystal")
-        ? "light_aether_crystal"
-        : "camp_core_hearth";
-      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], coreTexture);
-      sprite.setDisplaySize(112, 112);
+      const coreTexture = "grand_castle_keep";
+      const sprite = scene.add.sprite(Position.x[eid], 650, coreTexture);
+      sprite.setDisplaySize(240, 160);
+      sprite.setOrigin(0.5, 1);
       sprite.setDepth(1);
       spriteMap.set(eid, sprite);
     }
@@ -256,7 +258,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       const eid = cores[i];
       const sprite = spriteMap.get(eid);
       if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
-        sprite.setPosition(Position.x[eid], Position.y[eid]);
+        sprite.setPosition(Position.x[eid], 650);
         const time = scene.time.now;
 
         // Hearth Smoke / Spark Particles
@@ -438,20 +440,24 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         }
     }
 
-    // --- 4.6. POIs ---
+    // --- 4.6. POIs (Grand Stands & Workshops) ---
     const poisEntered = poiQueryEnter(world);
     for (let i = 0; i < poisEntered.length; i++) {
         const eid = poisEntered[i];
         const type = WildernessPoiComponent.poiType[eid];
-        let texture = "camp_core_hearth"; // fallback
-        if (type === 3) texture = "poi_vagrant_portal";
-        else if (type === 4) texture = "tool_hammer_stand";
-        else if (type === 5) texture = "tool_bow_stand";
-        else if (type === 6) texture = "tool_sword_stand";
-        else if (type === 8) texture = "tool_warehouse";
+        let texture = "grand_castle_keep"; // fallback
+        let dw = 96;
+        let dh = 96;
+        if (type === 3) { texture = "poi_vagrant_portal"; dw = 64; dh = 64; }
+        else if (type === 4) { texture = "tool_hammer_stand"; dw = 96; dh = 96; }
+        else if (type === 5) { texture = "tool_bow_stand"; dw = 96; dh = 96; }
+        else if (type === 6) { texture = "tool_sword_stand"; dw = 96; dh = 96; }
+        else if (type === 8) { texture = "tool_warehouse"; dw = 112; dh = 96; }
 
-        const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], texture);
+        const sprite = scene.add.sprite(Position.x[eid], 650, texture);
         sprite.setOrigin(0.5, 1);
+        sprite.setDisplaySize(dw, dh);
+        sprite.setDepth(2);
         spriteMap.set(eid, sprite);
     }
 
@@ -468,7 +474,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
           const dist = Math.abs(Position.x[bpEid] - pX);
           if (dist < 65) {
             promptText.setText("[SPACE] Build Wall (10 Aether)")
-              .setPosition(Position.x[bpEid], Position.y[bpEid] - 40)
+              .setPosition(Position.x[bpEid], 560)
               .setVisible(true);
             promptShown = true;
             break;
@@ -504,7 +510,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
 
             if (label) {
               promptText.setText(label)
-                .setPosition(Position.x[poiEid], Position.y[poiEid] - 50)
+                .setPosition(Position.x[poiEid], 535)
                 .setVisible(true);
               promptShown = true;
               break;

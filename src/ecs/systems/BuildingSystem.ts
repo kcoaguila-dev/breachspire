@@ -83,12 +83,19 @@ export function createBuildingSystem() {
 
           if (dist <= 65) {
             const cost = computeWallUpgradeCost(0)!;
-            const curAether = CampCoreComponent.lightEnergy[coreEid];
+            const pEnergy = PlayerControlled.energy[pEid] || 0;
+            const cEnergy = CampCoreComponent.lightEnergy[coreEid] || 0;
+            const curAether = Math.max(pEnergy, cEnergy);
             const curWood = hasComponent(world, CampStockComponent, coreEid) ? CampStockComponent.wood[coreEid] : 0;
 
             if (curAether >= cost.aether && curWood >= cost.wood) {
               interactionCooldowns.set(pEid, 300); // 300ms debounce
-              CampCoreComponent.lightEnergy[coreEid] -= cost.aether;
+              if (PlayerControlled.energy[pEid] >= cost.aether) {
+                PlayerControlled.energy[pEid] -= cost.aether;
+              }
+              if (CampCoreComponent.lightEnergy[coreEid] >= cost.aether) {
+                CampCoreComponent.lightEnergy[coreEid] -= cost.aether;
+              }
               if (hasComponent(world, CampStockComponent, coreEid)) {
                 CampStockComponent.wood[coreEid] -= cost.wood;
               }
@@ -115,13 +122,20 @@ export function createBuildingSystem() {
               const nextTierCost = computeWallUpgradeCost(currentTier);
 
               if (nextTierCost) {
-                const curAether = CampCoreComponent.lightEnergy[coreEid];
+                const pEnergy = PlayerControlled.energy[pEid] || 0;
+                const cEnergy = CampCoreComponent.lightEnergy[coreEid] || 0;
+                const curAether = Math.max(pEnergy, cEnergy);
                 const curWood = hasComponent(world, CampStockComponent, coreEid) ? CampStockComponent.wood[coreEid] : 0;
                 const curIron = hasComponent(world, CampStockComponent, coreEid) ? CampStockComponent.iron[coreEid] : 0;
 
                 if (curAether >= nextTierCost.aether && curWood >= nextTierCost.wood && curIron >= nextTierCost.iron) {
                   interactionCooldowns.set(pEid, 300);
-                  CampCoreComponent.lightEnergy[coreEid] -= nextTierCost.aether;
+                  if (PlayerControlled.energy[pEid] >= nextTierCost.aether) {
+                    PlayerControlled.energy[pEid] -= nextTierCost.aether;
+                  }
+                  if (CampCoreComponent.lightEnergy[coreEid] >= nextTierCost.aether) {
+                    CampCoreComponent.lightEnergy[coreEid] -= nextTierCost.aether;
+                  }
                   if (hasComponent(world, CampStockComponent, coreEid)) {
                     CampStockComponent.wood[coreEid] -= nextTierCost.wood;
                     CampStockComponent.iron[coreEid] -= nextTierCost.iron;
