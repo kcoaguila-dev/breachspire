@@ -159,9 +159,9 @@ export class GameScene extends Phaser.Scene {
     ScreenAlertComponent.rightFlankDanger[this.screenAlertEid] = 0;
     ScreenAlertComponent.shakeIntensity[this.screenAlertEid] = 0;
 
-    // Set Map Bounds (3200x1200)
-    this.physics?.world.setBounds(0, 0, 3200, 1200);
-    this.cameras.main.setBounds(0, 0, 3200, 1200);
+    // Set Map Bounds (32000x1200) — Kingdom Two Crowns Islands 3-5 Scale
+    this.physics?.world.setBounds(0, 0, 32000, 1200);
+    this.cameras.main.setBounds(0, 0, 32000, 1200);
     this.cameras.main.setZoom(1.0);
 
     // Setup Inputs
@@ -238,8 +238,8 @@ export class GameScene extends Phaser.Scene {
       this.coopSystem = createCoopSystem(f2Key, archerData);
       this.dayNightSystem = createDayNightSystem();
 
-      const worldWidth = 3200;
-      const coreX = 1600;
+      const worldWidth = 32000;
+      const coreX = 16000;
       const centerY = 650;
       const sw = this.scale.width;
       const sh = this.scale.height;
@@ -249,7 +249,7 @@ export class GameScene extends Phaser.Scene {
       this.add.tileSprite(sw / 2, sh / 2, sw, sh, "bg_sky")
         .setScrollFactor(0).setDepth(-10);
 
-      // Misty Pine Forest Parallax Layer — dense evergreens down to the grass
+      // Misty Pine Forest Parallax Layer — dense evergreens across 32,000px
       this.bgTrees = this.add.tileSprite(worldWidth / 2, centerY - 20, worldWidth, 550, "bg_forest_mist")
         .setScrollFactor(0.2, 1.0).setDepth(-8);
 
@@ -261,8 +261,8 @@ export class GameScene extends Phaser.Scene {
       this.add.rectangle(worldWidth / 2, centerY + 300, worldWidth, 400, 0x0a0c10)
         .setScrollFactor(1.0).setDepth(0);
 
-      // Center the camera on the avatar
-      this.cameras.main.centerOn(1480, centerY);
+      // Center the camera on the avatar in base camp
+      this.cameras.main.centerOn(15800, centerY);
 
       createGameStateEntity(world);
       createDayNightEntity(world);
@@ -274,12 +274,12 @@ export class GameScene extends Phaser.Scene {
       CoopStateComponent.player1Eid[coopEid] = -1;
       CoopStateComponent.player2Eid[coopEid] = -1;
 
-      // Spawn Camp Core
+      // Spawn Camp Core at Map Center
       createCampCoreEntity(world, campConfig, coreX, centerY);
 
-      // Spawn Spires
-      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, 200, centerY, defendersMap);
-      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, 3000, centerY, defendersMap);
+      // Spawn Spires at Far West and Far East Edges
+      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, 800, centerY, defendersMap);
+      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, 31200, centerY, defendersMap);
 
       // Spawn invasion spawners
       createInvasionSpawner(world, leftSpire, SpireSideValues.Left, 3000, 3);
@@ -297,18 +297,20 @@ export class GameScene extends Phaser.Scene {
         return poiEid;
       };
 
-      // Tool Guild Stands
-      spawnPoi(5, 1450, centerY); // Bow Stand (Archer Guild, 15 Aether)
-      spawnPoi(4, 1750, centerY); // Hammer Stand (Builder Guild, 10 Aether)
-      spawnPoi(6, 1350, centerY); // Sword Stand (Knight Guild, 20 Aether)
+      // Town Guild Stands
+      spawnPoi(5, 15500, centerY); // Bow Stand (Archer Guild, 15 Aether)
+      spawnPoi(4, 16500, centerY); // Hammer Stand (Builder Guild, 10 Aether)
+      spawnPoi(6, 15000, centerY); // Sword Stand (Knight Guild, 20 Aether)
 
-      // Vagrant Camps in Wilderness
-      spawnPoi(3, 550, centerY);  // Left Vagrant Camp
-      spawnPoi(3, 2650, centerY); // Right Vagrant Camp
+      // Vagrant Camps in Wilderness (Inner & Deep)
+      spawnPoi(3, 12500, centerY); // West Inner Vagrant Camp
+      spawnPoi(3, 19500, centerY); // East Inner Vagrant Camp
+      spawnPoi(3, 6500, centerY);  // West Deep Frontier Vagrant Camp
+      spawnPoi(3, 25500, centerY); // East Deep Frontier Vagrant Camp
 
-      // Shrines
-      spawnPoi(0, 750, centerY);  // Left Shrine
-      spawnPoi(0, 2450, centerY); // Right Shrine
+      // Ancient Shrines
+      spawnPoi(0, 9500, centerY);  // West Ancient Shrine
+      spawnPoi(0, 22500, centerY); // East Ancient Shrine
 
       // ── Unemployed People (Peasants / Wanderers) ─────────────────────────────
       const spawnPeasant = (x: number, y: number) => {
@@ -340,14 +342,18 @@ export class GameScene extends Phaser.Scene {
       };
 
       // Starting wanderers sitting by vagrant camps
-      spawnPeasant(530, centerY);
-      spawnPeasant(570, centerY);
-      spawnPeasant(2630, centerY);
-      spawnPeasant(2670, centerY);
+      spawnPeasant(12470, centerY);
+      spawnPeasant(12530, centerY);
+      spawnPeasant(19470, centerY);
+      spawnPeasant(19530, centerY);
+      spawnPeasant(6470, centerY);
+      spawnPeasant(6530, centerY);
+      spawnPeasant(25470, centerY);
+      spawnPeasant(25530, centerY);
 
       // Starting unemployed citizens in base camp
-      spawnPeasant(1530, centerY);
-      spawnPeasant(1670, centerY);
+      spawnPeasant(15850, centerY);
+      spawnPeasant(16150, centerY);
 
       // ── Procedural / Randomized Wall Mounds & Debris ─────────────────────────
       const spawnWallMound = (x: number, y: number) => {
@@ -364,19 +370,33 @@ export class GameScene extends Phaser.Scene {
         return bpEid;
       };
 
-      // Inner camp boundary mounds (randomized ± 30px) - must be built by builders!
-      const leftInnerWallX = 1200 + Math.floor(Math.random() * 40 - 20);
-      const rightInnerWallX = 2000 + Math.floor(Math.random() * 40 - 20);
+      // Inner camp boundary mounds (randomized ± 40px)
+      const leftInnerWallX = 14200 + Math.floor(Math.random() * 80 - 40);
+      const rightInnerWallX = 17800 + Math.floor(Math.random() * 80 - 40);
       spawnWallMound(leftInnerWallX, centerY);
       spawnWallMound(rightInnerWallX, centerY);
 
-      // Outer expansion wall debris / mounds (randomized ± 40px)
-      const leftOuterMoundX = 850 + Math.floor(Math.random() * 60 - 30);
-      const rightOuterMoundX = 2350 + Math.floor(Math.random() * 60 - 30);
-      spawnWallMound(leftOuterMoundX, centerY);
-      spawnWallMound(rightOuterMoundX, centerY);
+      // Mid-territory expansion wall mounds
+      const leftMidWallX = 10500 + Math.floor(Math.random() * 80 - 40);
+      const rightMidWallX = 21500 + Math.floor(Math.random() * 80 - 40);
+      spawnWallMound(leftMidWallX, centerY);
+      spawnWallMound(rightMidWallX, centerY);
 
-      // Wilderness Trees & Iron Ore
+      // Frontier fortress wall mounds (near Spires)
+      const leftFrontierWallX = 4000 + Math.floor(Math.random() * 80 - 40);
+      const rightFrontierWallX = 28000 + Math.floor(Math.random() * 80 - 40);
+      spawnWallMound(leftFrontierWallX, centerY);
+      spawnWallMound(rightFrontierWallX, centerY);
+
+      // Watchtowers behind wall defenses
+      createWatchtowerEntity(world, 14500, centerY);
+      createWatchtowerEntity(world, 17500, centerY);
+      createWatchtowerEntity(world, 10800, centerY);
+      createWatchtowerEntity(world, 21200, centerY);
+      createWatchtowerEntity(world, 4300, centerY);
+      createWatchtowerEntity(world, 27700, centerY);
+
+      // Wilderness Trees & Iron Ore across the vast world
       const spawnNode = (type: number, minX: number, maxX: number, count: number, yieldCount: number) => {
         for (let i = 0; i < count; i++) {
             const rx = minX + Math.floor(Math.random() * (maxX - minX));
@@ -385,24 +405,29 @@ export class GameScene extends Phaser.Scene {
       };
 
       // 0 = Pine Tree, 1 = Iron Ore
-      spawnNode(0, 300, 750, 4, 10);
-      spawnNode(0, 2450, 2900, 4, 10);
-      spawnNode(1, 400, 700, 2, 5);
-      spawnNode(1, 2500, 2800, 2, 5);
+      // West Wilderness
+      spawnNode(0, 11500, 13800, 6, 10); // Inner West Forest
+      spawnNode(0, 7500, 10000, 8, 10);  // Mid West Forest
+      spawnNode(0, 1500, 3800, 8, 10);   // Deep West Forest
+      spawnNode(1, 8500, 9500, 4, 5);    // West Iron Veins
+      spawnNode(1, 2000, 3500, 4, 5);    // Deep West Iron Veins
 
-      // Watchtowers behind inner defenses
-      createWatchtowerEntity(world, 1340, centerY);
-      createWatchtowerEntity(world, 1860, centerY);
+      // East Wilderness
+      spawnNode(0, 18200, 20500, 6, 10); // Inner East Forest
+      spawnNode(0, 22000, 24500, 8, 10); // Mid East Forest
+      spawnNode(0, 28200, 30500, 8, 10); // Deep East Forest
+      spawnNode(1, 22500, 23500, 4, 5);  // East Iron Veins
+      spawnNode(1, 28500, 30000, 4, 5);  // Deep East Iron Veins
 
       // Spawn Player 1 (Commander)
-      const knightEntity = createUnitEntity(world, commanderData, 1480, centerY);
+      const knightEntity = createUnitEntity(world, commanderData, 15800, centerY);
       setPlayerControlled(world, knightEntity, 1);
       CoopStateComponent.player1Eid[coopEid] = knightEntity;
 
       // Spawn Player 2 if Co-op Mode selected
       if (this.isCoopMode) {
         const valkyrieData = await loadUnitData("/data/heroes/valkyrie.json");
-        const p2Entity = createUnitEntity(world, valkyrieData, 1560, centerY);
+        const p2Entity = createUnitEntity(world, valkyrieData, 16200, centerY);
         setPlayerControlled(world, p2Entity, 2);
         CoopStateComponent.player2Eid[coopEid] = p2Entity;
       }

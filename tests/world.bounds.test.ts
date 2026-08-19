@@ -30,23 +30,23 @@ describe('Expansive World Bounds', () => {
       crystalMaxHP: 2000
     };
 
-    // Construct according to new layout specs
-    const coreEid = createCampCoreEntity(world, campConfig, 1600, 600);
-    const leftWallEid = createCampWallEntity(world, campConfig, SpireSideValues.Left, 1200, 600);
-    const rightWallEid = createCampWallEntity(world, campConfig, SpireSideValues.Right, 2000, 600);
-    const leftSpireEid = createSpireEntity(world, spireConfig, SpireSideValues.Left, 200, 600);
-    const rightSpireEid = createSpireEntity(world, spireConfig, SpireSideValues.Right, 3000, 600);
+    // Construct according to Kingdom Islands 3-5 (32,000px) layout specs
+    const coreEid = createCampCoreEntity(world, campConfig, 16000, 600);
+    const leftWallEid = createCampWallEntity(world, campConfig, SpireSideValues.Left, 14200, 600);
+    const rightWallEid = createCampWallEntity(world, campConfig, SpireSideValues.Right, 17800, 600);
+    const leftSpireEid = createSpireEntity(world, spireConfig, SpireSideValues.Left, 800, 600);
+    const rightSpireEid = createSpireEntity(world, spireConfig, SpireSideValues.Right, 31200, 600);
 
-    expect(Position.x[coreEid]).toBe(1600);
-    expect(Position.x[leftWallEid]).toBe(1200);
-    expect(Position.x[rightWallEid]).toBe(2000);
-    expect(Position.x[leftSpireEid]).toBe(200);
-    expect(Position.x[rightSpireEid]).toBe(3000);
+    expect(Position.x[coreEid]).toBe(16000);
+    expect(Position.x[leftWallEid]).toBe(14200);
+    expect(Position.x[rightWallEid]).toBe(17800);
+    expect(Position.x[leftSpireEid]).toBe(800);
+    expect(Position.x[rightSpireEid]).toBe(31200);
 
     // Bounds verify left/right boundaries
-    // Left Spire at 200 is >= 0
-    // Right Spire at 3000 is <= 3200
+    // Left Spire at 800 is >= 0
+    // Right Spire at 31200 is <= 32000
     expect(Position.x[leftSpireEid]).toBeGreaterThanOrEqual(0);
-    expect(Position.x[rightSpireEid]).toBeLessThanOrEqual(3200);
+    expect(Position.x[rightSpireEid]).toBeLessThanOrEqual(32000);
   });
 });

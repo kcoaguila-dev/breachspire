@@ -71,7 +71,7 @@ export function createSplitCameraSystem(scene: Phaser.Scene) {
 
       if (!p2Camera && viewports.cam2) {
         p2Camera = scene.cameras.add(viewports.cam2.x, viewports.cam2.y, viewports.cam2.width, viewports.cam2.height);
-        p2Camera.setBounds(0, 0, 3200, 1200);
+        p2Camera.setBounds(0, 0, 32000, 1200);
         p2Camera.setZoom(1.0);
       } else if (p2Camera && viewports.cam2) {
         if (p2Camera.height !== viewports.cam2.height || p2Camera.width !== viewports.cam2.width) {

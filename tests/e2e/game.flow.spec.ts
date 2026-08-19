@@ -137,7 +137,7 @@ test.describe('Breachspire Game Flow - Leader & Replay E2E', () => {
     });
 
     if (playerState) {
-        expect(playerState.x).toBe(1600);
+        expect(playerState.x).toBe(15800);
     }
   });
 
@@ -158,7 +158,7 @@ test.describe('Breachspire Game Flow - Leader & Replay E2E', () => {
         let count = 0;
         scene.children.list.forEach((child: any) => {
             if (child.type === 'Sprite' && child.texture && child.texture.key === 'goblin') {
-                if (child.x > 1200 && child.x < 2000) {
+                if (child.x > 14000 && child.x < 18000) {
                     count++;
                 }
             }
@@ -351,7 +351,7 @@ test.describe('Breachspire Game Flow - Leader & Replay E2E', () => {
       Health.max[builderEid] = 75;
 
       addComponent(world, Position, builderEid);
-      Position.x[builderEid] = 1600;
+      Position.x[builderEid] = 16000;
       Position.y[builderEid] = 650;
 
       addComponent(world, FactionTag, builderEid);
