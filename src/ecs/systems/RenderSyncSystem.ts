@@ -77,12 +77,16 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       const textureId = getUnitTextureKey(faction, combatType, isFlying, role);
       const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], textureId);
 
-      // Display at exactly 2× the source frame size → each pixel becomes a 2×2 block at camera zoom 2×
-      // 48px-frame sheets (archer, mage, valkyrie, goblin, cultist) → 96×96
-      // 64px-frame sheets (commander, troll)                        → 128×128
+      // Display at 2× the source pixel size — each pixel becomes a 2×2 block
+      // px_*.jpg sources: heroes=48px, troll/commander=64px, goblin/cultist=40px
       const textureKey = getUnitTextureKey(faction, combatType, isFlying, role);
-      const isLargeFrame = textureKey === "anim_commander" || textureKey === "anim_troll";
-      const displaySize = isLargeFrame ? 128 : 96;
+      let displaySize = 96; // default: 48px × 2
+      if (textureKey === "steed_commander" || textureKey === "unit_troll" ||
+          textureKey === "anim_commander"  || textureKey === "anim_troll") {
+        displaySize = 128; // 64px × 2
+      } else if (textureKey === "unit_goblin" || textureKey === "unit_cultist") {
+        displaySize = 80;  // 40px × 2
+      }
       sprite.setDisplaySize(displaySize, displaySize);
 
       spriteMap.set(eid, sprite);
@@ -104,9 +108,10 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         const isMoving = Math.abs(velX) > 5 || Math.abs(Velocity.y[eid]) > 5;
 
         // ── Animation playback ─────────────────────────────────────────────────
-        // Read combatType + isFlying to resolve the anim base key, then play
-        // idle or walk. Only switch when key changes to avoid resetting mid-cycle.
-        if (!isDead) {
+        // Only attempt animation if the sprite was created from an anim_ spritesheet.
+        // Static px_*.jpg sprites (steed_commander, unit_goblin, etc.) are single-frame
+        // canvas textures and cannot play animations — skip them.
+        if (!isDead && sprite.texture.key.startsWith("anim_")) {
           const combatType = hasComponent(world, CombatTypeComponent, eid)
             ? CombatTypeComponent.type[eid] : 0;
           const isFlying = hasComponent(world, CanReachElevated, eid);
