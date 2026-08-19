@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getNoteFrequency, computeCrossfadeGains } from '../src/audio/AudioManager';
+import { getNoteFrequency, computeCrossfadeGains, AudioManager } from '../src/audio/AudioManager';
 
 describe('Audio BGM Math', () => {
   it('should compute correct frequency for A4', () => {
@@ -42,5 +42,36 @@ describe('Audio BGM Math', () => {
     result = computeCrossfadeGains(isNight, 1);
     expect(result.dayGain).toBeCloseTo(0, 2);
     expect(result.nightGain).toBeCloseTo(1, 2);
+  });
+
+  it('should cleanly replace activeInstance and cancel scheduler on destroy', () => {
+    // Mock Web Audio Context in node test environment
+    const mockCtx = {
+      state: 'running',
+      currentTime: 0,
+      createGain: () => ({
+        gain: { value: 1, setValueAtTime: () => {}, linearRampToValueAtTime: () => {}, cancelScheduledValues: () => {} },
+        connect: () => {},
+      }),
+      destination: {},
+      close: () => {},
+      resume: () => {},
+    };
+
+    (globalThis as any).window = {
+      AudioContext: function () {
+        return mockCtx;
+      },
+    };
+
+    const audio1 = new AudioManager();
+    expect(AudioManager.getActiveInstance()).toBe(audio1);
+
+    // Creating a second instance should destroy the first
+    const audio2 = new AudioManager();
+    expect(AudioManager.getActiveInstance()).toBe(audio2);
+
+    audio2.destroy();
+    expect(AudioManager.getActiveInstance()).toBeNull();
   });
 });

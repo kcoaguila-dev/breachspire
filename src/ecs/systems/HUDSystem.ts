@@ -9,11 +9,16 @@ const coopQuery = defineQuery([CoopStateComponent]);
 
 export function createHUDSystem(scene: Phaser.Scene) {
   // Setup Phaser UI elements
-  // We'll place HUD at the top/sides
   const uiElements: Phaser.GameObjects.GameObject[] = [];
 
-  // Core Energy Text
-  const coreEnergyText = scene.add.text(400, 20, 'Energy: 0/0', { fontSize: '20px', color: '#ffea00', backgroundColor: '#0008' }).setOrigin(0.5, 0);
+  // Core Energy Text: Top-Left, crisp arcade pixel font, sharp black outline, NO background shadow box
+  const coreEnergyText = scene.add.text(30, 20, 'Energy: 0/0', {
+    fontSize: '20px',
+    fontFamily: 'monospace',
+    color: '#ffea00',
+    stroke: '#000000',
+    strokeThickness: 3
+  }).setOrigin(0, 0);
   uiElements.push(coreEnergyText);
 
   // Coop Divider
@@ -26,8 +31,14 @@ export function createHUDSystem(scene: Phaser.Scene) {
   divider.setVisible(false);
   uiElements.push(divider);
 
-  // Day Night Text
-  const dayNightText = scene.add.text(scene.scale.width - 120, 30, '☀️ Day 1', { fontSize: '18px', color: '#fff', backgroundColor: '#0008' }).setOrigin(0, 0);
+  // Day Night Text: Top-Right, crisp arcade pixel font, sharp black outline, NO background shadow box
+  const dayNightText = scene.add.text(scene.scale.width - 30, 20, '☀️ Day 1', {
+    fontSize: '18px',
+    fontFamily: 'monospace',
+    color: '#ffffff',
+    stroke: '#000000',
+    strokeThickness: 3
+  }).setOrigin(1, 0);
   uiElements.push(dayNightText);
 
   // Ensure HUD is above game entities

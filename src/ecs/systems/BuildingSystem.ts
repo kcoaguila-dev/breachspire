@@ -1,5 +1,5 @@
-import { IWorld, defineQuery, addComponent } from "bitecs";
-import { Position, WallBlueprint, BlueprintStateValues, UnitRole, RoleValues, CampCoreComponent, PlayerControlled, InputStateComponent, Velocity, Speed, CampWallComponent } from "../components";
+import { IWorld, defineQuery, addComponent, removeComponent, hasComponent } from "bitecs";
+import { Position, WallBlueprint, BlueprintStateValues, UnitRole, RoleValues, CampCoreComponent, PlayerControlled, InputStateComponent, Velocity, Speed, CampWallComponent, Health } from "../components";
 
 export function computeConstructionProgress(currentProgress: number, builderSpeed: number, delta: number): number {
   return currentProgress + (builderSpeed * (delta / 1000));
@@ -16,6 +16,8 @@ const campCoreQuery = defineQuery([CampCoreComponent, Position]);
 const campWallQuery = defineQuery([CampWallComponent, Position]);
 
 export function createBuildingSystem() {
+  const interactionCooldowns = new Map<number, number>();
+
   return (world: IWorld, delta: number) => {
     const blueprints = blueprintQuery(world);
     const builders = builderQuery(world);
@@ -25,10 +27,19 @@ export function createBuildingSystem() {
     if (cores.length === 0) return world;
     const coreEid = cores[0];
 
+    // Decrement interaction cooldowns
+    for (const [pEid, cd] of interactionCooldowns.entries()) {
+      if (cd > 0) {
+        interactionCooldowns.set(pEid, cd - delta);
+      }
+    }
+
     // Player interaction with blueprints
     for (let i = 0; i < players.length; i++) {
       const pEid = players[i];
-      if (InputStateComponent.attack[pEid]) {
+      const cd = interactionCooldowns.get(pEid) || 0;
+
+      if (InputStateComponent.attack[pEid] && cd <= 0) {
         for (let j = 0; j < blueprints.length; j++) {
           const bpEid = blueprints[j];
           if (WallBlueprint.state[bpEid] !== BlueprintStateValues.MOUND) continue;
@@ -40,6 +51,7 @@ export function createBuildingSystem() {
           if (dist <= 65) {
             const cost = WallBlueprint.cost[bpEid] || 10;
             if (CampCoreComponent.lightEnergy[coreEid] >= cost) {
+              interactionCooldowns.set(pEid, 300); // 300ms debounce
               CampCoreComponent.lightEnergy[coreEid] -= cost;
               WallBlueprint.state[bpEid] = BlueprintStateValues.ORDERED;
             }
@@ -90,7 +102,7 @@ export function createBuildingSystem() {
         }
       }
 
-      if (targetBpEid !== -1) {
+      if (targetBpEid !== -1 && hasComponent(world, WallBlueprint, targetBpEid)) {
         const dx = Position.x[targetBpEid] - Position.x[builderEid];
         const dist = Math.abs(dx);
 
@@ -116,21 +128,28 @@ export function createBuildingSystem() {
           if (WallBlueprint.progress[targetBpEid] >= 100) {
             WallBlueprint.state[targetBpEid] = BlueprintStateValues.COMPLETED;
 
-            // Create camp wall component or update existing
-            let blueprintTargetWallEid = WallBlueprint.targetWallEid[targetBpEid];
-            if (!blueprintTargetWallEid || blueprintTargetWallEid === -1) {
-              blueprintTargetWallEid = targetBpEid;
-            }
-            addComponent(world, CampWallComponent, blueprintTargetWallEid);
             const wallHp = UnitRole.level[builderEid] >= 2 ? 150 : 100;
-            CampWallComponent.hp[blueprintTargetWallEid] = wallHp;
-            CampWallComponent.maxHp[blueprintTargetWallEid] = wallHp;
+
+            if (!hasComponent(world, CampWallComponent, targetBpEid)) {
+              addComponent(world, CampWallComponent, targetBpEid);
+            }
+            CampWallComponent.hp[targetBpEid] = wallHp;
+            CampWallComponent.maxHp[targetBpEid] = wallHp;
+
+            if (!hasComponent(world, Health, targetBpEid)) {
+              addComponent(world, Health, targetBpEid);
+            }
+            Health.current[targetBpEid] = wallHp;
+            Health.max[targetBpEid] = wallHp;
+
+            // Cleanly remove WallBlueprint so builder doesn't re-target it
+            removeComponent(world, WallBlueprint, targetBpEid);
 
             // XP burst on completion
             UnitRole.xp[builderEid] += 10;
           }
         }
-      } else if (targetWallEid !== -1) {
+      } else if (targetWallEid !== -1 && hasComponent(world, CampWallComponent, targetWallEid)) {
         const dx = Position.x[targetWallEid] - Position.x[builderEid];
         const dist = Math.abs(dx);
 
@@ -146,6 +165,10 @@ export function createBuildingSystem() {
           CampWallComponent.hp[targetWallEid] += repairAmount;
           if (CampWallComponent.hp[targetWallEid] > CampWallComponent.maxHp[targetWallEid]) {
             CampWallComponent.hp[targetWallEid] = CampWallComponent.maxHp[targetWallEid];
+          }
+
+          if (hasComponent(world, Health, targetWallEid)) {
+            Health.current[targetWallEid] = CampWallComponent.hp[targetWallEid];
           }
 
           UnitRole.xp[builderEid] += 1 * (delta / 1000);

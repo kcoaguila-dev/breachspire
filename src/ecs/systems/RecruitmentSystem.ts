@@ -1,5 +1,5 @@
 import { IWorld, defineQuery, addEntity, addComponent } from "bitecs";
-import { Position, WildernessPoiComponent, UnitRole, RoleValues, CampCoreComponent, PlayerControlled, InputStateComponent, Velocity, Speed, FactionValues, FactionTag, Health, CombatTypeComponent, CombatTypeValues } from "../components";
+import { Position, WildernessPoiComponent, UnitRole, RoleValues, CampCoreComponent, PlayerControlled, InputStateComponent, Velocity, Speed, FactionValues, FactionTag, Health, CombatTypeComponent, CombatTypeValues, Attack, FSMState, FSMStateValues } from "../components";
 
 export function canAffordRecruitment(energy: number, cost: number): boolean {
   return energy >= cost;
@@ -12,6 +12,7 @@ const peasantQuery = defineQuery([UnitRole, Position, Velocity, Speed]);
 
 export function createRecruitmentSystem() {
   let vagrantRespawnTimer = 0;
+  const interactionCooldowns = new Map<number, number>();
 
   return (world: IWorld, delta: number) => {
     const players = playerQuery(world);
@@ -23,6 +24,13 @@ export function createRecruitmentSystem() {
     const coreEid = cores[0];
     const coreX = Position.x[coreEid] || 1600;
     const coreY = Position.y[coreEid] || 650;
+
+    // Decrement interaction cooldowns
+    for (const [pEid, cd] of interactionCooldowns.entries()) {
+      if (cd > 0) {
+        interactionCooldowns.set(pEid, cd - delta);
+      }
+    }
 
     // 1. Periodic Vagrant Respawn at Vagrant Camps (POI Type 3)
     vagrantRespawnTimer += delta;
@@ -71,7 +79,9 @@ export function createRecruitmentSystem() {
     // 2. Player Recruitment & Tool Stand Interaction
     for (let i = 0; i < players.length; i++) {
       const pEid = players[i];
-      if (InputStateComponent.attack[pEid]) {
+      const cd = interactionCooldowns.get(pEid) || 0;
+
+      if (InputStateComponent.attack[pEid] && cd <= 0) {
         for (let j = 0; j < pois.length; j++) {
           const poiEid = pois[j];
           const poiType = WildernessPoiComponent.poiType[poiEid];
@@ -89,6 +99,8 @@ export function createRecruitmentSystem() {
             else continue;
 
             if (canAffordRecruitment(CampCoreComponent.lightEnergy[coreEid], cost)) {
+              interactionCooldowns.set(pEid, 300); // 300ms debounce
+
               if (poiType === 3) {
                 // Find nearest unrecruited vagrant sitting at the camp
                 let targetVagrant = -1;
@@ -152,18 +164,86 @@ export function createRecruitmentSystem() {
                   }
                 }
 
+                CampCoreComponent.lightEnergy[coreEid] -= cost;
+
                 if (targetPeasant !== -1) {
-                  CampCoreComponent.lightEnergy[coreEid] -= cost;
+                  // Upgrade existing unemployed peasant
                   if (poiType === 4) {
                     UnitRole.role[targetPeasant] = RoleValues.BUILDER;
+                    Health.max[targetPeasant] = 75;
+                    Health.current[targetPeasant] = 75;
+                    Speed.value[targetPeasant] = 60;
                   } else if (poiType === 5) {
                     UnitRole.role[targetPeasant] = RoleValues.ARCHER;
+                    Health.max[targetPeasant] = 80;
+                    Health.current[targetPeasant] = 80;
+                    Speed.value[targetPeasant] = 50;
                     addComponent(world, CombatTypeComponent, targetPeasant);
                     CombatTypeComponent.type[targetPeasant] = CombatTypeValues.Ranged;
+                    addComponent(world, Attack, targetPeasant);
+                    Attack.power[targetPeasant] = 15;
+                    addComponent(world, FSMState, targetPeasant);
+                    FSMState.state[targetPeasant] = FSMStateValues.IDLE;
                   } else if (poiType === 6) {
                     UnitRole.role[targetPeasant] = RoleValues.KNIGHT;
+                    Health.max[targetPeasant] = 150;
+                    Health.current[targetPeasant] = 150;
+                    Speed.value[targetPeasant] = 70;
                     addComponent(world, CombatTypeComponent, targetPeasant);
                     CombatTypeComponent.type[targetPeasant] = CombatTypeValues.Melee;
+                    addComponent(world, Attack, targetPeasant);
+                    Attack.power[targetPeasant] = 25;
+                    addComponent(world, FSMState, targetPeasant);
+                    FSMState.state[targetPeasant] = FSMStateValues.IDLE;
+                  }
+                } else {
+                  // Direct hiring: spawn newly recruited worker with role at stand
+                  const newUnitEid = addEntity(world);
+                  addComponent(world, Position, newUnitEid);
+                  Position.x[newUnitEid] = Position.x[poiEid] || coreX;
+                  Position.y[newUnitEid] = Position.y[poiEid] || coreY;
+
+                  addComponent(world, Velocity, newUnitEid);
+                  Velocity.x[newUnitEid] = 0;
+                  Velocity.y[newUnitEid] = 0;
+
+                  addComponent(world, Speed, newUnitEid);
+                  addComponent(world, Health, newUnitEid);
+                  addComponent(world, FactionTag, newUnitEid);
+                  FactionTag.faction[newUnitEid] = FactionValues.Hero;
+
+                  addComponent(world, UnitRole, newUnitEid);
+                  UnitRole.level[newUnitEid] = 1;
+                  UnitRole.xp[newUnitEid] = 0;
+                  UnitRole.nextLevelXp[newUnitEid] = 50;
+
+                  if (poiType === 4) {
+                    UnitRole.role[newUnitEid] = RoleValues.BUILDER;
+                    Health.max[newUnitEid] = 75;
+                    Health.current[newUnitEid] = 75;
+                    Speed.value[newUnitEid] = 60;
+                  } else if (poiType === 5) {
+                    UnitRole.role[newUnitEid] = RoleValues.ARCHER;
+                    Health.max[newUnitEid] = 80;
+                    Health.current[newUnitEid] = 80;
+                    Speed.value[newUnitEid] = 50;
+                    addComponent(world, CombatTypeComponent, newUnitEid);
+                    CombatTypeComponent.type[newUnitEid] = CombatTypeValues.Ranged;
+                    addComponent(world, Attack, newUnitEid);
+                    Attack.power[newUnitEid] = 15;
+                    addComponent(world, FSMState, newUnitEid);
+                    FSMState.state[newUnitEid] = FSMStateValues.IDLE;
+                  } else if (poiType === 6) {
+                    UnitRole.role[newUnitEid] = RoleValues.KNIGHT;
+                    Health.max[newUnitEid] = 150;
+                    Health.current[newUnitEid] = 150;
+                    Speed.value[newUnitEid] = 70;
+                    addComponent(world, CombatTypeComponent, newUnitEid);
+                    CombatTypeComponent.type[newUnitEid] = CombatTypeValues.Melee;
+                    addComponent(world, Attack, newUnitEid);
+                    Attack.power[newUnitEid] = 25;
+                    addComponent(world, FSMState, newUnitEid);
+                    FSMState.state[newUnitEid] = FSMStateValues.IDLE;
                   }
                 }
               }

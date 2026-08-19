@@ -1,6 +1,6 @@
 import { createDayNightSystem } from "../ecs/systems/DayNightSystem";
 import Phaser from "phaser";
-import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity } from "../ecs/world";
+import { world, createUnitEntity, createCampCoreEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity } from "../ecs/world";
 import { SpireSideValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, UnitRole, RoleValues, WallBlueprint, BlueprintStateValues, CoopStateComponent, WildernessPoiComponent, GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent, InvasionSpawner, SpireComponent } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
@@ -23,7 +23,7 @@ import { createLeaderDeathSystem } from "../ecs/systems/LeaderDeathSystem";
 import { createCombatFeedbackSystem } from "../ecs/systems/CombatFeedbackSystem";
 import { AudioManager } from "../audio/AudioManager";
 import { loadUnitData, loadCampConfig, loadSpireConfig } from "../data/loader";
-import { defineQuery, addEntity, addComponent } from "bitecs";
+import { defineQuery, addEntity, addComponent, hasComponent } from "bitecs";
 import { SpriteMap } from "../ecs/systems/RenderSyncSystem";
 import { createHUDSystem } from "../ecs/systems/HUDSystem";
 import { resetWorldState } from "../ecs/world";
@@ -69,6 +69,7 @@ export class GameScene extends Phaser.Scene {
   private spriteMap: SpriteMap = new Map();
   private isReady = false;
   private isGameOver = false;
+  private isCoopMode = false;
   private prevIsNight: number = -1;
   private bgMountains!: Phaser.GameObjects.TileSprite;
   private bgTrees!: Phaser.GameObjects.TileSprite;
@@ -82,19 +83,41 @@ export class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
-  init(_data?: { coop?: boolean }) {
+  init(data?: { coop?: boolean }) {
     this.isReady = false;
     this.isGameOver = false;
+    this.isCoopMode = data?.coop ?? false;
     this.prevIsNight = -1;
     this.spriteMap.clear();
     resetWorldState(world);
+
+    if (this.audioManager) {
+      this.audioManager.destroy();
+      this.audioManager = null as any;
+    }
   }
 
   async create() {
+    this.events.once('shutdown', () => {
+      if (this.audioManager) {
+        this.audioManager.destroy();
+        this.audioManager = null as any;
+      }
+    });
+
     (window as any).__breachspire = {
       world,
       InvasionSpawner,
       SpireComponent,
+      Health,
+      Position,
+      FactionTag,
+      FactionValues,
+      UnitRole,
+      RoleValues,
+      addEntity,
+      addComponent,
+      hasComponent,
     };
 
     this.hudSystem = createHUDSystem(this);
@@ -135,7 +158,7 @@ export class GameScene extends Phaser.Scene {
     // Set Map Bounds (3200x1200)
     this.physics?.world.setBounds(0, 0, 3200, 1200);
     this.cameras.main.setBounds(0, 0, 3200, 1200);
-    this.cameras.main.setZoom(2.0);
+    this.cameras.main.setZoom(1.0);
 
     // Setup Inputs
     const cursors = this.input.keyboard!.createCursorKeys();
@@ -241,7 +264,7 @@ export class GameScene extends Phaser.Scene {
       // Coop Entity
       const coopEid = addEntity(world);
       addComponent(world, CoopStateComponent, coopEid);
-      CoopStateComponent.isCoopActive[coopEid] = 0;
+      CoopStateComponent.isCoopActive[coopEid] = this.isCoopMode ? 1 : 0;
       CoopStateComponent.player1Eid[coopEid] = -1;
       CoopStateComponent.player2Eid[coopEid] = -1;
 
@@ -335,11 +358,11 @@ export class GameScene extends Phaser.Scene {
         return bpEid;
       };
 
-      // Inner camp boundary mounds (randomized ± 30px)
+      // Inner camp boundary mounds (randomized ± 30px) - must be built by builders!
       const leftInnerWallX = 1200 + Math.floor(Math.random() * 40 - 20);
       const rightInnerWallX = 2000 + Math.floor(Math.random() * 40 - 20);
-      createCampWallEntity(world, campConfig, SpireSideValues.Left, leftInnerWallX, centerY);
-      createCampWallEntity(world, campConfig, SpireSideValues.Right, rightInnerWallX, centerY);
+      spawnWallMound(leftInnerWallX, centerY);
+      spawnWallMound(rightInnerWallX, centerY);
 
       // Outer expansion wall debris / mounds (randomized ± 40px)
       const leftOuterMoundX = 850 + Math.floor(Math.random() * 60 - 30);
@@ -347,10 +370,18 @@ export class GameScene extends Phaser.Scene {
       spawnWallMound(leftOuterMoundX, centerY);
       spawnWallMound(rightOuterMoundX, centerY);
 
-      // Spawn Player Unit
+      // Spawn Player 1 (Commander)
       const knightEntity = createUnitEntity(world, commanderData, 1480, centerY);
       setPlayerControlled(world, knightEntity, 1);
       CoopStateComponent.player1Eid[coopEid] = knightEntity;
+
+      // Spawn Player 2 if Co-op Mode selected
+      if (this.isCoopMode) {
+        const valkyrieData = await loadUnitData("/data/heroes/valkyrie.json");
+        const p2Entity = createUnitEntity(world, valkyrieData, 1560, centerY);
+        setPlayerControlled(world, p2Entity, 2);
+        CoopStateComponent.player2Eid[coopEid] = p2Entity;
+      }
 
       this.isReady = true;
       console.log("GameScene ready");

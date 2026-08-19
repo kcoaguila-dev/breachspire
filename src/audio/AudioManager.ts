@@ -13,6 +13,12 @@ export function computeCrossfadeGains(isNight: boolean, progress: number): { day
 }
 
 export class AudioManager {
+  private static activeInstance: AudioManager | null = null;
+
+  public static getActiveInstance(): AudioManager | null {
+    return AudioManager.activeInstance;
+  }
+
   private ctx: AudioContext;
   private masterGain: GainNode;
   private dayGain: GainNode;
@@ -25,6 +31,12 @@ export class AudioManager {
   private beatCount: number = 0;
 
   constructor() {
+    // If an existing AudioManager is running, stop and destroy it to prevent duplicate BGMs
+    if (AudioManager.activeInstance) {
+      AudioManager.activeInstance.destroy();
+    }
+    AudioManager.activeInstance = this;
+
     this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
 
     this.masterGain = this.ctx.createGain();
@@ -53,6 +65,28 @@ export class AudioManager {
 
     this.nextNoteTime = this.ctx.currentTime + 0.1;
     this.scheduleBGM();
+  }
+
+  public stopBGM() {
+    if (this.schedulerTimer) {
+      clearTimeout(this.schedulerTimer);
+      this.schedulerTimer = null;
+    }
+    this.bgmStarted = false;
+  }
+
+  public destroy() {
+    this.stopBGM();
+    if (AudioManager.activeInstance === this) {
+      AudioManager.activeInstance = null;
+    }
+    if (this.ctx && this.ctx.state !== 'closed') {
+      try {
+        this.ctx.close();
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   public setMusicMood(mood: 'day' | 'night', crossfadeDurationMs: number) {
@@ -87,6 +121,8 @@ export class AudioManager {
   }
 
   private scheduleBGM() {
+    if (!this.bgmStarted || (this.ctx && this.ctx.state === 'closed')) return;
+
     while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
       this.playBGMBeat(this.nextNoteTime);
       this.nextNoteTime += 0.5; // 120 BPM

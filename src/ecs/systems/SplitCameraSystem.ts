@@ -62,17 +62,22 @@ export function createSplitCameraSystem(scene: Phaser.Scene) {
     const viewports = computeCameraViewports(originalWidth, originalHeight, fullyCoop);
 
     if (fullyCoop) {
-      // Split Screen Active
-      if (cam1.height !== viewports.cam1.height) {
-          cam1.setViewport(viewports.cam1.x, viewports.cam1.y, viewports.cam1.width, viewports.cam1.height);
+      // Split Screen Active — Top half (P1) and Bottom half (P2)
+      if (cam1.height !== viewports.cam1.height || cam1.width !== viewports.cam1.width) {
+        cam1.setSize(viewports.cam1.width, viewports.cam1.height);
+        cam1.setViewport(viewports.cam1.x, viewports.cam1.y, viewports.cam1.width, viewports.cam1.height);
+        cam1.setZoom(1.0);
       }
 
       if (!p2Camera && viewports.cam2) {
         p2Camera = scene.cameras.add(viewports.cam2.x, viewports.cam2.y, viewports.cam2.width, viewports.cam2.height);
         p2Camera.setBounds(0, 0, 3200, 1200);
+        p2Camera.setZoom(1.0);
       } else if (p2Camera && viewports.cam2) {
-        if (p2Camera.height !== viewports.cam2.height) {
-           p2Camera.setViewport(viewports.cam2.x, viewports.cam2.y, viewports.cam2.width, viewports.cam2.height);
+        if (p2Camera.height !== viewports.cam2.height || p2Camera.width !== viewports.cam2.width) {
+          p2Camera.setSize(viewports.cam2.width, viewports.cam2.height);
+          p2Camera.setViewport(viewports.cam2.x, viewports.cam2.y, viewports.cam2.width, viewports.cam2.height);
+          p2Camera.setZoom(1.0);
         }
       }
 
@@ -93,9 +98,11 @@ export function createSplitCameraSystem(scene: Phaser.Scene) {
       }
 
     } else {
-      // Solo Screen Active
-      if (cam1.height !== viewports.cam1.height) {
+      // Solo Screen Active — Full screen 1.0 zoom
+      if (cam1.height !== viewports.cam1.height || cam1.width !== viewports.cam1.width) {
+        cam1.setSize(viewports.cam1.width, viewports.cam1.height);
         cam1.setViewport(viewports.cam1.x, viewports.cam1.y, viewports.cam1.width, viewports.cam1.height);
+        cam1.setZoom(1.0);
       }
       if (p2Camera) {
         scene.cameras.remove(p2Camera);

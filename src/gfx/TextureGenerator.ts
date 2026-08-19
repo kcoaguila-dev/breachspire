@@ -4,12 +4,12 @@ import { FactionValues, CombatTypeValues } from "../ecs/components";
 export function getUnitTextureKey(faction: number, combatType: number, isFlying: boolean, role?: number): string {
     if (faction === FactionValues.Hero) {
         if (role === 0) return "peasant_unit"; // Peasant
-        if (role === 1) return "peasant_unit"; // Builder
+        if (role === 1) return "builder_unit"; // Builder
         if (isFlying)                               return "anim_valkyrie";
-        if (combatType === CombatTypeValues.Melee)  return "anim_commander";
+        if (combatType === CombatTypeValues.Melee)  return "anim_knight";
         if (combatType === CombatTypeValues.Ranged) return "anim_archer";
         if (combatType === CombatTypeValues.Magic)  return "anim_mage";
-        return "anim_commander"; // fallback
+        return "anim_knight"; // fallback
     } else {
         if (combatType === CombatTypeValues.Melee)  return "anim_troll";
         if (combatType === CombatTypeValues.Ranged) return "anim_goblin";
@@ -59,8 +59,9 @@ export class TextureGenerator {
         this.generateToolBowStand(scene, "tool_bow_stand");
         this.generateToolSwordStand(scene, "tool_sword_stand");
 
-        // Peasant (no real sprite sheet for this one yet)
+        // Peasant & Builder (generated pixel art)
         this.generatePeasantUnit(scene, "peasant_unit");
+        this.generateBuilderUnit(scene, "builder_unit");
 
         // Units — skip if already loaded from sprite sheet by BootScene
         this.generateKnight(scene, "unit_knight");
@@ -81,17 +82,46 @@ export class TextureGenerator {
     private static generateWallFoundationMound(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        graphics.fillStyle(0x654321, 1);
+
+        // Earthen Dirt Base Mound (48px wide x 24px high)
+        graphics.fillStyle(0x3e2723, 1);
         graphics.beginPath();
-        graphics.moveTo(0, 128);
-        graphics.lineTo(16, 110);
-        graphics.lineTo(32, 128);
+        graphics.moveTo(0, 24);
+        graphics.lineTo(8, 12);
+        graphics.lineTo(24, 6);
+        graphics.lineTo(40, 12);
+        graphics.lineTo(48, 24);
+        graphics.closePath();
         graphics.fillPath();
 
-        graphics.fillStyle(0xa0a0a0, 1);
-        graphics.fillRect(14, 96, 4, 16);
+        // Top Soil / Moss Layer
+        graphics.fillStyle(0x558b2f, 1);
+        graphics.fillRect(8, 12, 32, 3);
+        graphics.fillRect(16, 8, 16, 4);
 
-        graphics.generateTexture(key, 32, 128);
+        // Cobblestone / Masonry Foundation Debris
+        graphics.fillStyle(0x78909c, 1);
+        graphics.fillRect(10, 14, 8, 6);
+        graphics.fillRect(26, 12, 10, 7);
+        graphics.fillRect(18, 16, 8, 5);
+
+        // Stone Highlights & Shadows
+        graphics.fillStyle(0x90a4ae, 1);
+        graphics.fillRect(10, 14, 8, 2);
+        graphics.fillRect(26, 12, 10, 2);
+        graphics.fillStyle(0x37474f, 1);
+        graphics.fillRect(10, 18, 8, 2);
+        graphics.fillRect(26, 17, 10, 2);
+
+        // Wooden Construction Stake / Mallet
+        graphics.fillStyle(0x8d6e63, 1);
+        graphics.fillRect(4, 10, 4, 12);
+        graphics.fillRect(40, 10, 4, 12);
+        graphics.fillStyle(0xd7ccc8, 1);
+        graphics.fillRect(4, 8, 4, 2);
+        graphics.fillRect(40, 8, 4, 2);
+
+        graphics.generateTexture(key, 48, 24);
         graphics.destroy();
     }
 
@@ -213,88 +243,222 @@ export class TextureGenerator {
         graphics.destroy();
     }
 
+    private static generateBuilderUnit(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.make.graphics({ x: 0, y: 0 });
+        // Head / Skin
+        graphics.fillStyle(0xf5cda0, 1);
+        graphics.fillRect(12, 6, 8, 8);
+        // Yellow builder hardcap
+        graphics.fillStyle(0xe5a93b, 1);
+        graphics.fillRect(10, 3, 12, 5);
+        // Eyes
+        graphics.fillStyle(0x1a1a1a, 1);
+        graphics.fillRect(17, 9, 2, 2);
+        // Heavy work shirt (orange/brown)
+        graphics.fillStyle(0xd35400, 1);
+        graphics.fillRect(10, 13, 12, 11);
+        // Leather Tool Apron
+        graphics.fillStyle(0x795548, 1);
+        graphics.fillRect(12, 15, 8, 9);
+        // Heavy Hammer held in hand
+        graphics.fillStyle(0x8B4513, 1);
+        graphics.fillRect(22, 6, 3, 14);
+        graphics.fillStyle(0xb0c4de, 1);
+        graphics.fillRect(19, 4, 9, 5);
+        // Legs / Boots
+        graphics.fillStyle(0x2d3436, 1);
+        graphics.fillRect(11, 24, 4, 6);
+        graphics.fillRect(17, 24, 4, 6);
+        graphics.generateTexture(key, 32, 32);
+        graphics.destroy();
+    }
+
     private static generateWallStonePristine(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        graphics.fillStyle(0x708090, 1);
-        graphics.fillRect(0, 0, 32, 128);
-        graphics.generateTexture(key, 32, 128);
+
+        // Heavy Oak Timber Frame Base & Posts
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(0, 0, 48, 80);
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(2, 2, 44, 76);
+
+        // Stone Brick Masonry Courses
+        const colors = [0x78909c, 0x607d8b, 0x546e7a, 0x455a64];
+        for (let y = 16; y < 80; y += 12) {
+            const isOffset = (y / 12) % 2 === 0;
+            const step = 14;
+            for (let x = 4; x < 44; x += step) {
+                const brickX = isOffset ? x : x - 7;
+                if (brickX < 4 || brickX + 12 > 44) continue;
+                const c = colors[(x + y) % colors.length];
+                graphics.fillStyle(c, 1);
+                graphics.fillRect(brickX, y, 12, 10);
+                graphics.fillStyle(0x90a4ae, 1);
+                graphics.fillRect(brickX, y, 12, 2); // Highlight
+                graphics.fillStyle(0x263238, 1);
+                graphics.fillRect(brickX, y + 8, 12, 2); // Mortar shadow
+            }
+        }
+
+        // Battlement Crenellations (Top Parapet)
+        graphics.fillStyle(0x90a4ae, 1);
+        graphics.fillRect(4, 0, 12, 16);
+        graphics.fillRect(32, 0, 12, 16);
+        graphics.fillStyle(0xb0bec5, 1);
+        graphics.fillRect(4, 0, 12, 3);
+        graphics.fillRect(32, 0, 12, 3);
+
+        graphics.generateTexture(key, 48, 80);
         graphics.destroy();
     }
 
     private static generateWallStoneCracked(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        graphics.fillStyle(0x708090, 1);
-        graphics.fillRect(0, 0, 32, 128);
-        // Cracks
-        graphics.lineStyle(2, 0x2f4f4f, 1);
+
+        // Base pristine structure
+        this.generateWallStonePristine(scene, "tmp_wall_pristine");
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(0, 0, 48, 80);
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(2, 2, 44, 76);
+
+        const colors = [0x78909c, 0x607d8b, 0x546e7a, 0x455a64];
+        for (let y = 16; y < 80; y += 12) {
+            const isOffset = (y / 12) % 2 === 0;
+            const step = 14;
+            for (let x = 4; x < 44; x += step) {
+                const brickX = isOffset ? x : x - 7;
+                if (brickX < 4 || brickX + 12 > 44) continue;
+                const c = colors[(x + y) % colors.length];
+                graphics.fillStyle(c, 1);
+                graphics.fillRect(brickX, y, 12, 10);
+            }
+        }
+
+        // Crenellations
+        graphics.fillStyle(0x90a4ae, 1);
+        graphics.fillRect(4, 0, 12, 16);
+        graphics.fillRect(32, 0, 12, 16);
+
+        // Cracks & Fractures
+        graphics.lineStyle(2, 0x1a2421, 1);
         graphics.beginPath();
-        graphics.moveTo(8, 0);
-        graphics.lineTo(16, 32);
-        graphics.lineTo(8, 64);
+        graphics.moveTo(12, 8);
+        graphics.lineTo(20, 32);
+        graphics.lineTo(14, 56);
+        graphics.lineTo(24, 78);
         graphics.strokePath();
-        graphics.generateTexture(key, 32, 128);
+
+        graphics.generateTexture(key, 48, 80);
         graphics.destroy();
     }
 
     private static generateWallStoneCrumbling(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        graphics.fillStyle(0x708090, 1);
-        graphics.fillRect(0, 0, 32, 128);
-        // Deep Cracks
-        graphics.lineStyle(3, 0x2f4f4f, 1);
+
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(0, 0, 48, 80);
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(2, 2, 44, 76);
+
+        const colors = [0x78909c, 0x607d8b, 0x546e7a, 0x455a64];
+        for (let y = 16; y < 80; y += 12) {
+            const isOffset = (y / 12) % 2 === 0;
+            for (let x = 4; x < 44; x += 14) {
+                const brickX = isOffset ? x : x - 7;
+                if (brickX < 4 || brickX + 12 > 44) continue;
+                graphics.fillStyle(colors[(x + y) % colors.length], 1);
+                graphics.fillRect(brickX, y, 12, 10);
+            }
+        }
+
+        // Broken Parapet (Left crenellation shattered)
+        graphics.fillStyle(0x90a4ae, 1);
+        graphics.fillRect(32, 0, 12, 16);
+        graphics.fillRect(4, 8, 8, 8);
+
+        // Deep Fractures & Missing Stone Chunks
+        graphics.lineStyle(3, 0x111111, 1);
         graphics.beginPath();
-        graphics.moveTo(16, 0);
-        graphics.lineTo(8, 32);
-        graphics.lineTo(24, 64);
-        graphics.lineTo(16, 96);
+        graphics.moveTo(4, 16);
+        graphics.lineTo(18, 38);
+        graphics.lineTo(10, 60);
+        graphics.lineTo(28, 80);
         graphics.strokePath();
-        // Chips
-        graphics.fillStyle(0x000000, 0.5);
-        graphics.fillRect(0, 32, 8, 8);
-        graphics.fillRect(24, 80, 8, 16);
-        graphics.generateTexture(key, 32, 128);
+
+        graphics.fillStyle(0x1a1a1a, 0.8);
+        graphics.fillRect(6, 24, 8, 8);
+        graphics.fillRect(28, 48, 10, 12);
+
+        graphics.generateTexture(key, 48, 80);
         graphics.destroy();
     }
 
     private static generateWallStoneCritical(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        graphics.fillStyle(0x708090, 1);
-        graphics.fillRect(0, 32, 32, 96); // Top missing
-        // Heavy fractures
-        graphics.lineStyle(4, 0x1a2421, 1);
+
+        // Wall partially collapsed (Top half mostly destroyed)
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(0, 30, 48, 50);
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(2, 32, 44, 46);
+
+        const colors = [0x607d8b, 0x546e7a, 0x455a64];
+        for (let y = 36; y < 80; y += 12) {
+            for (let x = 4; x < 44; x += 14) {
+                graphics.fillStyle(colors[(x + y) % colors.length], 1);
+                graphics.fillRect(x, y, 10, 10);
+            }
+        }
+
+        // Heavy gaping breaches and exposed timber splinters
+        graphics.lineStyle(4, 0x0a0a0a, 1);
         graphics.beginPath();
-        graphics.moveTo(0, 32);
-        graphics.lineTo(16, 64);
-        graphics.lineTo(8, 96);
-        graphics.lineTo(32, 128);
+        graphics.moveTo(0, 30);
+        graphics.lineTo(20, 54);
+        graphics.lineTo(12, 80);
+        graphics.moveTo(48, 30);
+        graphics.lineTo(30, 58);
         graphics.strokePath();
-        graphics.fillStyle(0x000000, 0.5);
-        graphics.fillRect(0, 64, 12, 12);
-        graphics.fillRect(20, 96, 12, 16);
-        graphics.generateTexture(key, 32, 128);
+
+        graphics.fillStyle(0x000000, 0.9);
+        graphics.fillRect(16, 40, 16, 20);
+
+        graphics.generateTexture(key, 48, 80);
         graphics.destroy();
     }
 
     private static generateWallRubbleCollapsed(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Only rubble at bottom
-        graphics.fillStyle(0x404040, 1);
+
+        // Collapsed Rubble & Stone Debris Mound (48px wide x 24px high)
+        graphics.fillStyle(0x212121, 1);
         graphics.beginPath();
-        graphics.moveTo(0, 128);
-        graphics.lineTo(8, 100);
-        graphics.lineTo(24, 110);
-        graphics.lineTo(32, 128);
+        graphics.moveTo(0, 24);
+        graphics.lineTo(10, 8);
+        graphics.lineTo(28, 4);
+        graphics.lineTo(48, 24);
+        graphics.closePath();
         graphics.fillPath();
-        // Loose stones
-        graphics.fillStyle(0x708090, 1);
-        graphics.fillRect(4, 115, 8, 8);
-        graphics.fillRect(20, 120, 6, 6);
-        graphics.generateTexture(key, 32, 128);
+
+        // Shattered Stone Blocks
+        graphics.fillStyle(0x546e7a, 1);
+        graphics.fillRect(6, 12, 10, 8);
+        graphics.fillRect(24, 10, 12, 8);
+        graphics.fillRect(16, 14, 10, 6);
+
+        // Broken Splintered Timber
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(2, 16, 16, 4);
+        graphics.fillRect(30, 14, 14, 4);
+
+        graphics.generateTexture(key, 48, 24);
         graphics.destroy();
     }
 

@@ -83,20 +83,18 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
           combatType = CombatTypeComponent.type[eid];
       }
       const isFlying = hasComponent(world, CanReachElevated, eid);
+      const isPlayer = hasComponent(world, PlayerControlled, eid);
       const role = hasComponent(world, UnitRole, eid) ? UnitRole.role[eid] : undefined;
-
-      const textureId = getUnitTextureKey(faction, combatType, isFlying, role);
+      const textureId = isPlayer ? "anim_commander" : getUnitTextureKey(faction, combatType, isFlying, role);
       const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], textureId);
 
       // Display at 2× the source pixel size — each pixel becomes a 2×2 block
-      // px_*.jpg sources: heroes=48px, troll/commander=64px, goblin/cultist=40px
-      const textureKey = getUnitTextureKey(faction, combatType, isFlying, role);
       let displaySize = 96; // default: 48px × 2
-      if (textureKey === "anim_commander" || textureKey === "steed_commander") {
+      if (textureId === "anim_commander" || textureId === "steed_commander") {
         displaySize = 140; // 80px × 1.75 — generous frame for king on horse with sword
-      } else if (textureKey === "anim_troll" || textureKey === "unit_troll") {
+      } else if (textureId === "anim_troll" || textureId === "unit_troll") {
         displaySize = 128; // 64px × 2
-      } else if (textureKey === "anim_goblin" || textureKey === "unit_goblin" || textureKey === "anim_cultist" || textureKey === "unit_cultist") {
+      } else if (textureId === "anim_goblin" || textureId === "unit_goblin" || textureId === "anim_cultist" || textureId === "unit_cultist" || textureId === "peasant_unit" || textureId === "builder_unit") {
         displaySize = 80;  // 40px × 2
       }
       sprite.setDisplaySize(displaySize, displaySize);
@@ -123,12 +121,39 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         const isDead  = Health.current[eid] <= 0;
         const isMoving = Math.abs(velX) > 5 || Math.abs(Velocity.y[eid]) > 5;
 
+        // ── Dynamic Role / CombatType Texture Sync ────────────────────────────
+        if (!isDead) {
+          const combatType = hasComponent(world, CombatTypeComponent, eid)
+            ? CombatTypeComponent.type[eid] : 0;
+          const isFlying = hasComponent(world, CanReachElevated, eid);
+          const role = hasComponent(world, UnitRole, eid) ? UnitRole.role[eid] : undefined;
+          const isPlayer = hasComponent(world, PlayerControlled, eid);
+          const expectedTexture = isPlayer
+            ? "anim_commander"
+            : getUnitTextureKey(faction, combatType, isFlying, role);
+
+          if (sprite.texture.key !== expectedTexture && scene.textures.exists(expectedTexture)) {
+            sprite.setTexture(expectedTexture);
+            let displaySize = 96;
+            if (expectedTexture === "anim_commander" || expectedTexture === "steed_commander") displaySize = 140;
+            else if (expectedTexture === "anim_troll" || expectedTexture === "unit_troll") displaySize = 128;
+            else if (expectedTexture === "anim_goblin" || expectedTexture === "anim_cultist" || expectedTexture === "peasant_unit" || expectedTexture === "builder_unit") displaySize = 80;
+            sprite.setDisplaySize(displaySize, displaySize);
+            if (expectedTexture.startsWith("anim_") && scene.anims.exists(`${expectedTexture}_idle`)) {
+              sprite.anims.play(`${expectedTexture}_idle`);
+            }
+          }
+        }
+
         // ── Animation playback ─────────────────────────────────────────────────
         if (!isDead && sprite.texture.key.startsWith("anim_")) {
           const combatType = hasComponent(world, CombatTypeComponent, eid)
             ? CombatTypeComponent.type[eid] : 0;
           const isFlying = hasComponent(world, CanReachElevated, eid);
-          const base = getAnimBaseKey(faction, combatType, isFlying);
+          const isPlayer = hasComponent(world, PlayerControlled, eid);
+          const base = isPlayer
+            ? "anim_commander"
+            : getAnimBaseKey(faction, combatType, isFlying);
           const targetAnim = isMoving ? `${base}_walk` : `${base}_idle`;
 
           if (sprite.anims.currentAnim?.key !== targetAnim && scene.anims.exists(targetAnim)) {
@@ -238,20 +263,17 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             });
         }
 
-        // Diegetic Visuals — gentle light pulsation based on energy ratio
+        // Diegetic Visuals — smooth steady luminescence based on energy ratio
         const energyRatio = Math.max(0, Math.min(1, CampCoreComponent.lightEnergy[eid] / CampCoreComponent.maxEnergy[eid]));
-        const glowAlpha = 0.88 + 0.12 * Math.sin(time / 700);
+        const glowAlpha = 0.92 + 0.08 * Math.sin(time / 1200);
+        sprite.setAlpha(glowAlpha);
 
-        if (energyRatio > 0.5) {
-            sprite.setAlpha(glowAlpha);
+        if (energyRatio > 0.4) {
             sprite.clearTint();
-        } else if (energyRatio > 0.2) {
-            sprite.setAlpha(0.85);
-            sprite.setTint(0xffd080);
+        } else if (energyRatio > 0.1) {
+            sprite.setTint(0xffd080); // Warm ember
         } else {
-            const danger = 0.6 + Math.sin(time / 150) * 0.4;
-            sprite.setAlpha(danger);
-            sprite.setTint(0xff4422);
+            sprite.setTint(0xff8866); // Soft dimmed amber (steady, no strobe flashing or blinking)
         }
       }
     }
@@ -261,6 +283,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     for (let i = 0; i < wallsEntered.length; i++) {
       const eid = wallsEntered[i];
       const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "wall_stage_1_pristine");
+      sprite.setOrigin(0.5, 1);
       spriteMap.set(eid, sprite);
     }
     const walls = campWallQuery(world);
