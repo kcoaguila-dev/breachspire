@@ -195,23 +195,22 @@ constructor() {
       this.coopSystem = createCoopSystem(f2Key, p2Data);
 
       // ── Register Animations (wiring only — no gameplay logic) ────────────────
-      // Frames 0-3 = idle, frames 4-7 = walk (matches the generated sprite sheets)
       for (const def of ANIM_DEFS) {
         if (!this.textures.exists(def.key)) continue;
         // Avoid re-creating animations on scene restart
         if (!this.anims.exists(`${def.key}_idle`)) {
           this.anims.create({
             key: `${def.key}_idle`,
-            frames: this.anims.generateFrameNumbers(def.key, { start: 0, end: 3 }),
-            frameRate: def.frameRate,
+            frames: this.anims.generateFrameNumbers(def.key, { start: 0, end: def.idleEnd }),
+            frameRate: Math.max(2, Math.floor(def.frameRate / 2)),
             repeat: -1,
           });
         }
         if (!this.anims.exists(`${def.key}_walk`)) {
           this.anims.create({
             key: `${def.key}_walk`,
-            frames: this.anims.generateFrameNumbers(def.key, { start: 4, end: 7 }),
-            frameRate: def.frameRate + 2,
+            frames: this.anims.generateFrameNumbers(def.key, { start: 0, end: def.walkEnd }),
+            frameRate: def.frameRate,
             repeat: -1,
           });
         }

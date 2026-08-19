@@ -89,6 +89,10 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       }
       sprite.setDisplaySize(displaySize, displaySize);
 
+      if (textureId.startsWith("anim_") && scene.anims.exists(`${textureId}_idle`)) {
+        sprite.anims.play(`${textureId}_idle`);
+      }
+
       spriteMap.set(eid, sprite);
 
       const hpGraphics = scene.add.graphics();

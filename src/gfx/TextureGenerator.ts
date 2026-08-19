@@ -3,24 +3,25 @@ import { FactionValues, CombatTypeValues } from "../ecs/components";
 
 export function getUnitTextureKey(faction: number, combatType: number, isFlying: boolean, role?: number): string {
     if (faction === FactionValues.Hero) {
-        if (role === 0) return "peasant_unit"; // Peasant — no sprite yet
-        if (role === 1) return "peasant_unit"; // Builder — no sprite yet
-        if (isFlying)                               return "unit_valkyrie";
-        if (combatType === CombatTypeValues.Melee)  return "steed_commander";
-        if (combatType === CombatTypeValues.Ranged) return "unit_archer";
-        if (combatType === CombatTypeValues.Magic)  return "unit_mage";
-        return "steed_commander"; // fallback
+        if (role === 0) return "peasant_unit"; // Peasant
+        if (role === 1) return "peasant_unit"; // Builder
+        if (isFlying)                               return "anim_valkyrie";
+        if (combatType === CombatTypeValues.Melee)  return "anim_commander";
+        if (combatType === CombatTypeValues.Ranged) return "anim_archer";
+        if (combatType === CombatTypeValues.Magic)  return "anim_mage";
+        return "anim_commander"; // fallback
     } else {
-        if (combatType === CombatTypeValues.Melee)  return "unit_troll";
-        if (combatType === CombatTypeValues.Ranged) return "unit_goblin";
-        if (combatType === CombatTypeValues.Magic)  return "unit_cultist";
-        return "unit_goblin";
+        if (combatType === CombatTypeValues.Melee)  return "anim_troll";
+        if (combatType === CombatTypeValues.Ranged) return "anim_goblin";
+        if (combatType === CombatTypeValues.Magic)  return "anim_cultist";
+        return "anim_goblin";
     }
 }
 
-
 // Unit texture keys loaded from real sprite sheets by BootScene
 const SPRITE_SHEET_KEYS = new Set([
+    "anim_commander", "anim_knight", "anim_archer", "anim_mage", "anim_valkyrie",
+    "anim_goblin", "anim_troll", "anim_cultist",
     "unit_knight", "unit_archer", "unit_mage", "unit_valkyrie",
     "steed_commander", "unit_goblin", "unit_troll", "unit_cultist",
     "camp_core_hearth", "light_aether_crystal",
