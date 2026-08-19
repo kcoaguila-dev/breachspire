@@ -4,11 +4,23 @@ export function formatEnergyText(current: number, max: number): string {
   return `Energy: ${c}/${m}`;
 }
 
-export function formatResourceHUDText(energy: number, maxEnergy: number, wood: number, iron: number): string {
+export function formatResourceHUDText(
+  energy: number,
+  maxEnergy: number,
+  wood: number,
+  iron: number,
+  maxWood?: number,
+  maxIron?: number
+): string {
   const e = Math.max(0, Math.floor(energy));
   const m = Math.max(0, Math.floor(maxEnergy));
   const w = Math.max(0, Math.floor(wood));
   const i = Math.max(0, Math.floor(iron));
+  if (maxWood !== undefined && maxIron !== undefined) {
+    const mw = Math.max(0, Math.floor(maxWood));
+    const mi = Math.max(0, Math.floor(maxIron));
+    return `⚡ Energy: ${e}/${m}  |  🪵 Wood: ${w}/${mw}  |  ⛏️ Iron: ${i}/${mi}`;
+  }
   return `⚡ Energy: ${e}/${m}  |  🪵 Wood: ${w}  |  ⛏️ Iron: ${i}`;
 }
 

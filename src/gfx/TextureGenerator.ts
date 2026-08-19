@@ -81,6 +81,69 @@ export class TextureGenerator {
         this.generateWoodPalisade(scene, "wall_wood_palisade");
         this.generateIronSpikedWall(scene, "wall_iron_spikes");
         this.generateWatchtower(scene, "watchtower_structure");
+        this.generateWarehouse(scene, "tool_warehouse");
+    }
+
+    private static generateWarehouse(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+
+        // Stone Foundation Base (48x48)
+        graphics.fillStyle(0x37474f, 1);
+        graphics.fillRect(2, 40, 44, 8);
+        graphics.fillStyle(0x546e7a, 1);
+        graphics.fillRect(4, 40, 40, 3);
+
+        // Timber Frame Shed
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(4, 16, 40, 24);
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(6, 18, 36, 22);
+
+        // Open Storage Bay
+        graphics.fillStyle(0x212121, 1);
+        graphics.fillRect(8, 22, 32, 18);
+
+        // Stacked Timber Logs (Left Side)
+        graphics.fillStyle(0x8d6e63, 1);
+        graphics.fillCircle(12, 35, 4);
+        graphics.fillCircle(19, 35, 4);
+        graphics.fillCircle(15, 29, 4);
+        graphics.fillStyle(0xd7ccc8, 1);
+        graphics.fillCircle(12, 35, 2);
+        graphics.fillCircle(19, 35, 2);
+        graphics.fillCircle(15, 29, 2);
+
+        // Stacked Iron Ore Ingots (Right Side)
+        graphics.fillStyle(0x78909c, 1);
+        graphics.fillRect(26, 33, 12, 5);
+        graphics.fillRect(28, 27, 8, 5);
+        graphics.fillStyle(0xcfd8dc, 1);
+        graphics.fillRect(27, 33, 10, 2);
+        graphics.fillRect(29, 27, 6, 2);
+        graphics.fillStyle(0xffffff, 1);
+        graphics.fillRect(34, 28, 2, 2);
+        graphics.fillRect(32, 34, 2, 2);
+
+        // Slanted Shingle Roof
+        graphics.fillStyle(0x4e342e, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 16);
+        graphics.lineTo(24, 4);
+        graphics.lineTo(48, 16);
+        graphics.closePath();
+        graphics.fillPath();
+
+        graphics.fillStyle(0x6d4c41, 1);
+        graphics.beginPath();
+        graphics.moveTo(3, 15);
+        graphics.lineTo(24, 6);
+        graphics.lineTo(45, 15);
+        graphics.closePath();
+        graphics.fillPath();
+
+        graphics.generateTexture(key, 48, 48);
+        graphics.destroy();
     }
 
     private static generatePineTree(scene: Phaser.Scene, key: string) {

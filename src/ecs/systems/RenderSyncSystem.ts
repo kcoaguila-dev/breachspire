@@ -1,10 +1,11 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled, HarvestableNode, HarvestableNodeValues, HarvestableStateValues, WallTierValues, WatchtowerComponent } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled, HarvestableNode, HarvestableNodeValues, HarvestableStateValues, WallTierValues, WatchtowerComponent, CampStockComponent } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getAnimBaseKey } from "../../gfx/AnimationKeys";
 import { getWallDamageStage } from "./CampSiegeSystem";
 import { getAmbientLightingColor } from "./DayNightSystem";
+import { computeInventoryUpgradeCost } from "./InventorySystem";
 
 export type RenderGameObject =
   | Phaser.GameObjects.Sprite
@@ -425,6 +426,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         else if (type === 4) texture = "tool_hammer_stand";
         else if (type === 5) texture = "tool_bow_stand";
         else if (type === 6) texture = "tool_sword_stand";
+        else if (type === 8) texture = "tool_warehouse";
 
         const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], texture);
         sprite.setOrigin(0.5, 1);
@@ -465,6 +467,18 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             else if (type === 4) label = "[SPACE] Hire Builder (10 Aether)";
             else if (type === 5) label = "[SPACE] Hire Archer (15 Aether)";
             else if (type === 6) label = "[SPACE] Hire Knight (20 Aether)";
+            else if (type === 8) {
+              const cores = campCoreQuery(world);
+              const currentLevel = cores.length > 0 && hasComponent(world, CampStockComponent, cores[0])
+                ? CampStockComponent.inventoryLevel[cores[0]]
+                : 0;
+              const cost = computeInventoryUpgradeCost(currentLevel);
+              if (cost) {
+                label = `[SPACE] Expand Stockpile (${cost.woodCost} Wood ➔ Max ${cost.newMaxWood})`;
+              } else {
+                label = `Max Stockpile Reached (Lv. ${currentLevel})`;
+              }
+            }
 
             if (label) {
               promptText.setText(label)

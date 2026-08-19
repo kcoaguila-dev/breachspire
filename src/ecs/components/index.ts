@@ -209,6 +209,7 @@ export enum PoiTypeValues {
   BowStand = 5,
   SwordStand = 6,
   WatchtowerFoundation = 7,
+  Warehouse = 8,
 }
 
 export const WildernessPoiComponent = defineComponent({
@@ -336,4 +337,7 @@ export const HarvestableNode = defineComponent({
 export const CampStockComponent = defineComponent({
   wood: Types.f32,
   iron: Types.f32,
+  maxWood: Types.f32,
+  maxIron: Types.f32,
+  inventoryLevel: Types.ui8,
 });

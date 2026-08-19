@@ -75,11 +75,15 @@ export function createHUDSystem(scene: Phaser.Scene) {
       const max = CampCoreComponent.maxEnergy[coreEid];
       let wood = 0;
       let iron = 0;
+      let maxWood = 20;
+      let maxIron = 10;
       if (hasComponent(world, CampStockComponent, coreEid)) {
         wood = CampStockComponent.wood[coreEid];
         iron = CampStockComponent.iron[coreEid];
+        maxWood = CampStockComponent.maxWood[coreEid] || 20;
+        maxIron = CampStockComponent.maxIron[coreEid] || 10;
       }
-      coreEnergyText.setText(formatResourceHUDText(energy, max, wood, iron));
+      coreEnergyText.setText(formatResourceHUDText(energy, max, wood, iron, maxWood, maxIron));
     }
 
     return world;

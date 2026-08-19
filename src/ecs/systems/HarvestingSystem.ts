@@ -14,6 +14,7 @@ import {
   Health,
   DayNightCycle
 } from "../components";
+import { clampResource } from "./InventorySystem";
 
 export function computeHarvestProgress(currentProgress: number, builderSpeed: number, delta: number): number {
   return currentProgress + (builderSpeed * (delta / 1000));
@@ -131,9 +132,11 @@ export function createHarvestingSystem() {
             const yieldCount = HarvestableNode.yieldCount[targetNodeEid];
 
             if (nodeType === 0) { // PineTree -> Wood
-               CampStockComponent.wood[coreEid] += yieldCount;
+               const maxWood = CampStockComponent.maxWood[coreEid] || 20;
+               CampStockComponent.wood[coreEid] = clampResource(CampStockComponent.wood[coreEid], yieldCount, maxWood);
             } else if (nodeType === 1) { // IronOre -> Iron
-               CampStockComponent.iron[coreEid] += yieldCount;
+               const maxIron = CampStockComponent.maxIron[coreEid] || 10;
+               CampStockComponent.iron[coreEid] = clampResource(CampStockComponent.iron[coreEid], yieldCount, maxIron);
             }
           }
         }

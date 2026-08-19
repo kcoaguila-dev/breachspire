@@ -139,6 +139,9 @@ export function createCampCoreEntity(
   addComponent(world, CampStockComponent, entity);
   CampStockComponent.wood[entity] = 0;
   CampStockComponent.iron[entity] = 0;
+  CampStockComponent.maxWood[entity] = 20; // Default base capacity
+  CampStockComponent.maxIron[entity] = 10;
+  CampStockComponent.inventoryLevel[entity] = 0;
 
   return entity;
 }

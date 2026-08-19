@@ -34,6 +34,7 @@ import { createAetherSpawningSystem } from "../ecs/systems/AetherSpawningSystem"
 import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSystem";
 import { createHarvestingSystem } from "../ecs/systems/HarvestingSystem";
 import { createWatchtowerSystem } from "../ecs/systems/WatchtowerSystem";
+import { createInventorySystem } from "../ecs/systems/InventorySystem";
 import { ANIM_DEFS } from "../gfx/AnimationKeys";
 
 
@@ -67,6 +68,7 @@ export class GameScene extends Phaser.Scene {
   private aetherCollectionSystem!: ReturnType<typeof createAetherCollectionSystem>;
   private harvestingSystem!: ReturnType<typeof createHarvestingSystem>;
   private watchtowerSystem!: ReturnType<typeof createWatchtowerSystem>;
+  private inventorySystem!: ReturnType<typeof createInventorySystem>;
   private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
   private audioManager!: AudioManager;
 
@@ -180,6 +182,7 @@ export class GameScene extends Phaser.Scene {
     this.aetherCollectionSystem = createAetherCollectionSystem(this.audioManager);
     this.harvestingSystem = createHarvestingSystem();
     this.watchtowerSystem = createWatchtowerSystem();
+    this.inventorySystem = createInventorySystem();
 
     try {
       // Load all game data via validated loaders
@@ -297,10 +300,11 @@ export class GameScene extends Phaser.Scene {
         return poiEid;
       };
 
-      // Town Guild Stands
+      // Town Guild Stands & Stockpile Warehouse
       spawnPoi(5, 15500, centerY); // Bow Stand (Archer Guild, 15 Aether)
       spawnPoi(4, 16500, centerY); // Hammer Stand (Builder Guild, 10 Aether)
       spawnPoi(6, 15000, centerY); // Sword Stand (Knight Guild, 20 Aether)
+      spawnPoi(8, 16200, centerY); // Resource Stockpile / Warehouse (Costs Wood to expand Inventory)
 
       // Vagrant Camps in Wilderness (Inner & Deep)
       spawnPoi(3, 12500, centerY); // West Inner Vagrant Camp
@@ -460,6 +464,7 @@ export class GameScene extends Phaser.Scene {
     // Kingdom Building & Recruitment Systems
     this.buildingSystem(world, delta);
     this.harvestingSystem(world, delta);
+    this.inventorySystem(world, delta);
     this.watchtowerSystem(world, delta);
     this.recruitmentSystem(world, delta);
     this.progressionXPSystem(world, delta);
