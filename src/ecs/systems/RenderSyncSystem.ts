@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled, HarvestableNode, HarvestableNodeValues, HarvestableStateValues } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getAnimBaseKey } from "../../gfx/AnimationKeys";
 import { getWallDamageStage } from "./CampSiegeSystem";
@@ -49,6 +49,10 @@ const levelUpEventQuery = defineQuery([LevelUpEvent]);
 const moteQuery = defineQuery([AetherMoteComponent, Position]);
 const moteQueryEnter = enterQuery(moteQuery);
 const moteQueryExit = exitQuery(moteQuery);
+
+const harvestableQuery = defineQuery([HarvestableNode, Position]);
+const harvestableQueryEnter = enterQuery(harvestableQuery);
+const harvestableQueryExit = exitQuery(harvestableQuery);
 
 const aetherCollectEventQuery = defineQuery([AetherCollectEvent]);
 
@@ -438,6 +442,47 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
 
     if (!promptShown) {
       promptText.setVisible(false);
+    }
+
+    // --- Harvestable Nodes ---
+    const harvestableEnter = harvestableQueryEnter(world);
+    for (let i = 0; i < harvestableEnter.length; i++) {
+        const eid = harvestableEnter[i];
+        const type = HarvestableNode.nodeType[eid];
+        const textureId = type === HarvestableNodeValues.PineTree ? "node_pine_tree" : "node_iron_ore";
+
+        const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], textureId);
+        sprite.setOrigin(0.5, 1.0); // Grounded
+        sprite.setDepth(15);
+        spriteMap.set(eid, sprite);
+    }
+
+    const harvestableEids = harvestableQuery(world);
+    for (let i = 0; i < harvestableEids.length; i++) {
+        const eid = harvestableEids[i];
+        const sprite = spriteMap.get(eid) as Phaser.GameObjects.Sprite;
+        if (sprite) {
+            sprite.x = Position.x[eid];
+            sprite.y = Position.y[eid];
+            const state = HarvestableNode.state[eid];
+            if (state === HarvestableStateValues.Depleted) {
+                sprite.setAlpha(0.3);
+            } else if (state === HarvestableStateValues.Ordered || state === HarvestableStateValues.BeingHarvested) {
+                sprite.setAlpha(0.8);
+            } else {
+                sprite.setAlpha(1.0);
+            }
+        }
+    }
+
+    const harvestableExit = harvestableQueryExit(world);
+    for (let i = 0; i < harvestableExit.length; i++) {
+        const eid = harvestableExit[i];
+        const sprite = spriteMap.get(eid);
+        if (sprite) {
+            sprite.destroy();
+            spriteMap.delete(eid);
+        }
     }
 
     // --- Motes ---

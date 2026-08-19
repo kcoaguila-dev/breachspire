@@ -1,6 +1,6 @@
 import { createDayNightSystem } from "../ecs/systems/DayNightSystem";
 import Phaser from "phaser";
-import { world, createUnitEntity, createCampCoreEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity } from "../ecs/world";
+import { world, createUnitEntity, createCampCoreEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity, createHarvestableNodeEntity } from "../ecs/world";
 import { SpireSideValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, UnitRole, RoleValues, WallBlueprint, BlueprintStateValues, CoopStateComponent, WildernessPoiComponent, GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent, InvasionSpawner, SpireComponent } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
@@ -32,6 +32,7 @@ import { createRecruitmentSystem } from "../ecs/systems/RecruitmentSystem";
 import { createProgressionXPSystem } from "../ecs/systems/ProgressionXPSystem";
 import { createAetherSpawningSystem } from "../ecs/systems/AetherSpawningSystem";
 import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSystem";
+import { createHarvestingSystem } from "../ecs/systems/HarvestingSystem";
 import { ANIM_DEFS } from "../gfx/AnimationKeys";
 
 
@@ -63,6 +64,7 @@ export class GameScene extends Phaser.Scene {
   private progressionXPSystem!: ReturnType<typeof createProgressionXPSystem>;
   private aetherSpawningSystem!: ReturnType<typeof createAetherSpawningSystem>;
   private aetherCollectionSystem!: ReturnType<typeof createAetherCollectionSystem>;
+  private harvestingSystem!: ReturnType<typeof createHarvestingSystem>;
   private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
   private audioManager!: AudioManager;
 
@@ -174,6 +176,7 @@ export class GameScene extends Phaser.Scene {
     this.splitCameraSystem = createSplitCameraSystem(this);
     this.aetherSpawningSystem = createAetherSpawningSystem();
     this.aetherCollectionSystem = createAetherCollectionSystem(this.audioManager);
+    this.harvestingSystem = createHarvestingSystem();
 
     try {
       // Load all game data via validated loaders
@@ -370,6 +373,20 @@ export class GameScene extends Phaser.Scene {
       spawnWallMound(leftOuterMoundX, centerY);
       spawnWallMound(rightOuterMoundX, centerY);
 
+      // Wilderness Trees & Iron Ore
+      const spawnNode = (type: number, minX: number, maxX: number, count: number, yieldCount: number) => {
+        for (let i = 0; i < count; i++) {
+            const rx = minX + Math.floor(Math.random() * (maxX - minX));
+            createHarvestableNodeEntity(world, type, yieldCount, rx, centerY);
+        }
+      };
+
+      // 0 = Pine Tree, 1 = Iron Ore
+      spawnNode(0, 300, 750, 4, 10);
+      spawnNode(0, 2450, 2900, 4, 10);
+      spawnNode(1, 400, 700, 2, 5);
+      spawnNode(1, 2500, 2800, 2, 5);
+
       // Spawn Player 1 (Commander)
       const knightEntity = createUnitEntity(world, commanderData, 1480, centerY);
       setPlayerControlled(world, knightEntity, 1);
@@ -410,6 +427,7 @@ export class GameScene extends Phaser.Scene {
 
     // Kingdom Building & Recruitment Systems
     this.buildingSystem(world, delta);
+    this.harvestingSystem(world, delta);
     this.recruitmentSystem(world, delta);
     this.progressionXPSystem(world, delta);
 

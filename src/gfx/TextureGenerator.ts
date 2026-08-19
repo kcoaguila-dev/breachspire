@@ -72,6 +72,31 @@ export class TextureGenerator {
         this.generateTroll(scene, "unit_troll");
         this.generateCultist(scene, "unit_cultist");
         this.generateSteedCommander(scene, "steed_commander");
+
+        // Harvestable nodes
+        this.generatePineTree(scene, "node_pine_tree");
+        this.generateIronOre(scene, "node_iron_ore");
+    }
+
+    private static generatePineTree(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+        graphics.fillStyle(0x006400, 1);
+        graphics.fillRect(8, 0, 16, 48); // Leaves
+        graphics.fillStyle(0x8B4513, 1);
+        graphics.fillRect(12, 48, 8, 16); // Trunk
+        graphics.generateTexture(key, 32, 64);
+        graphics.destroy();
+    }
+
+    private static generateIronOre(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+        graphics.fillStyle(0xA9A9A9, 1);
+        graphics.fillRect(0, 16, 32, 16);
+        graphics.fillRect(4, 8, 24, 8);
+        graphics.generateTexture(key, 32, 32);
+        graphics.destroy();
     }
 
     // Returns true if the key should use a real sprite sheet instead of the programmatic fallback

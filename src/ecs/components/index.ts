@@ -278,3 +278,31 @@ export const AetherCollectEvent = defineComponent({
   x: Types.f32,
   y: Types.f32,
 });
+
+// ─────────────────────────────────────────────────────
+// Harvesting Components
+// ─────────────────────────────────────────────────────
+
+export enum HarvestableNodeValues {
+  PineTree = 0,
+  IronOre = 1,
+}
+
+export enum HarvestableStateValues {
+  Natural = 0,
+  Ordered = 1,
+  BeingHarvested = 2,
+  Depleted = 3,
+}
+
+export const HarvestableNode = defineComponent({
+  nodeType: Types.ui8, // 0 = PineTree, 1 = IronOre
+  state: Types.ui8, // 0 = Natural, 1 = Ordered, 2 = BeingHarvested, 3 = Depleted
+  yieldCount: Types.ui8,
+  progress: Types.f32,
+});
+
+export const CampStockComponent = defineComponent({
+  wood: Types.f32,
+  iron: Types.f32,
+});

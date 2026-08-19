@@ -16,6 +16,9 @@ import {
   SpireSideValues,
   FloorComponent,
   CampCoreComponent,
+  CampStockComponent,
+  HarvestableNode,
+  HarvestableStateValues,
   CampWallComponent,
   PlayerControlled,
   InputStateComponent,
@@ -131,6 +134,32 @@ export function createCampCoreEntity(
 
   // Removed health components for core to prevent slow chipping
   // Core is destroyed instantly if a monster touches it
+
+  addComponent(world, CampStockComponent, entity);
+  CampStockComponent.wood[entity] = 0;
+  CampStockComponent.iron[entity] = 0;
+
+  return entity;
+}
+
+export function createHarvestableNodeEntity(
+  world: IWorld,
+  nodeType: number,
+  yieldCount: number,
+  x: number,
+  y: number
+): number {
+  const entity = addEntity(world);
+
+  addComponent(world, Position, entity);
+  Position.x[entity] = x;
+  Position.y[entity] = y;
+
+  addComponent(world, HarvestableNode, entity);
+  HarvestableNode.nodeType[entity] = nodeType;
+  HarvestableNode.state[entity] = HarvestableStateValues.Natural;
+  HarvestableNode.yieldCount[entity] = yieldCount;
+  HarvestableNode.progress[entity] = 0;
 
   return entity;
 }
