@@ -146,7 +146,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             let displaySize = 96;
             if (expectedTexture === "anim_commander" || expectedTexture === "steed_commander") displaySize = 140;
             else if (expectedTexture === "anim_troll" || expectedTexture === "unit_troll") displaySize = 128;
-            else if (expectedTexture === "anim_goblin" || expectedTexture === "anim_cultist" || expectedTexture === "peasant_unit" || expectedTexture === "builder_unit") displaySize = 80;
+            else if (expectedTexture === "anim_goblin" || expectedTexture === "anim_cultist" || expectedTexture === "peasant_unit" || expectedTexture === "builder_unit" || expectedTexture === "unit_vagrant") displaySize = 80;
             sprite.setDisplaySize(displaySize, displaySize);
             if (expectedTexture.startsWith("anim_") && scene.anims.exists(`${expectedTexture}_idle`)) {
               sprite.anims.play(`${expectedTexture}_idle`);
@@ -422,7 +422,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         const eid = poisEntered[i];
         const type = WildernessPoiComponent.poiType[eid];
         let texture = "camp_core_hearth"; // fallback
-        if (type === 3) texture = "camp_core_hearth";
+        if (type === 3) texture = "poi_vagrant_portal";
         else if (type === 4) texture = "tool_hammer_stand";
         else if (type === 5) texture = "tool_bow_stand";
         else if (type === 6) texture = "tool_sword_stand";
@@ -463,7 +463,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
           if (dist < 65) {
             const type = WildernessPoiComponent.poiType[poiEid];
             let label = "";
-            if (type === 3) label = "[SPACE] Recruit Vagrant (5 Aether)";
+            if (type === 3) label = "[SPACE] Guide Vagrant to Camp (5 Aether)";
             else if (type === 4) label = "[SPACE] Hire Builder (10 Aether)";
             else if (type === 5) label = "[SPACE] Hire Archer (15 Aether)";
             else if (type === 6) label = "[SPACE] Hire Knight (20 Aether)";

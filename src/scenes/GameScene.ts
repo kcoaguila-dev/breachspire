@@ -29,6 +29,7 @@ import { createHUDSystem } from "../ecs/systems/HUDSystem";
 import { resetWorldState } from "../ecs/world";
 import { createBuildingSystem } from "../ecs/systems/BuildingSystem";
 import { createRecruitmentSystem } from "../ecs/systems/RecruitmentSystem";
+import { createVagrantPortalSystem } from "../ecs/systems/VagrantPortalSystem";
 import { createProgressionXPSystem } from "../ecs/systems/ProgressionXPSystem";
 import { createAetherSpawningSystem } from "../ecs/systems/AetherSpawningSystem";
 import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSystem";
@@ -42,6 +43,7 @@ import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateMan
 
 export class GameScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
+  private vagrantPortalSystem!: ReturnType<typeof createVagrantPortalSystem>;
   private movementSystem!: ReturnType<typeof createMovementSystem>;
   private combatSystem!: ReturnType<typeof createCombatSystem>;
   private leaderDeathSystem!: ReturnType<typeof createLeaderDeathSystem>;
@@ -240,6 +242,7 @@ export class GameScene extends Phaser.Scene {
       this.renderSyncSystem = createRenderSyncSystem(this, this.spriteMap);
       this.coopSystem = createCoopSystem(f2Key, archerData);
       this.dayNightSystem = createDayNightSystem();
+      this.vagrantPortalSystem = createVagrantPortalSystem();
 
       const worldWidth = 32000;
       const coreX = 16000;
@@ -316,8 +319,8 @@ export class GameScene extends Phaser.Scene {
       spawnPoi(0, 9500, centerY);  // West Ancient Shrine
       spawnPoi(0, 22500, centerY); // East Ancient Shrine
 
-      // ── Unemployed People (Peasants / Wanderers) ─────────────────────────────
-      const spawnPeasant = (x: number, y: number) => {
+      // ── Citizens (Peasants) & Vagrants ───────────────────────────────────────
+      const spawnPeasant = (x: number, y: number, role: number = RoleValues.PEASANT) => {
         const pEid = addEntity(world);
         addComponent(world, Position, pEid);
         Position.x[pEid] = x;
@@ -331,33 +334,36 @@ export class GameScene extends Phaser.Scene {
         Speed.value[pEid] = 40;
 
         addComponent(world, Health, pEid);
-        Health.max[pEid] = 50;
-        Health.current[pEid] = 50;
+        Health.max[pEid] = role === RoleValues.VAGRANT ? 40 : 50;
+        Health.current[pEid] = Health.max[pEid];
 
         addComponent(world, FactionTag, pEid);
         FactionTag.faction[pEid] = FactionValues.Hero;
 
         addComponent(world, UnitRole, pEid);
-        UnitRole.role[pEid] = RoleValues.PEASANT;
+        UnitRole.role[pEid] = role;
         UnitRole.level[pEid] = 1;
         UnitRole.xp[pEid] = 0;
         UnitRole.nextLevelXp[pEid] = 50;
         return pEid;
       };
 
-      // Starting wanderers sitting by vagrant camps
-      spawnPeasant(12470, centerY);
-      spawnPeasant(12530, centerY);
-      spawnPeasant(19470, centerY);
-      spawnPeasant(19530, centerY);
-      spawnPeasant(6470, centerY);
-      spawnPeasant(6530, centerY);
-      spawnPeasant(25470, centerY);
-      spawnPeasant(25530, centerY);
+      // 5 Starting Active Citizens in Town Center / Base Camp (Day 1 ready to work)
+      spawnPeasant(15820, centerY, RoleValues.PEASANT);
+      spawnPeasant(15900, centerY, RoleValues.PEASANT);
+      spawnPeasant(16000, centerY, RoleValues.PEASANT);
+      spawnPeasant(16080, centerY, RoleValues.PEASANT);
+      spawnPeasant(16160, centerY, RoleValues.PEASANT);
 
-      // Starting unemployed citizens in base camp
-      spawnPeasant(15850, centerY);
-      spawnPeasant(16150, centerY);
+      // Starting Unrecruited Grayish Vagrants sitting at Wilderness Waygates (2 per portal)
+      spawnPeasant(12470, centerY, RoleValues.VAGRANT);
+      spawnPeasant(12530, centerY, RoleValues.VAGRANT);
+      spawnPeasant(19470, centerY, RoleValues.VAGRANT);
+      spawnPeasant(19530, centerY, RoleValues.VAGRANT);
+      spawnPeasant(6470, centerY, RoleValues.VAGRANT);
+      spawnPeasant(6530, centerY, RoleValues.VAGRANT);
+      spawnPeasant(25470, centerY, RoleValues.VAGRANT);
+      spawnPeasant(25530, centerY, RoleValues.VAGRANT);
 
       // ── Procedural / Randomized Wall Mounds & Debris ─────────────────────────
       const spawnWallMound = (x: number, y: number) => {
@@ -484,6 +490,7 @@ export class GameScene extends Phaser.Scene {
     this.harvestingSystem(world, delta);
     this.inventorySystem(world, delta);
     this.watchtowerSystem(world, delta);
+    this.vagrantPortalSystem(world, delta);
     this.recruitmentSystem(world, delta);
     this.progressionXPSystem(world, delta);
 

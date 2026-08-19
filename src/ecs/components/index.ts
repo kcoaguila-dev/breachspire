@@ -254,6 +254,7 @@ export enum RoleValues {
   BUILDER = 1,
   ARCHER = 2,
   KNIGHT = 3,
+  VAGRANT = 4,
 }
 
 export const UnitRole = defineComponent({
