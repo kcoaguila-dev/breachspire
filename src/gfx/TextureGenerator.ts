@@ -73,15 +73,249 @@ export class TextureGenerator {
         this.generateCultist(scene, "unit_cultist");
         this.generateSteedCommander(scene, "steed_commander");
 
-        // Harvestable nodes
+        // Harvestable nodes & Trees (Kingdom Two Crowns Scale)
         this.generatePineTree(scene, "node_pine_tree");
+        this.generateAncientOak(scene, "tree_ancient_oak");
+        this.generateTallPine(scene, "tree_tall_pine");
+        this.generateAutumnBirch(scene, "tree_autumn_birch");
         this.generateIronOre(scene, "node_iron_ore");
+        this.generateBloodMoon(scene, "moon_blood_red");
 
         // Tiered Walls & Structures
         this.generateWoodPalisade(scene, "wall_wood_palisade");
         this.generateIronSpikedWall(scene, "wall_iron_spikes");
         this.generateWatchtower(scene, "watchtower_structure");
         this.generateWarehouse(scene, "tool_warehouse");
+    }
+
+    private static generateBloodMoon(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+
+        // Outer Crimson Glow Aura (64x64)
+        graphics.fillStyle(0xb71c1c, 0.25);
+        graphics.fillCircle(32, 32, 30);
+        graphics.fillStyle(0xd32f2f, 0.45);
+        graphics.fillCircle(32, 32, 24);
+
+        // Blood Moon Disc
+        graphics.fillStyle(0xff1744, 1);
+        graphics.fillCircle(32, 32, 18);
+        graphics.fillStyle(0xff5252, 1);
+        graphics.fillCircle(30, 30, 15);
+
+        // Dark Eclipse Craters & Textures
+        graphics.fillStyle(0x880e4f, 0.7);
+        graphics.fillCircle(25, 27, 4);
+        graphics.fillCircle(35, 34, 5);
+        graphics.fillCircle(28, 37, 3);
+        graphics.fillCircle(37, 24, 2.5);
+
+        // Inner Core Glow
+        graphics.fillStyle(0xff8a80, 0.8);
+        graphics.fillCircle(28, 28, 6);
+
+        graphics.generateTexture(key, 64, 64);
+        graphics.destroy();
+    }
+
+    private static generateAncientOak(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+
+        // Ancient Oak Canvas: 112 x 220 px (Kingdom Two Crowns Scale)
+        const cx = 56;
+
+        // Root Flared Base (Anchored to ground)
+        graphics.fillStyle(0x2d1a12, 1);
+        graphics.beginPath();
+        graphics.moveTo(cx - 24, 220);
+        graphics.lineTo(cx - 10, 170);
+        graphics.lineTo(cx + 10, 170);
+        graphics.lineTo(cx + 24, 220);
+        graphics.closePath();
+        graphics.fillPath();
+
+        // Main Gnarled Trunk
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.fillRect(cx - 9, 90, 18, 110);
+        graphics.fillStyle(0x4e342e, 1);
+        graphics.fillRect(cx - 5, 90, 10, 110);
+        graphics.fillStyle(0x5d4037, 1);
+        graphics.fillRect(cx - 2, 90, 4, 110);
+
+        // Heavy Branching Limbs
+        graphics.fillStyle(0x3e2723, 1);
+        graphics.beginPath();
+        graphics.moveTo(cx - 8, 120);
+        graphics.lineTo(cx - 36, 80);
+        graphics.lineTo(cx - 30, 75);
+        graphics.lineTo(cx - 2, 110);
+        graphics.closePath();
+        graphics.fillPath();
+
+        graphics.beginPath();
+        graphics.moveTo(cx + 8, 115);
+        graphics.lineTo(cx + 38, 75);
+        graphics.lineTo(cx + 32, 70);
+        graphics.lineTo(cx + 2, 105);
+        graphics.closePath();
+        graphics.fillPath();
+
+        // Deep Canopy Underbelly Shadow (Base Volume)
+        graphics.fillStyle(0x0e3a13, 1);
+        graphics.fillCircle(cx, 75, 42);
+        graphics.fillCircle(cx - 26, 85, 28);
+        graphics.fillCircle(cx + 26, 82, 28);
+
+        // Rich Emerald Midtone Clusters
+        graphics.fillStyle(0x1b5e20, 1);
+        graphics.fillCircle(cx, 68, 38);
+        graphics.fillCircle(cx - 24, 76, 26);
+        graphics.fillCircle(cx + 24, 74, 26);
+        graphics.fillCircle(cx - 16, 50, 24);
+        graphics.fillCircle(cx + 16, 48, 24);
+        graphics.fillCircle(cx, 35, 26);
+
+        // Vibrant Forest Green Foliage Clouds
+        graphics.fillStyle(0x2e7d32, 1);
+        graphics.fillCircle(cx - 2, 62, 32);
+        graphics.fillCircle(cx - 22, 70, 22);
+        graphics.fillCircle(cx + 22, 68, 22);
+        graphics.fillCircle(cx - 14, 44, 20);
+        graphics.fillCircle(cx + 14, 42, 20);
+        graphics.fillCircle(cx, 30, 22);
+
+        // Bright Emerald Canopy Layer
+        graphics.fillStyle(0x388e3c, 1);
+        graphics.fillCircle(cx - 3, 56, 26);
+        graphics.fillCircle(cx - 20, 64, 18);
+        graphics.fillCircle(cx + 20, 62, 18);
+        graphics.fillCircle(cx - 12, 38, 16);
+        graphics.fillCircle(cx + 12, 36, 16);
+        graphics.fillCircle(cx, 24, 18);
+
+        // Golden-Green Sunlit Canopy Rims (Pic 2 style)
+        graphics.fillStyle(0x81c784, 0.9);
+        graphics.fillCircle(cx - 4, 22, 10);
+        graphics.fillCircle(cx - 14, 34, 8);
+        graphics.fillCircle(cx + 12, 32, 8);
+        graphics.fillCircle(cx - 20, 58, 8);
+        graphics.fillCircle(cx + 18, 56, 8);
+
+        // Micro Sunlight Gleam
+        graphics.fillStyle(0xc8e6c9, 0.8);
+        graphics.fillCircle(cx - 4, 18, 4);
+        graphics.fillCircle(cx - 14, 30, 3);
+        graphics.fillCircle(cx + 12, 28, 3);
+
+        graphics.generateTexture(key, 112, 220);
+        graphics.destroy();
+    }
+
+    private static generateTallPine(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+
+        // Tall Alpine Pine: 80 x 230 px
+        const cx = 40;
+
+        // Trunk (Dark Cedar Bark)
+        graphics.fillStyle(0x2d1a12, 1);
+        graphics.fillRect(cx - 6, 110, 12, 120);
+        graphics.fillStyle(0x4e342e, 1);
+        graphics.fillRect(cx - 3, 110, 6, 120);
+
+        // 6 Tiers of Bushy Pine Needles
+        const pineTiers = [
+            { y: 150, w: 74, h: 42, c1: 0x0e3a13, c2: 0x1b5e20, c3: 0x2e7d32 },
+            { y: 120, w: 64, h: 38, c1: 0x0e3a13, c2: 0x1b5e20, c3: 0x2e7d32 },
+            { y: 90,  w: 54, h: 36, c1: 0x1b5e20, c2: 0x2e7d32, c3: 0x388e3c },
+            { y: 62,  w: 44, h: 34, c1: 0x1b5e20, c2: 0x2e7d32, c3: 0x388e3c },
+            { y: 36,  w: 32, h: 30, c1: 0x2e7d32, c2: 0x388e3c, c3: 0x43a047 },
+            { y: 12,  w: 18, h: 26, c1: 0x388e3c, c2: 0x43a047, c3: 0x81c784 },
+        ];
+
+        for (const t of pineTiers) {
+            // Shadow Under
+            graphics.fillStyle(t.c1, 1);
+            graphics.beginPath();
+            graphics.moveTo(cx - t.w / 2, t.y + t.h);
+            graphics.lineTo(cx, t.y);
+            graphics.lineTo(cx + t.w / 2, t.y + t.h);
+            graphics.closePath();
+            graphics.fillPath();
+
+            // Midtone Body
+            graphics.fillStyle(t.c2, 1);
+            graphics.beginPath();
+            graphics.moveTo(cx - (t.w - 6) / 2, t.y + t.h - 4);
+            graphics.lineTo(cx, t.y + 2);
+            graphics.lineTo(cx + (t.w - 6) / 2, t.y + t.h - 4);
+            graphics.closePath();
+            graphics.fillPath();
+
+            // Highlight Ridge
+            graphics.fillStyle(t.c3, 0.8);
+            graphics.fillRect(cx - t.w / 4, t.y + 10, t.w / 2, 3);
+        }
+
+        graphics.generateTexture(key, 80, 230);
+        graphics.destroy();
+    }
+
+    private static generateAutumnBirch(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+
+        // Autumn Birch: 96 x 190 px
+        const cx = 48;
+
+        // White/Grey Birch Trunk with Dark Knots
+        graphics.fillStyle(0xb0bec5, 1);
+        graphics.fillRect(cx - 5, 80, 10, 110);
+        graphics.fillStyle(0xe0e0e0, 1);
+        graphics.fillRect(cx - 3, 80, 6, 110);
+
+        // Birch Horizontal Knots
+        graphics.fillStyle(0x263238, 1);
+        graphics.fillRect(cx - 5, 100, 4, 3);
+        graphics.fillRect(cx + 1, 120, 4, 2);
+        graphics.fillRect(cx - 4, 140, 5, 2);
+        graphics.fillRect(cx + 1, 160, 3, 3);
+
+        // Warm Autumn Amber & Crimson Canopy Clouds
+        graphics.fillStyle(0xbf360c, 1); // Deep Russet Shadow
+        graphics.fillCircle(cx, 65, 36);
+        graphics.fillCircle(cx - 20, 75, 24);
+        graphics.fillCircle(cx + 20, 72, 24);
+
+        graphics.fillStyle(0xd84315, 1); // Vibrant Orange-Red
+        graphics.fillCircle(cx, 58, 32);
+        graphics.fillCircle(cx - 18, 66, 20);
+        graphics.fillCircle(cx + 18, 64, 20);
+        graphics.fillCircle(cx - 12, 42, 18);
+        graphics.fillCircle(cx + 12, 40, 18);
+        graphics.fillCircle(cx, 28, 20);
+
+        graphics.fillStyle(0xf57c00, 1); // Glowing Golden Amber
+        graphics.fillCircle(cx - 2, 52, 26);
+        graphics.fillCircle(cx - 14, 36, 14);
+        graphics.fillCircle(cx + 14, 34, 14);
+        graphics.fillCircle(cx, 22, 16);
+
+        graphics.fillStyle(0xffb74d, 0.9); // Sunlight Gold Rim
+        graphics.fillCircle(cx - 4, 18, 8);
+        graphics.fillCircle(cx - 12, 30, 6);
+        graphics.fillCircle(cx + 12, 28, 6);
+
+        graphics.generateTexture(key, 96, 190);
+        graphics.destroy();
+    }
+
+    private static generatePineTree(scene: Phaser.Scene, key: string) {
+        // Fallback default pine uses Ancient Oak scale
+        this.generateAncientOak(scene, key);
     }
 
     private static generateWarehouse(scene: Phaser.Scene, key: string) {
@@ -146,41 +380,7 @@ export class TextureGenerator {
         graphics.destroy();
     }
 
-    private static generatePineTree(scene: Phaser.Scene, key: string) {
-        if (scene.textures.exists(key)) return;
-        const graphics = scene.add.graphics();
 
-        // Trunk (48x96)
-        graphics.fillStyle(0x3e2723, 1);
-        graphics.fillRect(20, 56, 8, 40);
-        graphics.fillStyle(0x5d4037, 1);
-        graphics.fillRect(22, 56, 4, 40);
-
-        // Layered Pine Foliage (Bottom to Top)
-        const layers = [
-            { y: 52, w: 44, h: 22, color: 0x1b5e20 },
-            { y: 36, w: 36, h: 20, color: 0x2e7d32 },
-            { y: 22, w: 28, h: 18, color: 0x388e3c },
-            { y: 6,  w: 18, h: 18, color: 0x43a047 },
-        ];
-
-        for (const l of layers) {
-            graphics.fillStyle(l.color, 1);
-            graphics.beginPath();
-            graphics.moveTo(24 - l.w / 2, l.y + l.h);
-            graphics.lineTo(24, l.y);
-            graphics.lineTo(24 + l.w / 2, l.y + l.h);
-            graphics.closePath();
-            graphics.fillPath();
-
-            // Foliage highlight
-            graphics.fillStyle(0x81c784, 0.6);
-            graphics.fillRect(24 - l.w / 4, l.y + 6, l.w / 2, 2);
-        }
-
-        graphics.generateTexture(key, 48, 96);
-        graphics.destroy();
-    }
 
     private static generateIronOre(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;

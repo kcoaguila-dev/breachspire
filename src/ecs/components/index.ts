@@ -318,6 +318,9 @@ export const AetherCollectEvent = defineComponent({
 export enum HarvestableNodeValues {
   PineTree = 0,
   IronOre = 1,
+  AncientOak = 2,
+  TallPine = 3,
+  AutumnBirch = 4,
 }
 
 export enum HarvestableStateValues {

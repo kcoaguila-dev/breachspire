@@ -501,11 +501,15 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     for (let i = 0; i < harvestableEnter.length; i++) {
         const eid = harvestableEnter[i];
         const type = HarvestableNode.nodeType[eid];
-        const textureId = type === HarvestableNodeValues.PineTree ? "node_pine_tree" : "node_iron_ore";
+        let textureId = "tree_ancient_oak";
+        if (type === HarvestableNodeValues.IronOre) textureId = "node_iron_ore";
+        else if (type === HarvestableNodeValues.TallPine) textureId = "tree_tall_pine";
+        else if (type === HarvestableNodeValues.AutumnBirch) textureId = "tree_autumn_birch";
+        else if (type === HarvestableNodeValues.PineTree || type === HarvestableNodeValues.AncientOak) textureId = "tree_ancient_oak";
 
         const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], textureId);
         sprite.setOrigin(0.5, 1.0); // Grounded
-        sprite.setDepth(15);
+        sprite.setDepth(5); // In background behind units
         spriteMap.set(eid, sprite);
     }
 

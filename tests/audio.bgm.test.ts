@@ -44,6 +44,13 @@ describe('Audio BGM Math', () => {
     expect(result.nightGain).toBeCloseTo(1, 2);
   });
 
+  it('should crossfade correctly for blood_moon mood', () => {
+    const result = computeCrossfadeGains('blood_moon', 1);
+    expect(result.bloodMoonGain).toBeCloseTo(1, 2);
+    expect(result.dayGain).toBeCloseTo(0, 2);
+    expect(result.nightGain).toBeCloseTo(0, 2);
+  });
+
   it('should cleanly replace activeInstance and cancel scheduler on destroy', () => {
     // Mock Web Audio Context in node test environment
     const mockCtx = {

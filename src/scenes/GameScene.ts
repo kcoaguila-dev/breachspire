@@ -1,7 +1,7 @@
-import { createDayNightSystem } from "../ecs/systems/DayNightSystem";
+import { createDayNightSystem, isBloodMoonDay } from "../ecs/systems/DayNightSystem";
 import Phaser from "phaser";
 import { world, createUnitEntity, createCampCoreEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity, createHarvestableNodeEntity, createWatchtowerEntity } from "../ecs/world";
-import { SpireSideValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, UnitRole, RoleValues, WallBlueprint, BlueprintStateValues, CoopStateComponent, WildernessPoiComponent, GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent, InvasionSpawner, SpireComponent } from "../ecs/components";
+import { SpireSideValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, UnitRole, RoleValues, WallBlueprint, BlueprintStateValues, CoopStateComponent, WildernessPoiComponent, GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent, InvasionSpawner, SpireComponent, HarvestableNodeValues } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
 import { createSplitCameraSystem } from "../ecs/systems/SplitCameraSystem";
@@ -76,7 +76,7 @@ export class GameScene extends Phaser.Scene {
   private isReady = false;
   private isGameOver = false;
   private isCoopMode = false;
-  private prevIsNight: number = -1;
+  private currentMusicMood: string = '';
   private bgMountains!: Phaser.GameObjects.TileSprite;
   private bgTrees!: Phaser.GameObjects.TileSprite;
   private screenAlertEid!: number;
@@ -93,7 +93,7 @@ export class GameScene extends Phaser.Scene {
     this.isReady = false;
     this.isGameOver = false;
     this.isCoopMode = data?.coop ?? false;
-    this.prevIsNight = -1;
+    this.currentMusicMood = '';
     this.spriteMap.clear();
     resetWorldState(world);
 
@@ -400,28 +400,46 @@ export class GameScene extends Phaser.Scene {
       createWatchtowerEntity(world, 4300, centerY);
       createWatchtowerEntity(world, 27700, centerY);
 
-      // Wilderness Trees & Iron Ore across the vast world
-      const spawnNode = (type: number, minX: number, maxX: number, count: number, yieldCount: number) => {
+      // ── Procedural Forests & Ore Clusters across 32,000px (Kingdom Two Crowns Wilderness) ──
+      const treeTypes = [
+        HarvestableNodeValues.AncientOak,
+        HarvestableNodeValues.TallPine,
+        HarvestableNodeValues.AutumnBirch,
+        HarvestableNodeValues.PineTree
+      ];
+
+      // Spawn West Wilderness Forests (~45 Diverse Giant Trees)
+      for (let i = 0; i < 45; i++) {
+        const rx = 1200 + Math.floor(Math.random() * 12500);
+        // Keep clear of wall mounds (14200, 10500, 4000) and camps
+        if (Math.abs(rx - 14200) < 160 || Math.abs(rx - 10500) < 160 || Math.abs(rx - 4000) < 160) continue;
+        const type = treeTypes[Math.floor(Math.random() * treeTypes.length)];
+        const yieldAmt = 4 + Math.floor(Math.random() * 5); // 4 - 8 Wood
+        createHarvestableNodeEntity(world, type, yieldAmt, rx, centerY);
+      }
+
+      // Spawn East Wilderness Forests (~45 Diverse Giant Trees)
+      for (let i = 0; i < 45; i++) {
+        const rx = 18300 + Math.floor(Math.random() * 12500);
+        // Keep clear of wall mounds (17800, 21500, 28000) and camps
+        if (Math.abs(rx - 17800) < 160 || Math.abs(rx - 21500) < 160 || Math.abs(rx - 28000) < 160) continue;
+        const type = treeTypes[Math.floor(Math.random() * treeTypes.length)];
+        const yieldAmt = 4 + Math.floor(Math.random() * 5);
+        createHarvestableNodeEntity(world, type, yieldAmt, rx, centerY);
+      }
+
+      // Spawn Wilderness Iron Ore Deposits
+      const spawnOre = (minX: number, maxX: number, count: number) => {
         for (let i = 0; i < count; i++) {
-            const rx = minX + Math.floor(Math.random() * (maxX - minX));
-            createHarvestableNodeEntity(world, type, yieldCount, rx, centerY);
+          const rx = minX + Math.floor(Math.random() * (maxX - minX));
+          createHarvestableNodeEntity(world, HarvestableNodeValues.IronOre, 5, rx, centerY);
         }
       };
 
-      // 0 = Pine Tree, 1 = Iron Ore
-      // West Wilderness
-      spawnNode(0, 11500, 13800, 6, 10); // Inner West Forest
-      spawnNode(0, 7500, 10000, 8, 10);  // Mid West Forest
-      spawnNode(0, 1500, 3800, 8, 10);   // Deep West Forest
-      spawnNode(1, 8500, 9500, 4, 5);    // West Iron Veins
-      spawnNode(1, 2000, 3500, 4, 5);    // Deep West Iron Veins
-
-      // East Wilderness
-      spawnNode(0, 18200, 20500, 6, 10); // Inner East Forest
-      spawnNode(0, 22000, 24500, 8, 10); // Mid East Forest
-      spawnNode(0, 28200, 30500, 8, 10); // Deep East Forest
-      spawnNode(1, 22500, 23500, 4, 5);  // East Iron Veins
-      spawnNode(1, 28500, 30000, 4, 5);  // Deep East Iron Veins
+      spawnOre(7500, 9500, 5);   // Mid West Iron Veins
+      spawnOre(1800, 3600, 5);   // Deep West Frontier Mines
+      spawnOre(22200, 24200, 5); // Mid East Iron Veins
+      spawnOre(28200, 30200, 5); // Deep East Frontier Mines
 
       // Spawn Player 1 (Commander)
       const knightEntity = createUnitEntity(world, commanderData, 15800, centerY);
@@ -501,21 +519,24 @@ export class GameScene extends Phaser.Scene {
     this.renderSyncSystem(world);
     this.hudSystem(world, delta);
 
-    // Check DayNightCycle to transition BGM
+    // Check DayNightCycle to transition BGM (Day / Night / Blood Moon)
     const dayNightEids = this.dayNightQuery(world);
     if (dayNightEids.length > 0) {
       const eid = dayNightEids[0];
       const isNight = DayNightCycle.isNight[eid];
+      const dayNum = DayNightCycle.dayNumber[eid];
+      const isBloodMoon = isBloodMoonDay(dayNum);
 
-      if (this.prevIsNight !== isNight) {
-        if (this.prevIsNight !== -1) {
-          if (isNight === 1) {
-            this.audioManager.setMusicMood('night', 3000);
-          } else {
-            this.audioManager.setMusicMood('day', 3000);
-          }
+      let targetMood: 'day' | 'night' | 'blood_moon' = 'day';
+      if (isNight === 1) {
+        targetMood = isBloodMoon ? 'blood_moon' : 'night';
+      }
+
+      if (this.currentMusicMood !== targetMood) {
+        if (this.currentMusicMood !== '') {
+          this.audioManager.setMusicMood(targetMood, 3000);
         }
-        this.prevIsNight = isNight;
+        this.currentMusicMood = targetMood;
       }
     }
 

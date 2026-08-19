@@ -3,12 +3,14 @@ export function getNoteFrequency(midiNote: number): number {
   return 440 * Math.pow(2, (midiNote - 69) / 12);
 }
 
-export function computeCrossfadeGains(isNight: boolean, progress: number): { dayGain: number, nightGain: number } {
+export function computeCrossfadeGains(mood: 'day' | 'night' | 'blood_moon' | boolean, progress: number): { dayGain: number, nightGain: number, bloodMoonGain: number } {
   const p = Math.max(0, Math.min(1, progress));
-  if (isNight) {
-    return { dayGain: 1 - p, nightGain: p };
+  if (mood === 'blood_moon') {
+    return { dayGain: 0, nightGain: (1 - p) * 0.2, bloodMoonGain: p };
+  } else if (mood === 'night' || mood === true) {
+    return { dayGain: 1 - p, nightGain: p, bloodMoonGain: 0 };
   } else {
-    return { dayGain: p, nightGain: 1 - p };
+    return { dayGain: p, nightGain: 1 - p, bloodMoonGain: 0 };
   }
 }
 
@@ -23,6 +25,7 @@ export class AudioManager {
   private masterGain: GainNode;
   private dayGain: GainNode;
   private nightGain: GainNode;
+  private bloodMoonGain: GainNode;
   private isMuted: boolean = false;
   private bgmStarted: boolean = false;
   // @ts-ignore
@@ -50,6 +53,10 @@ export class AudioManager {
     this.nightGain = this.ctx.createGain();
     this.nightGain.gain.value = 0;
     this.nightGain.connect(this.masterGain);
+
+    this.bloodMoonGain = this.ctx.createGain();
+    this.bloodMoonGain.gain.value = 0;
+    this.bloodMoonGain.connect(this.masterGain);
   }
 
   // BGM Methods
@@ -62,6 +69,7 @@ export class AudioManager {
 
     this.dayGain.gain.setValueAtTime(1, this.ctx.currentTime);
     this.nightGain.gain.setValueAtTime(0, this.ctx.currentTime);
+    this.bloodMoonGain.gain.setValueAtTime(0, this.ctx.currentTime);
 
     this.nextNoteTime = this.ctx.currentTime + 0.1;
     this.scheduleBGM();
@@ -89,23 +97,26 @@ export class AudioManager {
     }
   }
 
-  public setMusicMood(mood: 'day' | 'night', crossfadeDurationMs: number) {
+  public setMusicMood(mood: 'day' | 'night' | 'blood_moon', crossfadeDurationMs: number) {
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
     const t = this.ctx.currentTime;
     const duration = crossfadeDurationMs / 1000;
 
-    const target = computeCrossfadeGains(mood === 'night', 1.0);
+    const target = computeCrossfadeGains(mood, 1.0);
 
     this.dayGain.gain.cancelScheduledValues(t);
-    // Use setValueAtTime for current value before ramp
     this.dayGain.gain.setValueAtTime(this.dayGain.gain.value, t);
     this.dayGain.gain.linearRampToValueAtTime(target.dayGain, t + duration);
 
     this.nightGain.gain.cancelScheduledValues(t);
     this.nightGain.gain.setValueAtTime(this.nightGain.gain.value, t);
     this.nightGain.gain.linearRampToValueAtTime(target.nightGain, t + duration);
+
+    this.bloodMoonGain.gain.cancelScheduledValues(t);
+    this.bloodMoonGain.gain.setValueAtTime(this.bloodMoonGain.gain.value, t);
+    this.bloodMoonGain.gain.linearRampToValueAtTime(target.bloodMoonGain, t + duration);
   }
 
   public toggleMute() {
@@ -125,7 +136,7 @@ export class AudioManager {
 
     while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
       this.playBGMBeat(this.nextNoteTime);
-      this.nextNoteTime += 0.5; // 120 BPM
+      this.nextNoteTime += 0.5; // 120 BPM base
       this.beatCount++;
     }
     this.schedulerTimer = setTimeout(() => this.scheduleBGM(), 50);
@@ -153,6 +164,18 @@ export class AudioManager {
 
     if (this.beatCount % 4 === 0 || this.beatCount % 4 === 1) {
       this.playDrum(time, this.nightGain);
+    }
+
+    // Blood Moon Siege Theme: Fast Diminished arpeggios, rapid war drums, sub-bass rumble
+    const bloodMoonNotes = [57, 60, 63, 66, 69, 66, 63, 60]; // A diminished siege scale
+    const bloodNote = bloodMoonNotes[this.beatCount % bloodMoonNotes.length];
+    this.playSynth(getNoteFrequency(bloodNote), 'sawtooth', time, 0.35, 0.12, this.bloodMoonGain, 1800);
+    this.playSynth(getNoteFrequency(bloodNote + 12), 'square', time, 0.25, 0.06, this.bloodMoonGain, 2400);
+
+    // Rapid War Drums on every beat + sub pulse
+    this.playDrum(time, this.bloodMoonGain);
+    if (this.beatCount % 2 === 0) {
+      this.playSynth(getNoteFrequency(33), 'square', time, 0.6, 0.25, this.bloodMoonGain, 300); // A0 Sub-bass
     }
   }
 

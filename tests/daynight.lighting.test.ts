@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getAmbientLightingColor } from "../src/ecs/systems/DayNightSystem";
+import { getAmbientLightingColor, isBloodMoonDay } from "../src/ecs/systems/DayNightSystem";
 
 describe("DayNightSystem Ambient Lighting", () => {
     it("returns daylight values at progress 0.25", () => {
@@ -20,14 +20,27 @@ describe("DayNightSystem Ambient Lighting", () => {
 
     it("returns dark night values with high alpha at progress 0.85", () => {
         const color = getAmbientLightingColor(0.85);
-        // t = (0.85 - 0.65) / 0.35 = 0.5714...
-        // expected r: 255 + (10 - 255) * t = 255 - 140 = 115 (approx)
-        // expected g: 140 + (12 - 140) * t = 140 - 73.1 = 66.8 (approx)
-        // expected b: 60 + (35 - 60) * t = 60 - 14.28 = 45.7 (approx)
-        // expected alpha: 0.25 + 0.4 * t = 0.478 (approx)
         expect(color.alpha).toBeGreaterThan(0.4);
         expect(color.r).toBeLessThan(150);
         expect(color.g).toBeLessThan(100);
         expect(color.b).toBeLessThan(100);
+    });
+
+    it("identifies Blood Moon days correctly (every 4th day starting day 4)", () => {
+        expect(isBloodMoonDay(1)).toBe(false);
+        expect(isBloodMoonDay(2)).toBe(false);
+        expect(isBloodMoonDay(3)).toBe(false);
+        expect(isBloodMoonDay(4)).toBe(true);
+        expect(isBloodMoonDay(5)).toBe(false);
+        expect(isBloodMoonDay(8)).toBe(true);
+        expect(isBloodMoonDay(12)).toBe(true);
+    });
+
+    it("returns crimson Blood Moon lighting when isBloodMoon is true at night", () => {
+        const bloodColor = getAmbientLightingColor(0.85, true);
+        expect(bloodColor.r).toBe(255);
+        expect(bloodColor.g).toBeLessThan(30);
+        expect(bloodColor.b).toBeLessThan(40);
+        expect(bloodColor.alpha).toBeGreaterThan(0.5);
     });
 });

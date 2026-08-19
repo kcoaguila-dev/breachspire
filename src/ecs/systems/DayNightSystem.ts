@@ -6,7 +6,22 @@ const dayNightQuery = defineQuery([DayNightCycle]);
 // ─────────────────────────────────────────────────────
 // EXPORTED PURE LOGIC — testable by Vitest
 // ─────────────────────────────────────────────────────
-export function getAmbientLightingColor(cycleProgress: number): { r: number, g: number, b: number, alpha: number } {
+export function isBloodMoonDay(dayNumber: number): boolean {
+    return dayNumber > 1 && (dayNumber % 4 === 0);
+}
+
+export function getAmbientLightingColor(cycleProgress: number, isBloodMoon: boolean = false): { r: number, g: number, b: number, alpha: number } {
+    if (isBloodMoon && cycleProgress >= 0.5) {
+        // Deep crimson Blood Moon tint
+        const t = Math.min(1, (cycleProgress - 0.5) / 0.15);
+        return {
+            r: 255,
+            g: Math.round(30 * (1 - t * 0.8)),
+            b: Math.round(40 * (1 - t * 0.8)),
+            alpha: 0.15 + 0.55 * t
+        };
+    }
+
     if (cycleProgress < 0.5) {
         return { r: 255, g: 255, b: 255, alpha: 0.0 };
     } else if (cycleProgress < 0.65) {
@@ -48,22 +63,26 @@ export function computeDayNightPhase(elapsedTime: number, dayDuration: number, n
     return { isNight, progress, dayNumber };
 }
 
-export function computeWaveComposition(dayNumber: number, spireFloors: number): { goblinCount: number, archerCount: number, trollCount: number } {
-    // Wave 1: 2-3 goblins (let's use dayNumber for wave intensity logic, and spireFloors can boost it)
-    // Here dayNumber represents the wave/cycle number
+export function computeWaveComposition(dayNumber: number, spireFloors: number): { goblinCount: number, archerCount: number, trollCount: number, isBloodMoon: boolean } {
+    const isBloodMoon = isBloodMoonDay(dayNumber);
+    const bloodMoonBonus = isBloodMoon ? 2.5 : 1.0;
 
-    let goblinCount = 2 + dayNumber; // scales up each day
-    let archerCount = dayNumber > 1 ? dayNumber - 1 : 0; // archers start day 2
-    let trollCount = dayNumber > 2 ? Math.floor(dayNumber / 2) : 0; // trolls start day 3
+    let goblinCount = Math.ceil((2 + dayNumber) * bloodMoonBonus);
+    let archerCount = Math.ceil((dayNumber > 1 ? dayNumber - 1 : 0) * bloodMoonBonus);
+    let trollCount = Math.ceil((dayNumber > 2 ? Math.floor(dayNumber / 2) : 0) * bloodMoonBonus);
 
-    // Spire floors remaining can also scale the budget (more floors = more enemies)
-    // We'll keep it simple: multiply base by spireFloors/3, clamp to 1 minimum
+    if (isBloodMoon) {
+        trollCount = Math.max(trollCount, 2);
+        archerCount = Math.max(archerCount, 3);
+    }
+
     const multiplier = Math.max(1, spireFloors / 3);
 
     return {
         goblinCount: Math.ceil(goblinCount * multiplier),
         archerCount: Math.ceil(archerCount * multiplier),
-        trollCount: Math.ceil(trollCount * multiplier)
+        trollCount: Math.ceil(trollCount * multiplier),
+        isBloodMoon
     };
 }
 

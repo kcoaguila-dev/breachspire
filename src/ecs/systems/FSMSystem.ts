@@ -76,10 +76,29 @@ export function createFSMSystem() {
             continue;
         }
 
+        // Check if there is a closer threat within 100px (e.g. Player on horseback or defending hero)
+        let actualTarget = targetEid;
+        let actualDist = Math.sqrt((Position.x[targetEid] - Position.x[eid]) ** 2 + (Position.y[targetEid] - Position.y[eid]) ** 2);
+
+        for (let j = 0; j < aliveEntities.length; j++) {
+          const potentialTarget = aliveEntities[j];
+          if (potentialTarget === eid || Health.current[potentialTarget] <= 0) continue;
+          if (FactionTag.faction[potentialTarget] !== myFaction) {
+            const pX = Position.x[potentialTarget];
+            const pY = Position.y[potentialTarget];
+            const d = Math.sqrt((pX - Position.x[eid]) ** 2 + (pY - Position.y[eid]) ** 2);
+            if (d < 100 && d < actualDist) {
+              actualTarget = potentialTarget;
+              actualDist = d;
+            }
+          }
+        }
+        FSMState.targetEntity[eid] = actualTarget;
+
         // Move towards target
-        const dx = Position.x[targetEid] - Position.x[eid];
-        const dy = Position.y[targetEid] - Position.y[eid];
-        const dist = Math.sqrt(dx*dx + dy*dy);
+        const dx = Position.x[actualTarget] - Position.x[eid];
+        const dy = Position.y[actualTarget] - Position.y[eid];
+        const dist = actualDist;
 
         const ENGAGE_DISTANCE = 50; // pixels
 

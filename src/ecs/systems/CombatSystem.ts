@@ -5,6 +5,7 @@ import { calculateThornsDamage } from "./BuildingSystem";
 
 const combatQuery = defineQuery([Health, Attack, CombatTypeComponent, FSMState, Position]);
 const stateQuery = defineQuery([GameStateComponent]);
+const playerQuery = defineQuery([PlayerControlled, Position, Health]);
 
 // Multiplier constants
 const ADVANTAGE_MULTIPLIER = 1.5;
@@ -56,21 +57,42 @@ export function createCombatSystem() {
       if (state !== FSMStateValues.ENGAGE_TARGET) continue;
 
       const targetEid = FSMState.targetEntity[eid];
-      if (Health.current[targetEid] === undefined || Health.current[targetEid] <= 0) continue;
-
-      // Check distance
-      const dx = Position.x[targetEid] - Position.x[eid];
-      const dy = Position.y[targetEid] - Position.y[eid];
-      const dist = Math.sqrt(dx*dx + dy*dy);
-
       const ENGAGE_DISTANCE = 55; // slightly larger than FSM target stop distance to allow attacking
 
-      if (dist <= ENGAGE_DISTANCE) {
+      let attackTarget = targetEid;
+      let inRange = false;
+
+      // Priority 1: Check if a Player is in immediate range (<= 55px)
+      const players = playerQuery(world);
+      for (let p = 0; p < players.length; p++) {
+        const pEid = players[p];
+        if (Health.current[pEid] <= 0) continue;
+        const dxP = Position.x[pEid] - Position.x[eid];
+        const dyP = Position.y[pEid] - Position.y[eid];
+        if (Math.sqrt(dxP * dxP + dyP * dyP) <= ENGAGE_DISTANCE) {
+          attackTarget = pEid;
+          inRange = true;
+          break;
+        }
+      }
+
+      // Priority 2: Check standard FSM target
+      if (!inRange && targetEid !== undefined && Health.current[targetEid] > 0) {
+        const dx = Position.x[targetEid] - Position.x[eid];
+        const dy = Position.y[targetEid] - Position.y[eid];
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist <= ENGAGE_DISTANCE) {
+          attackTarget = targetEid;
+          inRange = true;
+        }
+      }
+
+      if (inRange && attackTarget !== -1) {
         const cd = attackCooldowns.get(eid) || 0;
         if (cd <= 0) {
           // Attack!
           const attackerType = CombatTypeComponent.type[eid];
-          const defenderType = CombatTypeComponent.type[targetEid];
+          const defenderType = CombatTypeComponent.type[attackTarget];
 
           const multiplier = getCombatMultiplier(attackerType, defenderType);
           let baseDamage = Attack.power[eid];
@@ -112,8 +134,8 @@ export function createCombatSystem() {
           // Phase 7: Spawn DamageTextEvent
           const eventEid = addEntity(world);
           addComponent(world, DamageTextEvent, eventEid);
-          DamageTextEvent.targetX[eventEid] = Position.x[targetEid];
-          DamageTextEvent.targetY[eventEid] = Position.y[targetEid] - 30; // Float slightly above
+          DamageTextEvent.targetX[eventEid] = Position.x[attackTarget];
+          DamageTextEvent.targetY[eventEid] = Position.y[attackTarget] - 30; // Float slightly above
           DamageTextEvent.amount[eventEid] = finalDamage;
           DamageTextEvent.isAdvantage[eventEid] = multiplier > 1.0 ? 2 : (multiplier < 1.0 ? 0 : 1);
           DamageTextEvent.combatType[eventEid] = attackerType;

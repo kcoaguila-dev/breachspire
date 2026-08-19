@@ -131,7 +131,7 @@ export function createHarvestingSystem() {
             const nodeType = HarvestableNode.nodeType[targetNodeEid];
             const yieldCount = HarvestableNode.yieldCount[targetNodeEid];
 
-            if (nodeType === 0) { // PineTree -> Wood
+            if (nodeType === 0 || nodeType >= 2) { // Wood (PineTree, AncientOak, TallPine, AutumnBirch)
                const maxWood = CampStockComponent.maxWood[coreEid] || 20;
                CampStockComponent.wood[coreEid] = clampResource(CampStockComponent.wood[coreEid], yieldCount, maxWood);
             } else if (nodeType === 1) { // IronOre -> Iron
