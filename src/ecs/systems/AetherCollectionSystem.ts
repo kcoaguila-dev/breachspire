@@ -8,7 +8,7 @@ const coreQuery = defineQuery([CampCoreComponent]);
 // ─────────────────────────────────────────────────────
 // EXPORTED PURE LOGIC — testable by Vitest
 // ─────────────────────────────────────────────────────
-export function getMoteInteraction(moteX: number, moteY: number, playerX: number, playerY: number, pickupRadius: number = 25, magnetRadius: number = 120): 'pickup' | 'magnet' | 'none' {
+export function getMoteInteraction(moteX: number, moteY: number, playerX: number, playerY: number, pickupRadius: number = 30, magnetRadius: number = 130): 'pickup' | 'magnet' | 'none' {
   const dx = playerX - moteX;
   const dy = playerY - moteY;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -22,6 +22,10 @@ export function clampEnergy(currentEnergy: number, amount: number, maxEnergy: nu
   return Math.min(currentEnergy + amount, maxEnergy);
 }
 
+export function shouldMoteDespawn(lifetime: number): boolean {
+  return lifetime <= 0;
+}
+
 // ─────────────────────────────────────────────────────
 // SYSTEM FACTORY
 // ─────────────────────────────────────────────────────
@@ -31,55 +35,80 @@ export function createAetherCollectionSystem(audioManager: { playAetherCollect: 
     if (motes.length === 0) return world;
 
     const players = playerQuery(world);
+
+    // 1. Process Despawn Timer for all motes
+    for (let i = 0; i < motes.length; i++) {
+      const eid = motes[i];
+      if (AetherMoteComponent.lifetime[eid] !== undefined && AetherMoteComponent.lifetime[eid] > 0) {
+        AetherMoteComponent.lifetime[eid] -= delta;
+        if (shouldMoteDespawn(AetherMoteComponent.lifetime[eid])) {
+          removeEntity(world, eid);
+          continue;
+        }
+      }
+    }
+
     if (players.length === 0) return world;
 
-    // Use Player 1 for now
-    let p1Eid = -1;
-    for (let i = 0; i < players.length; i++) {
-        if (PlayerControlled.playerId[players[i]] === 1) {
-            p1Eid = players[i];
-            break;
-        }
-    }
-    if (p1Eid === -1) p1Eid = players[0];
-
-    const px = Position.x[p1Eid];
-    const py = Position.y[p1Eid];
+    // 2. Process Interaction with all active Players (P1 and P2)
+    const cores = coreQuery(world);
+    const coreEid = cores.length > 0 ? cores[0] : -1;
 
     for (let i = 0; i < motes.length; i++) {
       const eid = motes[i];
       const mx = Position.x[eid];
       const my = Position.y[eid];
 
-      const dx = px - mx;
-      const dy = py - my;
+      // Find closest player
+      let closestPlayer = -1;
+      let minDistance = Infinity;
 
-      const interaction = getMoteInteraction(mx, my, px, py);
-
-      if (interaction === 'pickup') {
-        // Collect
-        const cores = coreQuery(world);
-        if (cores.length > 0) {
-            const coreEid = cores[0];
-            const maxEnergy = CampCoreComponent.maxEnergy[coreEid];
-            CampCoreComponent.lightEnergy[coreEid] = clampEnergy(CampCoreComponent.lightEnergy[coreEid], 10, maxEnergy);
-        }
-
-        const eventEid = addEntity(world);
-        addComponent(world, AetherCollectEvent, eventEid);
-        AetherCollectEvent.x[eventEid] = mx;
-        AetherCollectEvent.y[eventEid] = my;
-
-        audioManager.playAetherCollect();
-        removeEntity(world, eid);
-      } else if (interaction === 'magnet') {
-        // Magnetic pull
+      for (let p = 0; p < players.length; p++) {
+        const pEid = players[p];
+        const px = Position.x[pEid];
+        const py = Position.y[pEid];
+        const dx = px - mx;
+        const dy = py - my;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const speed = 200; // pixels per second
-        const vx = (dx / dist) * speed;
-        const vy = (dy / dist) * speed;
-        Position.x[eid] += (vx * delta) / 1000;
-        Position.y[eid] += (vy * delta) / 1000;
+
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestPlayer = pEid;
+        }
+      }
+
+      if (closestPlayer !== -1) {
+        const px = Position.x[closestPlayer];
+        const py = Position.y[closestPlayer];
+        const dx = px - mx;
+        const dy = py - my;
+
+        const interaction = getMoteInteraction(mx, my, px, py);
+
+        if (interaction === 'pickup') {
+          // Collect into shared core
+          if (coreEid !== -1) {
+            const maxEnergy = CampCoreComponent.maxEnergy[coreEid] || 100;
+            const moteValue = AetherMoteComponent.value[eid] || 5;
+            CampCoreComponent.lightEnergy[coreEid] = clampEnergy(CampCoreComponent.lightEnergy[coreEid], moteValue, maxEnergy);
+          }
+
+          const eventEid = addEntity(world);
+          addComponent(world, AetherCollectEvent, eventEid);
+          AetherCollectEvent.x[eventEid] = mx;
+          AetherCollectEvent.y[eventEid] = my;
+
+          audioManager.playAetherCollect();
+          removeEntity(world, eid);
+        } else if (interaction === 'magnet') {
+          // Magnetic pull towards closest player
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const speed = 220; // pixels per second
+          const vx = (dx / dist) * speed;
+          const vy = (dy / dist) * speed;
+          Position.x[eid] += (vx * delta) / 1000;
+          Position.y[eid] += (vy * delta) / 1000;
+        }
       }
     }
 

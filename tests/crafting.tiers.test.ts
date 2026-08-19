@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { computeWallUpgradeCost, calculateThornsDamage, createBuildingSystem } from "../src/ecs/systems/BuildingSystem";
 import { computeWatchtowerRange, computeWatchtowerAttackCooldown, canOccupyWatchtower, createWatchtowerSystem } from "../src/ecs/systems/WatchtowerSystem";
 import { createWorld, addEntity, addComponent } from "bitecs";
-import { Position, CampWallComponent, WallTierValues, WatchtowerComponent, UnitRole, RoleValues, Health, Speed, CampCoreComponent, CampStockComponent, WallBlueprint, BlueprintStateValues, PlayerControlled, InputStateComponent, Velocity } from "../src/ecs/components";
+import { Position, CampWallComponent, WallTierValues, WatchtowerComponent, TowerTierValues, TowerStateValues, UnitRole, RoleValues, Health, Speed, CampCoreComponent, CampStockComponent, WallBlueprint, BlueprintStateValues, PlayerControlled, InputStateComponent, Velocity } from "../src/ecs/components";
 
 describe("Tiered Crafting & Building Upgrades", () => {
   describe("computeWallUpgradeCost", () => {
@@ -77,19 +77,27 @@ describe("Tiered Crafting & Building Upgrades", () => {
   });
 
   describe("System Integration: Watchtower Archer Stationing", () => {
-    it("should auto-station an available archer into a vacant watchtower", () => {
+    it("should station an available archer into a completed watchtower upon player interaction", () => {
       const world = createWorld();
+
+      const coreEid = addEntity(world);
+      addComponent(world, CampCoreComponent, coreEid);
+      addComponent(world, Position, coreEid);
+      Position.x[coreEid] = 16000;
 
       const towerEid = addEntity(world);
       addComponent(world, Position, towerEid);
       Position.x[towerEid] = 500;
       Position.y[towerEid] = 300;
       addComponent(world, WatchtowerComponent, towerEid);
-      WatchtowerComponent.occupiedArcherEid[towerEid] = 0;
+      WatchtowerComponent.tier[towerEid] = TowerTierValues.WOODEN;
+      WatchtowerComponent.state[towerEid] = TowerStateValues.COMPLETED;
+      WatchtowerComponent.maxGarrison[towerEid] = 1;
+      WatchtowerComponent.garrisonCount[towerEid] = 0;
 
       const archerEid = addEntity(world);
       addComponent(world, Position, archerEid);
-      Position.x[archerEid] = 550;
+      Position.x[archerEid] = 520;
       Position.y[archerEid] = 300;
       addComponent(world, Health, archerEid);
       Health.current[archerEid] = 80;
@@ -98,12 +106,20 @@ describe("Tiered Crafting & Building Upgrades", () => {
       addComponent(world, UnitRole, archerEid);
       UnitRole.role[archerEid] = RoleValues.ARCHER;
 
+      const playerEid = addEntity(world);
+      addComponent(world, PlayerControlled, playerEid);
+      addComponent(world, InputStateComponent, playerEid);
+      InputStateComponent.attack[playerEid] = 1;
+      addComponent(world, Position, playerEid);
+      Position.x[playerEid] = 505;
+      Position.y[playerEid] = 300;
+
       const watchtowerSystem = createWatchtowerSystem();
       watchtowerSystem(world, 16);
 
       expect(WatchtowerComponent.occupiedArcherEid[towerEid]).toBe(archerEid);
       expect(Position.x[archerEid]).toBe(500);
-      expect(Position.y[archerEid]).toBe(260); // Perched 40px above ground
+      expect(Position.y[archerEid]).toBe(300 - 95); // Perched 95px above ground atop wooden platform
     });
   });
 

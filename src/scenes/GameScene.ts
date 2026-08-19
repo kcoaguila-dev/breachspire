@@ -1,7 +1,7 @@
 import { createDayNightSystem, isBloodMoonDay } from "../ecs/systems/DayNightSystem";
 import Phaser from "phaser";
 import { world, createUnitEntity, createCampCoreEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity, createHarvestableNodeEntity, createWatchtowerEntity } from "../ecs/world";
-import { SpireSideValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, UnitRole, RoleValues, WallBlueprint, BlueprintStateValues, CoopStateComponent, WildernessPoiComponent, GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent, InvasionSpawner, SpireComponent, HarvestableNodeValues } from "../ecs/components";
+import { SpireSideValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, UnitRole, RoleValues, WallBlueprint, BlueprintStateValues, CoopStateComponent, WildernessPoiComponent, GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent, InvasionSpawner, SpireComponent, HarvestableNodeValues, TowerTierValues } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
 import { createSplitCameraSystem } from "../ecs/systems/SplitCameraSystem";
@@ -36,6 +36,7 @@ import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSys
 import { createHarvestingSystem } from "../ecs/systems/HarvestingSystem";
 import { createWatchtowerSystem } from "../ecs/systems/WatchtowerSystem";
 import { createInventorySystem } from "../ecs/systems/InventorySystem";
+import { createWildlifeSystem } from "../ecs/systems/WildlifeSystem";
 import { ANIM_DEFS } from "../gfx/AnimationKeys";
 
 
@@ -44,6 +45,7 @@ import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateMan
 export class GameScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
   private vagrantPortalSystem!: ReturnType<typeof createVagrantPortalSystem>;
+  private wildlifeSystem!: ReturnType<typeof createWildlifeSystem>;
   private movementSystem!: ReturnType<typeof createMovementSystem>;
   private combatSystem!: ReturnType<typeof createCombatSystem>;
   private leaderDeathSystem!: ReturnType<typeof createLeaderDeathSystem>;
@@ -243,6 +245,7 @@ export class GameScene extends Phaser.Scene {
       this.coopSystem = createCoopSystem(f2Key, archerData);
       this.dayNightSystem = createDayNightSystem();
       this.vagrantPortalSystem = createVagrantPortalSystem();
+      this.wildlifeSystem = createWildlifeSystem();
 
       const worldWidth = 32000;
       const coreX = 16000;
@@ -398,13 +401,13 @@ export class GameScene extends Phaser.Scene {
       spawnWallMound(leftFrontierWallX, centerY);
       spawnWallMound(rightFrontierWallX, centerY);
 
-      // Watchtowers behind wall defenses
-      createWatchtowerEntity(world, 14500, centerY);
-      createWatchtowerEntity(world, 17500, centerY);
-      createWatchtowerEntity(world, 10800, centerY);
-      createWatchtowerEntity(world, 21200, centerY);
-      createWatchtowerEntity(world, 4300, centerY);
-      createWatchtowerEntity(world, 27700, centerY);
+      // Watchtower Foundation Boulder Piles (Unbuilt debris foundation) behind wall defenses
+      createWatchtowerEntity(world, 14500, centerY, TowerTierValues.RUBBLE);
+      createWatchtowerEntity(world, 17500, centerY, TowerTierValues.RUBBLE);
+      createWatchtowerEntity(world, 10800, centerY, TowerTierValues.RUBBLE);
+      createWatchtowerEntity(world, 21200, centerY, TowerTierValues.RUBBLE);
+      createWatchtowerEntity(world, 4300, centerY, TowerTierValues.RUBBLE);
+      createWatchtowerEntity(world, 27700, centerY, TowerTierValues.RUBBLE);
 
       // ── Procedural Forests & Ore Clusters across 32,000px (Kingdom Two Crowns Wilderness) ──
       const treeTypes = [
@@ -491,6 +494,7 @@ export class GameScene extends Phaser.Scene {
     this.inventorySystem(world, delta);
     this.watchtowerSystem(world, delta);
     this.vagrantPortalSystem(world, delta);
+    this.wildlifeSystem(world, delta);
     this.recruitmentSystem(world, delta);
     this.progressionXPSystem(world, delta);
 

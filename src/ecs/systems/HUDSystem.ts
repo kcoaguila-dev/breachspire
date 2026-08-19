@@ -1,11 +1,12 @@
 import { defineQuery, IWorld, hasComponent } from "bitecs";
-import { CampCoreComponent, DayNightCycle, CoopStateComponent, CampStockComponent } from "../components";
-import { formatResourceHUDText } from "../../ui/HUDState";
+import { CampCoreComponent, DayNightCycle, CoopStateComponent, CampStockComponent, PlayerControlled } from "../components";
+import { formatResourceHUDText, formatCoopEnergyHUDText } from "../../ui/HUDState";
 import Phaser from "phaser";
 
 const coreQuery = defineQuery([CampCoreComponent]);
 const dayNightQuery = defineQuery([DayNightCycle]);
 const coopQuery = defineQuery([CoopStateComponent]);
+const playerQuery = defineQuery([PlayerControlled]);
 
 export function createHUDSystem(scene: Phaser.Scene) {
   // Setup Phaser UI elements
@@ -67,25 +68,64 @@ export function createHUDSystem(scene: Phaser.Scene) {
         const isNight = DayNightCycle.isNight[eid] === 1;
         dayNightText.setText(isNight ? `🌙 Night ${dayNum}` : `☀️ Day ${dayNum}`);
     }
-    // 1. Update Core Energy & Resources
+
+    // 1. Update Energy & Resources
     const cores = coreQuery(world);
+    const players = playerQuery(world);
+
+    let wood = 0;
+    let iron = 0;
+    let maxWood = 20;
+    let maxIron = 10;
+
     if (cores.length > 0) {
       const coreEid = cores[0];
-      const energy = CampCoreComponent.lightEnergy[coreEid];
-      const max = CampCoreComponent.maxEnergy[coreEid];
-      let wood = 0;
-      let iron = 0;
-      let maxWood = 20;
-      let maxIron = 10;
       if (hasComponent(world, CampStockComponent, coreEid)) {
         wood = CampStockComponent.wood[coreEid];
         iron = CampStockComponent.iron[coreEid];
         maxWood = CampStockComponent.maxWood[coreEid] || 20;
         maxIron = CampStockComponent.maxIron[coreEid] || 10;
       }
-      coreEnergyText.setText(formatResourceHUDText(energy, max, wood, iron, maxWood, maxIron));
     }
 
+    if (isCoopActive && players.length >= 2) {
+      let p1Eid = -1;
+      let p2Eid = -1;
+      for (let i = 0; i < players.length; i++) {
+        if (PlayerControlled.playerId[players[i]] === 1) p1Eid = players[i];
+        if (PlayerControlled.playerId[players[i]] === 2) p2Eid = players[i];
+      }
+
+      if (p1Eid !== -1 && p2Eid !== -1) {
+        const p1Energy = PlayerControlled.energy[p1Eid];
+        const p1Max = PlayerControlled.maxEnergy[p1Eid] || 50;
+        const p1Down = PlayerControlled.isDowned[p1Eid] === 1;
+
+        const p2Energy = PlayerControlled.energy[p2Eid];
+        const p2Max = PlayerControlled.maxEnergy[p2Eid] || 50;
+        const p2Down = PlayerControlled.isDowned[p2Eid] === 1;
+
+        coreEnergyText.setText(formatCoopEnergyHUDText(
+          p1Energy, p1Max, p1Down,
+          p2Energy, p2Max, p2Down,
+          wood, iron, maxWood, maxIron
+        ));
+        return world;
+      }
+    }
+
+    // Single Player Display
+    let playerEnergy = 0;
+    let playerMaxEnergy = 50;
+    if (players.length > 0) {
+      playerEnergy = PlayerControlled.energy[players[0]] || 0;
+      playerMaxEnergy = PlayerControlled.maxEnergy[players[0]] || 50;
+    } else if (cores.length > 0) {
+      playerEnergy = CampCoreComponent.lightEnergy[cores[0]];
+      playerMaxEnergy = CampCoreComponent.maxEnergy[cores[0]];
+    }
+
+    coreEnergyText.setText(formatResourceHUDText(playerEnergy, playerMaxEnergy, wood, iron, maxWood, maxIron));
     return world;
   };
 }

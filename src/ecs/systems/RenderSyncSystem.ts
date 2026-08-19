@@ -1,11 +1,12 @@
 import Phaser from "phaser";
 import { defineQuery, IWorld, enterQuery, exitQuery, hasComponent, removeEntity } from "bitecs";
-import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled, HarvestableNode, HarvestableNodeValues, HarvestableStateValues, WallTierValues, WatchtowerComponent, CampStockComponent } from "../components";
+import { Position, FactionTag, FactionValues, Health, CampCoreComponent, CampWallComponent, SpireComponent, FloorComponent, GameStateComponent, GameStateValues, Velocity, CombatTypeComponent, CanReachElevated, WallBlueprint, WildernessPoiComponent, UnitRole, BlueprintStateValues, LevelUpEvent, DayNightCycle, AetherMoteComponent, AetherCollectEvent, PlayerControlled, HarvestableNode, HarvestableNodeValues, HarvestableStateValues, WallTierValues, WatchtowerComponent, TowerStateValues, TowerTierValues, CampStockComponent } from "../components";
 import { getUnitTextureKey } from "../../gfx/TextureGenerator";
 import { getAnimBaseKey } from "../../gfx/AnimationKeys";
 import { getWallDamageStage } from "./CampSiegeSystem";
 import { getAmbientLightingColor } from "./DayNightSystem";
 import { computeInventoryUpgradeCost } from "./InventorySystem";
+import { computeTowerUpgradeCost } from "./WatchtowerSystem";
 
 export type RenderGameObject =
   | Phaser.GameObjects.Sprite
@@ -147,6 +148,7 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             if (expectedTexture === "anim_commander" || expectedTexture === "steed_commander") displaySize = 140;
             else if (expectedTexture === "anim_troll" || expectedTexture === "unit_troll") displaySize = 128;
             else if (expectedTexture === "anim_goblin" || expectedTexture === "anim_cultist" || expectedTexture === "peasant_unit" || expectedTexture === "builder_unit" || expectedTexture === "unit_vagrant") displaySize = 80;
+            else if (expectedTexture === "unit_aether_slime") displaySize = 36;
             sprite.setDisplaySize(displaySize, displaySize);
             if (expectedTexture.startsWith("anim_") && scene.anims.exists(`${expectedTexture}_idle`)) {
               sprite.anims.play(`${expectedTexture}_idle`);
@@ -335,7 +337,15 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     const watchtowersEntered = watchtowerQueryEnter(world);
     for (let i = 0; i < watchtowersEntered.length; i++) {
       const eid = watchtowersEntered[i];
-      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], "watchtower_structure");
+      const tier = WatchtowerComponent.tier[eid];
+      const state = WatchtowerComponent.state[eid];
+      let tex = "tower_boulder_pile";
+      if (state === TowerStateValues.RUBBLE || tier === TowerTierValues.RUBBLE) tex = "tower_boulder_pile";
+      else if (tier === TowerTierValues.WOODEN) tex = "watchtower_tier_1";
+      else if (tier === TowerTierValues.BASTION) tex = "watchtower_tier_2";
+      else if (tier === TowerTierValues.FORTRESS) tex = "watchtower_tier_3";
+
+      const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], tex);
       sprite.setOrigin(0.5, 1);
       sprite.setDepth(12);
       spriteMap.set(eid, sprite);
@@ -355,6 +365,18 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       const sprite = spriteMap.get(eid);
       if (sprite && sprite instanceof Phaser.GameObjects.Sprite) {
         sprite.setPosition(Position.x[eid], Position.y[eid]);
+        const tier = WatchtowerComponent.tier[eid];
+        const state = WatchtowerComponent.state[eid];
+
+        let tex = "tower_boulder_pile";
+        if (state === TowerStateValues.RUBBLE || tier === TowerTierValues.RUBBLE) tex = "tower_boulder_pile";
+        else if (tier === TowerTierValues.WOODEN) tex = "watchtower_tier_1";
+        else if (tier === TowerTierValues.BASTION) tex = "watchtower_tier_2";
+        else if (tier === TowerTierValues.FORTRESS) tex = "watchtower_tier_3";
+
+        if (sprite.texture.key !== tex && scene.textures.exists(tex)) {
+          sprite.setTexture(tex);
+        }
       }
     }
 
@@ -490,6 +512,49 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
           }
         }
       }
+
+      // 3. Check Watchtowers
+      if (!promptShown) {
+        for (let i = 0; i < watchtowers.length; i++) {
+          const tEid = watchtowers[i];
+          const dist = Math.abs(Position.x[tEid] - pX);
+          if (dist < 65) {
+            const state = WatchtowerComponent.state[tEid];
+            const tier = WatchtowerComponent.tier[tEid];
+            const garrison = WatchtowerComponent.garrisonCount[tEid];
+            const maxG = WatchtowerComponent.maxGarrison[tEid];
+            let label = "";
+
+            if (state === TowerStateValues.RUBBLE || tier === TowerTierValues.RUBBLE) {
+              const cost = computeTowerUpgradeCost(0)!;
+              label = `[SPACE] Build Watchtower (${cost.aether} Aether, ${cost.wood} Wood)`;
+            } else if (state === TowerStateValues.ORDERED || state === TowerStateValues.BUILDING) {
+              label = `Building Watchtower (${Math.floor(WatchtowerComponent.progress[tEid])}%)`;
+            } else if (state === TowerStateValues.COMPLETED) {
+              if (garrison < maxG) {
+                label = `[SPACE] Station Archer (${garrison}/${maxG})`;
+              } else {
+                const cost = computeTowerUpgradeCost(tier);
+                if (cost) {
+                  const ironStr = cost.iron > 0 ? `, ${cost.iron} Iron` : "";
+                  const tierName = cost.nextTier === 2 ? "Bastion" : "Fortress";
+                  label = `[SPACE] Upgrade ${tierName} (${cost.aether} Aether, ${cost.wood} Wood${ironStr})`;
+                } else {
+                  label = `Fortress Watchtower (Max Lv. 3 - ${garrison}/${maxG} Archers)`;
+                }
+              }
+            }
+
+            if (label) {
+              promptText.setText(label)
+                .setPosition(Position.x[tEid], Position.y[tEid] - 50)
+                .setVisible(true);
+              promptShown = true;
+              break;
+            }
+          }
+        }
+      }
     }
 
     if (!promptShown) {
@@ -570,11 +635,16 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             // To allow tween + magnetic pull to co-exist cleanly, we can just sync X and let tween handle Y local offset,
             // or just set position directly.
             sprite.x = Position.x[eid];
-            // If it's being pulled (distance from tween center is far), we can sync Y too.
-            // Actually, just syncing x and y directly will override the tween, which is fine during magnet pull.
-            // We'll sync both. The tween will try to adjust Y relative to its current Y.
             if (Math.abs(sprite.y - Position.y[eid]) > 15) {
                 sprite.y = Position.y[eid];
+            }
+
+            const lifetime = AetherMoteComponent.lifetime[eid];
+            if (lifetime !== undefined && lifetime > 0 && lifetime < 5000) {
+                const flicker = Math.sin(scene.time.now / 60) > 0 ? 0.95 : 0.15;
+                sprite.setAlpha(flicker);
+            } else {
+                sprite.setAlpha(0.85);
             }
         }
     }

@@ -1,16 +1,29 @@
 import { defineQuery, IWorld, addEntity, addComponent, hasComponent } from "bitecs";
-import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole, PlayerControlled, GameStateComponent, GameStateValues, CampWallComponent } from "../components";
-import { shouldLeaderDieFromAttack } from "./GameStateSystem";
+import { Health, Attack, CombatTypeComponent, CombatTypeValues, FSMState, FSMStateValues, Position, DamageTextEvent, UnitRole, PlayerControlled, GameStateComponent, GameStateValues, CampWallComponent, CampCoreComponent, AetherMoteComponent } from "../components";
 import { calculateThornsDamage } from "./BuildingSystem";
 
 const combatQuery = defineQuery([Health, Attack, CombatTypeComponent, FSMState, Position]);
 const stateQuery = defineQuery([GameStateComponent]);
 const playerQuery = defineQuery([PlayerControlled, Position, Health]);
+const coreQuery = defineQuery([CampCoreComponent]);
 
 // Multiplier constants
 const ADVANTAGE_MULTIPLIER = 1.5;
 const DISADVANTAGE_MULTIPLIER = 0.5;
 const NEUTRAL_MULTIPLIER = 1.0;
+
+export interface PlayerDamageResult {
+  remainingEnergy: number;
+  isLethal: boolean;
+  energyDrained: number;
+}
+
+export function calculatePlayerEnergyDamage(currentEnergy: number, incomingDamage: number): PlayerDamageResult {
+  if (currentEnergy <= 0 || incomingDamage >= currentEnergy) {
+    return { remainingEnergy: 0, isLethal: true, energyDrained: currentEnergy };
+  }
+  return { remainingEnergy: currentEnergy - incomingDamage, isLethal: false, energyDrained: incomingDamage };
+}
 
 // Determines multiplier for attacker vs defender
 export function getCombatMultiplier(attackerType: number, defenderType: number): number {
@@ -59,31 +72,31 @@ export function createCombatSystem() {
       const targetEid = FSMState.targetEntity[eid];
       const ENGAGE_DISTANCE = 55; // slightly larger than FSM target stop distance to allow attacking
 
+      // Dynamic retargeting for defensive entities or nearby Player on horseback
+      const players = playerQuery(world);
       let attackTarget = targetEid;
       let inRange = false;
 
-      // Priority 1: Check if a Player is in immediate range (<= 55px)
-      const players = playerQuery(world);
-      for (let p = 0; p < players.length; p++) {
-        const pEid = players[p];
-        if (Health.current[pEid] <= 0) continue;
-        const dxP = Position.x[pEid] - Position.x[eid];
-        const dyP = Position.y[pEid] - Position.y[eid];
-        if (Math.sqrt(dxP * dxP + dyP * dyP) <= ENGAGE_DISTANCE) {
-          attackTarget = pEid;
+      // Check if original target is in range
+      if (Health.current[targetEid] > 0) {
+        const dx = Position.x[targetEid] - Position.x[eid];
+        const dy = Position.y[targetEid] - Position.y[eid];
+        if (Math.sqrt(dx * dx + dy * dy) <= ENGAGE_DISTANCE) {
           inRange = true;
-          break;
         }
       }
 
-      // Priority 2: Check standard FSM target
-      if (!inRange && targetEid !== undefined && Health.current[targetEid] > 0) {
-        const dx = Position.x[targetEid] - Position.x[eid];
-        const dy = Position.y[targetEid] - Position.y[eid];
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist <= ENGAGE_DISTANCE) {
-          attackTarget = targetEid;
-          inRange = true;
+      // If player is in close melee range (<= 55px), monster prioritizes player!
+      for (let p = 0; p < players.length; p++) {
+        const pEid = players[p];
+        if (Health.current[pEid] > 0) {
+          const pdx = Position.x[pEid] - Position.x[eid];
+          const pdy = Position.y[pEid] - Position.y[eid];
+          if (Math.sqrt(pdx * pdx + pdy * pdy) <= ENGAGE_DISTANCE) {
+            attackTarget = pEid;
+            inRange = true;
+            break;
+          }
         }
       }
 
@@ -106,20 +119,44 @@ export function createCombatSystem() {
 
           const finalDamage = baseDamage * multiplier;
 
-          if (hasComponent(world, PlayerControlled, targetEid)) {
-            if (shouldLeaderDieFromAttack(true, finalDamage)) {
-               Health.current[targetEid] = 0;
-               const states = stateQuery(world);
-               if (states.length > 0) {
-                 GameStateComponent.state[states[0]] = GameStateValues.DEFEAT;
-               }
+          if (hasComponent(world, PlayerControlled, targetEid) || hasComponent(world, PlayerControlled, attackTarget)) {
+            const hitPlayerEid = hasComponent(world, PlayerControlled, attackTarget) ? attackTarget : targetEid;
+            const cores = coreQuery(world);
+            const coreEid = cores.length > 0 ? cores[0] : -1;
+            const curEnergy = coreEid !== -1 ? CampCoreComponent.lightEnergy[coreEid] : 0;
+
+            const res = calculatePlayerEnergyDamage(curEnergy, finalDamage);
+
+            if (res.isLethal) {
+              Health.current[hitPlayerEid] = 0;
+              if (coreEid !== -1) CampCoreComponent.lightEnergy[coreEid] = 0;
+              const states = stateQuery(world);
+              if (states.length > 0) {
+                GameStateComponent.state[states[0]] = GameStateValues.DEFEAT;
+              }
+            } else {
+              // Deduct from shared energy pool
+              if (coreEid !== -1) {
+                CampCoreComponent.lightEnergy[coreEid] = res.remainingEnergy;
+              }
+              // Scatter 1-2 Aether Motes around hit player
+              const px = Position.x[hitPlayerEid];
+              const py = Position.y[hitPlayerEid];
+              const moteEid = addEntity(world);
+              addComponent(world, Position, moteEid);
+              Position.x[moteEid] = px + (Math.random() * 50 - 25);
+              Position.y[moteEid] = py - 10;
+              addComponent(world, AetherMoteComponent, moteEid);
+              AetherMoteComponent.value[moteEid] = 5;
+              AetherMoteComponent.lifetime[moteEid] = 18000;
+              AetherMoteComponent.maxLifetime[moteEid] = 18000;
             }
           } else {
-            Health.current[targetEid] = Math.max(0, Health.current[targetEid] - finalDamage);
+            Health.current[attackTarget] = Math.max(0, Health.current[attackTarget] - finalDamage);
 
             // Thorns reflection for Tier 3 Iron Spiked walls
-            if (hasComponent(world, CampWallComponent, targetEid)) {
-              const tier = CampWallComponent.tier[targetEid];
+            if (hasComponent(world, CampWallComponent, attackTarget)) {
+              const tier = CampWallComponent.tier[attackTarget];
               const thorns = calculateThornsDamage(tier, finalDamage);
               if (thorns > 0) {
                 Health.current[eid] = Math.max(0, Health.current[eid] - thorns);

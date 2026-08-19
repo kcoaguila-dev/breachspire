@@ -36,10 +36,11 @@ export const CombatTypeComponent = defineComponent({
 export enum FactionValues {
   Hero = 0,
   Monster = 1,
+  Neutral = 2,
 }
 
 export const FactionTag = defineComponent({
-  faction: Types.ui8, // 0 = Hero, 1 = Monster
+  faction: Types.ui8, // 0 = Hero, 1 = Monster, 2 = Neutral (Wildlife)
 });
 
 export enum FSMStateValues {
@@ -178,8 +179,30 @@ export const CampWallComponent = defineComponent({
   tier: Types.ui8, // 1 = Wood (60 HP), 2 = Stone (120 HP), 3 = Iron Spikes (200 HP)
 });
 
+export enum TowerStateValues {
+  RUBBLE = 0,    // Initial Boulder Debris / Rock Pile
+  ORDERED = 1,   // Ordered for construction by player
+  BUILDING = 2,  // Builder actively hammering
+  COMPLETED = 3, // Built & active
+}
+
+export enum TowerTierValues {
+  RUBBLE = 0,     // Boulder Pile (Unbuilt foundation debris)
+  WOODEN = 1,     // Wooden Watchtower (64x120 px, 1 Archer)
+  BASTION = 2,    // Timber Bastion (80x160 px, 2 Archers)
+  FORTRESS = 3,   // Stone Fortress Tower (96x200 px, 3 Archers)
+}
+
 export const WatchtowerComponent = defineComponent({
-  occupiedArcherEid: Types.eid,
+  tier: Types.ui8,             // TowerTierValues (0 = Rubble, 1 = Wooden, 2 = Bastion, 3 = Fortress)
+  state: Types.ui8,            // TowerStateValues (0 = Rubble, 1 = Ordered, 2 = Building, 3 = Completed)
+  progress: Types.f32,         // Construction progress 0..100
+  maxGarrison: Types.ui8,      // 1 (Tier 1), 2 (Tier 2), 3 (Tier 3)
+  garrisonCount: Types.ui8,    // Number of stationed archers
+  archer1Eid: Types.eid,
+  archer2Eid: Types.eid,
+  archer3Eid: Types.eid,
+  occupiedArcherEid: Types.eid,// Backwards compatibility for archer1Eid
   level: Types.ui8,
   rangeBonus: Types.f32,
   attackSpeedBonus: Types.f32,
@@ -190,8 +213,11 @@ export const WatchtowerComponent = defineComponent({
 // ─────────────────────────────────────────────────────
 
 export const PlayerControlled = defineComponent({
-  playerId: Types.ui8, // 1 or 2
+  playerId: Types.ui8,     // 1 or 2
   isControlled: Types.ui8,
+  energy: Types.f32,       // Individual Light Energy pouch
+  maxEnergy: Types.f32,    // Maximum capacity (e.g. 50 Aether)
+  isDowned: Types.ui8,     // 0 = Active, 1 = Downed / Crownless
 });
 
 export const CoopStateComponent = defineComponent({
@@ -255,6 +281,7 @@ export enum RoleValues {
   ARCHER = 2,
   KNIGHT = 3,
   VAGRANT = 4,
+  WILDLIFE = 5, // Harmless Aether Slimes & wilderness fauna
 }
 
 export const UnitRole = defineComponent({
@@ -305,7 +332,11 @@ export const DayNightCycle = defineComponent({
   isNight: Types.ui8,
 });
 
-export const AetherMoteComponent = defineComponent();
+export const AetherMoteComponent = defineComponent({
+  value: Types.f32,
+  lifetime: Types.f32,    // Remaining time in ms (e.g. 18000ms = 18s)
+  maxLifetime: Types.f32, // Initial lifespan
+});
 
 export const AetherCollectEvent = defineComponent({
   x: Types.f32,

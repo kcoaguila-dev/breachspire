@@ -2,6 +2,9 @@ import Phaser from "phaser";
 import { FactionValues, CombatTypeValues } from "../ecs/components";
 
 export function getUnitTextureKey(faction: number, combatType: number, isFlying: boolean, role?: number): string {
+    if (faction === FactionValues.Neutral || role === 5) {
+        return "unit_aether_slime";
+    }
     if (faction === FactionValues.Hero) {
         if (role === 4) return "unit_vagrant"; // Grayish Vagrant Wanderer
         if (role === 0) return "peasant_unit"; // Citizen (green tunic)
@@ -82,12 +85,61 @@ export class TextureGenerator {
         this.generateAutumnBirch(scene, "tree_autumn_birch");
         this.generateIronOre(scene, "node_iron_ore");
         this.generateBloodMoon(scene, "moon_blood_red");
-        // Tiered Walls & Structures
+        // Tiered Towers & Structures (Kingdom Two Crowns Scale)
+        this.generateTowerBoulderPile(scene, "tower_boulder_pile");
+        this.generateTowerTier1(scene, "watchtower_tier_1");
+        this.generateTowerTier2(scene, "watchtower_tier_2");
+        this.generateTowerTier3(scene, "watchtower_tier_3");
+        this.generateTowerTier1(scene, "watchtower_structure");
         this.generateWoodPalisade(scene, "wall_wood_palisade");
         this.generateIronSpikedWall(scene, "wall_iron_spikes");
-        this.generateWatchtower(scene, "watchtower_structure");
         this.generateWarehouse(scene, "tool_warehouse");
         this.generateVagrantPortal(scene, "poi_vagrant_portal");
+        this.generateAetherSlime(scene, "unit_aether_slime");
+    }
+
+    private static generateAetherSlime(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+        // 24 x 20 px Translucent Glowing Aether Slime
+        // Outer Jelly Dome
+        graphics.fillStyle(0x00b894, 1);
+        graphics.fillRect(2, 12, 20, 8);
+        graphics.fillRect(4, 8, 16, 12);
+        graphics.fillRect(6, 4, 12, 16);
+
+        graphics.fillStyle(0x00cec9, 1);
+        graphics.fillRect(4, 10, 16, 8);
+        graphics.fillRect(6, 6, 12, 12);
+        graphics.fillRect(8, 4, 8, 14);
+
+        graphics.fillStyle(0x81ecec, 1);
+        graphics.fillRect(6, 6, 6, 6);
+        graphics.fillRect(8, 4, 4, 4);
+
+        // Glossy Specular Rim
+        graphics.fillStyle(0xffffff, 0.9);
+        graphics.fillRect(6, 4, 4, 2);
+        graphics.fillRect(4, 6, 2, 2);
+
+        // Cute Big Dark Eyes
+        graphics.fillStyle(0x1e272e, 1);
+        graphics.fillRect(6, 9, 3, 4);
+        graphics.fillRect(15, 9, 3, 4);
+
+        // Eye White Sparkle
+        graphics.fillStyle(0xffffff, 1);
+        graphics.fillRect(6, 9, 1, 1);
+        graphics.fillRect(15, 9, 1, 1);
+
+        // Glowing Nucleus Core
+        graphics.fillStyle(0x55efc4, 1);
+        graphics.fillRect(10, 13, 4, 3);
+        graphics.fillStyle(0xffffff, 0.8);
+        graphics.fillRect(11, 14, 2, 1);
+
+        graphics.generateTexture(key, 24, 20);
+        graphics.destroy();
     }
 
     private static generateVagrantPortal(scene: Phaser.Scene, key: string) {
@@ -695,54 +747,234 @@ export class TextureGenerator {
         graphics.destroy();
     }
 
-    private static generateWatchtower(scene: Phaser.Scene, key: string) {
+    // ── Grand Kingdom-Scale Watchtowers ──────────────────────────────────
+    private static generateTowerBoulderPile(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.add.graphics();
+        // Boulder Pile Foundation: 56 x 28 px
+        // Earth & Gravel mound
+        graphics.fillStyle(0x1a0f08, 1);
+        graphics.fillRect(2, 20, 52, 8);
+        graphics.fillStyle(0x27150c, 1);
+        graphics.fillRect(4, 18, 48, 6);
 
-        // 4 Timber Support Pillars (48x96)
-        graphics.fillStyle(0x3e2723, 1);
-        graphics.fillRect(4, 36, 6, 60);
-        graphics.fillRect(38, 36, 6, 60);
+        // Weathered Granite Boulders
+        graphics.fillStyle(0x263238, 1);
+        graphics.fillRect(8, 10, 16, 14);
+        graphics.fillRect(22, 6, 20, 18);
+        graphics.fillRect(40, 12, 12, 12);
 
-        // Diagonal Cross Braces
-        graphics.lineStyle(2, 0x4e342e, 1);
-        graphics.beginPath();
-        graphics.moveTo(6, 40);
-        graphics.lineTo(42, 90);
-        graphics.moveTo(42, 40);
-        graphics.lineTo(6, 90);
-        graphics.strokePath();
+        graphics.fillStyle(0x37474f, 1);
+        graphics.fillRect(10, 12, 12, 10);
+        graphics.fillRect(24, 8, 16, 14);
+        graphics.fillRect(42, 14, 8, 8);
 
-        // Central Wooden Ladder
-        graphics.fillStyle(0x5d4037, 1);
-        graphics.fillRect(20, 36, 2, 60);
-        graphics.fillRect(26, 36, 2, 60);
-        for (let y = 40; y < 96; y += 8) {
-            graphics.fillRect(20, y, 8, 2);
+        graphics.fillStyle(0x546e7a, 1);
+        graphics.fillRect(12, 12, 8, 4);
+        graphics.fillRect(26, 8, 12, 4);
+        graphics.fillRect(44, 14, 4, 3);
+
+        // Ground Moss & Ivy
+        graphics.fillStyle(0x2e7d32, 1);
+        graphics.fillRect(6, 22, 8, 2);
+        graphics.fillRect(36, 20, 10, 2);
+
+        // Timber Foundation Survey Stakes with Orange Flags
+        graphics.fillStyle(0x4e342e, 1);
+        graphics.fillRect(4, 8, 2, 16);
+        graphics.fillRect(50, 8, 2, 16);
+        graphics.fillStyle(0xff6f00, 1);
+        graphics.fillRect(2, 8, 4, 3);
+        graphics.fillRect(48, 8, 4, 3);
+
+        graphics.generateTexture(key, 56, 28);
+        graphics.destroy();
+    }
+
+    private static generateTowerTier1(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+        // Level 1 Wooden Watchtower: 64 x 120 px (Holds 1 Archer)
+        // 1. Foundation Base Posts
+        graphics.fillStyle(0x1a0f08, 1);
+        graphics.fillRect(4, 112, 56, 8);
+
+        // 2. Heavy Timber Vertical Pillars
+        graphics.fillStyle(0x27150c, 1);
+        graphics.fillRect(6, 26, 8, 90);
+        graphics.fillRect(50, 26, 8, 90);
+        graphics.fillStyle(0x482818, 1);
+        graphics.fillRect(8, 26, 4, 90);
+        graphics.fillRect(52, 26, 4, 90);
+
+        // 3. Diagonal Cross Bracing (Lower & Upper)
+        graphics.fillStyle(0x361d11, 1);
+        for (let row = 0; row < 3; row++) {
+            const yStart = 34 + row * 26;
+            graphics.fillRect(12, yStart, 40, 4);
+            // X-crossings
+            graphics.fillRect(16 + row * 4, yStart + 8, 6, 6);
+            graphics.fillRect(42 - row * 4, yStart + 8, 6, 6);
         }
 
-        // Elevated Archer Sniper Platform (Perch at y=36)
-        graphics.fillStyle(0x5d4037, 1);
-        graphics.fillRect(0, 32, 48, 6);
-        graphics.fillStyle(0x8d6e63, 1);
-        graphics.fillRect(2, 33, 44, 4);
+        // 4. Center Wooden Ladder
+        graphics.fillStyle(0x1a0f08, 1);
+        graphics.fillRect(28, 26, 2, 90);
+        graphics.fillRect(34, 26, 2, 90);
+        for (let y = 30; y < 115; y += 8) {
+            graphics.fillRect(28, y, 8, 2);
+        }
 
-        // Platform Safety Railing
-        graphics.fillStyle(0x3e2723, 1);
-        graphics.fillRect(0, 20, 4, 12);
-        graphics.fillRect(44, 20, 4, 12);
-        graphics.fillRect(0, 20, 48, 3);
+        // 5. Elevated Railed Platform (Perch at y=25)
+        graphics.fillStyle(0x27150c, 1);
+        graphics.fillRect(2, 22, 60, 8);
+        graphics.fillStyle(0x5c331f, 1);
+        graphics.fillRect(4, 24, 56, 4);
 
-        // Thatched Straw Roof Canopy
+        // Platform Railings
+        graphics.fillStyle(0x27150c, 1);
+        graphics.fillRect(2, 10, 4, 14);
+        graphics.fillRect(58, 10, 4, 14);
+        graphics.fillRect(2, 10, 60, 3);
+        graphics.fillRect(2, 16, 60, 2);
+
+        // 6. Thatched Shingle Roof
         graphics.fillStyle(0xda9100, 1);
         graphics.beginPath();
-        graphics.moveTo(0, 14);
-        graphics.lineTo(24, 0);
-        graphics.lineTo(48, 14);
+        graphics.moveTo(0, 8);
+        graphics.lineTo(32, 0);
+        graphics.lineTo(64, 8);
         graphics.closePath();
         graphics.fillPath();
 
-        graphics.generateTexture(key, 48, 96);
+        graphics.fillStyle(0xf5b041, 1);
+        graphics.beginPath();
+        graphics.moveTo(4, 7);
+        graphics.lineTo(32, 2);
+        graphics.lineTo(60, 7);
+        graphics.closePath();
+        graphics.fillPath();
+
+        graphics.generateTexture(key, 64, 120);
+        graphics.destroy();
+    }
+
+    private static generateTowerTier2(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+        // Level 2 Reinforced Timber Bastion: 80 x 160 px (Holds 2 Archers)
+        // 1. Stone Plinth Foundation
+        graphics.fillStyle(0x263238, 1);
+        graphics.fillRect(4, 148, 72, 12);
+        graphics.fillStyle(0x37474f, 1);
+        graphics.fillRect(6, 150, 68, 6);
+
+        // 2. Heavy 4-Pillar Log Frame
+        graphics.fillStyle(0x1a0f08, 1);
+        graphics.fillRect(6, 30, 10, 122);
+        graphics.fillRect(64, 30, 10, 122);
+        graphics.fillStyle(0x482818, 1);
+        graphics.fillRect(8, 30, 6, 122);
+        graphics.fillRect(66, 30, 6, 122);
+
+        // Mid-floor reinforcement platform
+        graphics.fillStyle(0x27150c, 1);
+        graphics.fillRect(8, 90, 64, 8);
+        graphics.fillStyle(0x5c331f, 1);
+        graphics.fillRect(10, 92, 60, 4);
+
+        // Double X-Bracing
+        graphics.fillStyle(0x361d11, 1);
+        graphics.fillRect(16, 45, 48, 4);
+        graphics.fillRect(16, 70, 48, 4);
+        graphics.fillRect(16, 110, 48, 4);
+        graphics.fillRect(16, 130, 48, 4);
+
+        // 3. Wide Twin-Archer Parapet Platform (Perch at y=25)
+        graphics.fillStyle(0x1a0f08, 1);
+        graphics.fillRect(2, 22, 76, 10);
+        graphics.fillStyle(0x5c331f, 1);
+        graphics.fillRect(4, 24, 72, 6);
+
+        // Hardened Wood Shield Wall Parapets
+        graphics.fillStyle(0x361d11, 1);
+        graphics.fillRect(2, 8, 6, 16);
+        graphics.fillRect(72, 8, 6, 16);
+        graphics.fillRect(2, 8, 76, 4);
+        graphics.fillRect(36, 10, 8, 14); // Center division
+
+        // 4. Slanted Timber Shingle Rain Roof
+        graphics.fillStyle(0x795548, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 8);
+        graphics.lineTo(40, 0);
+        graphics.lineTo(80, 8);
+        graphics.closePath();
+        graphics.fillPath();
+
+        graphics.fillStyle(0x8d6e63, 1);
+        graphics.beginPath();
+        graphics.moveTo(4, 7);
+        graphics.lineTo(40, 2);
+        graphics.lineTo(76, 7);
+        graphics.closePath();
+        graphics.fillPath();
+
+        graphics.generateTexture(key, 80, 160);
+        graphics.destroy();
+    }
+
+    private static generateTowerTier3(scene: Phaser.Scene, key: string) {
+        if (scene.textures.exists(key)) return;
+        const graphics = scene.add.graphics();
+        // Level 3 Stone Fortress Tower: 96 x 200 px (Holds 3 Archers)
+        // 1. Heavy Granite Ashlar Wall Base (y = 30..200)
+        graphics.fillStyle(0x1a252f, 1);
+        graphics.fillRect(6, 30, 84, 170);
+        graphics.fillStyle(0x2c3e50, 1);
+        graphics.fillRect(8, 32, 80, 166);
+
+        // Cut Stone Ashlar Brick Texture
+        graphics.fillStyle(0x34495e, 1);
+        for (let row = 0; row < 12; row++) {
+            const y = 36 + row * 13;
+            const offset = (row % 2) * 10;
+            for (let col = 0; col < 4; col++) {
+                graphics.fillRect(12 + col * 20 + offset, y, 16, 10);
+            }
+        }
+
+        // Iron Torches on Wall
+        graphics.fillStyle(0x1a1a1a, 1);
+        graphics.fillRect(14, 110, 4, 12);
+        graphics.fillRect(78, 110, 4, 12);
+        graphics.fillStyle(0xff6f00, 1);
+        graphics.fillRect(13, 106, 6, 6);
+        graphics.fillRect(77, 106, 6, 6);
+        graphics.fillStyle(0xffd54f, 1);
+        graphics.fillRect(14, 107, 4, 4);
+        graphics.fillRect(78, 107, 4, 4);
+
+        // 2. Machicolated Stone Battlements / Crowning Parapet (Perch at y=25)
+        graphics.fillStyle(0x1a252f, 1);
+        graphics.fillRect(2, 20, 92, 14);
+        graphics.fillStyle(0x475569, 1);
+        graphics.fillRect(4, 22, 88, 8);
+
+        // Crenel & Merlon Battlements
+        graphics.fillStyle(0x1a252f, 1);
+        graphics.fillRect(2, 4, 16, 18);
+        graphics.fillRect(28, 4, 14, 18);
+        graphics.fillRect(54, 4, 14, 18);
+        graphics.fillRect(78, 4, 16, 18);
+
+        graphics.fillStyle(0x334155, 1);
+        graphics.fillRect(4, 6, 12, 14);
+        graphics.fillRect(30, 6, 10, 14);
+        graphics.fillRect(56, 6, 10, 14);
+        graphics.fillRect(80, 6, 12, 14);
+
+        graphics.generateTexture(key, 96, 200);
         graphics.destroy();
     }
 

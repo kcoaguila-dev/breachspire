@@ -48,6 +48,9 @@ export function createAetherSpawningSystem() {
       const moteEid = addEntity(world);
       addComponent(world, Position, moteEid);
       addComponent(world, AetherMoteComponent, moteEid);
+      AetherMoteComponent.value[moteEid] = 5;
+      AetherMoteComponent.lifetime[moteEid] = 18000;
+      AetherMoteComponent.maxLifetime[moteEid] = 18000;
 
       // Random offset around hearth
       Position.x[moteEid] = coreX + (Math.random() * 60 - 30);

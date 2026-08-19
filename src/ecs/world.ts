@@ -26,6 +26,10 @@ import {
   FlightEnergyComponent,
   FloorDefenderComponent,
   WatchtowerComponent,
+  TowerTierValues,
+  TowerStateValues,
+  RoleValues,
+  UnitRole,
 } from "./components";
 
 export const world = createWorld();
@@ -278,10 +282,13 @@ export function createFloorEntity(
   return entity;
 }
 
-export function setPlayerControlled(world: IWorld, entity: number, playerId: number = 1): void {
+export function setPlayerControlled(world: IWorld, entity: number, playerId: number = 1, initialEnergy: number = 20): void {
   addComponent(world, PlayerControlled, entity);
   PlayerControlled.isControlled[entity] = 1;
   PlayerControlled.playerId[entity] = playerId;
+  PlayerControlled.energy[entity] = initialEnergy;
+  PlayerControlled.maxEnergy[entity] = 50;
+  PlayerControlled.isDowned[entity] = 0;
 
   addComponent(world, InputStateComponent, entity);
   InputStateComponent.left[entity] = 0;
@@ -289,6 +296,33 @@ export function setPlayerControlled(world: IWorld, entity: number, playerId: num
   InputStateComponent.up[entity] = 0;
   InputStateComponent.down[entity] = 0;
   InputStateComponent.attack[entity] = 0;
+}
+
+export function createSlimeEntity(world: IWorld, x: number, y: number): number {
+  const entity = addEntity(world);
+  addComponent(world, Position, entity);
+  Position.x[entity] = x;
+  Position.y[entity] = y;
+
+  addComponent(world, Velocity, entity);
+  Velocity.x[entity] = (Math.random() * 20 - 10);
+  Velocity.y[entity] = 0;
+
+  addComponent(world, Speed, entity);
+  Speed.value[entity] = 25;
+
+  addComponent(world, Health, entity);
+  Health.max[entity] = 15;
+  Health.current[entity] = 15;
+
+  addComponent(world, FactionTag, entity);
+  FactionTag.faction[entity] = FactionValues.Neutral;
+
+  addComponent(world, UnitRole, entity);
+  UnitRole.role[entity] = RoleValues.WILDLIFE;
+  UnitRole.level[entity] = 1;
+
+  return entity;
 }
 
 export function createDayNightEntity(world: IWorld): number {
@@ -300,16 +334,24 @@ export function createDayNightEntity(world: IWorld): number {
   return entity;
 }
 
-export function createWatchtowerEntity(world: IWorld, x: number, y: number): number {
+export function createWatchtowerEntity(world: IWorld, x: number, y: number, tier: number = TowerTierValues.RUBBLE): number {
   const entity = addEntity(world);
   addComponent(world, Position, entity);
   Position.x[entity] = x;
   Position.y[entity] = y;
 
   addComponent(world, WatchtowerComponent, entity);
+  WatchtowerComponent.tier[entity] = tier;
+  WatchtowerComponent.state[entity] = tier === TowerTierValues.RUBBLE ? TowerStateValues.RUBBLE : TowerStateValues.COMPLETED;
+  WatchtowerComponent.progress[entity] = tier === TowerTierValues.RUBBLE ? 0 : 100;
+  WatchtowerComponent.maxGarrison[entity] = Math.max(1, tier);
+  WatchtowerComponent.garrisonCount[entity] = 0;
+  WatchtowerComponent.archer1Eid[entity] = 0;
+  WatchtowerComponent.archer2Eid[entity] = 0;
+  WatchtowerComponent.archer3Eid[entity] = 0;
   WatchtowerComponent.occupiedArcherEid[entity] = 0;
-  WatchtowerComponent.level[entity] = 1;
-  WatchtowerComponent.rangeBonus[entity] = 1.5;
+  WatchtowerComponent.level[entity] = tier;
+  WatchtowerComponent.rangeBonus[entity] = 1.6;
   WatchtowerComponent.attackSpeedBonus[entity] = 1.3;
   return entity;
 }

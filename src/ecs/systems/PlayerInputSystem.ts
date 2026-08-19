@@ -53,7 +53,16 @@ export function createPlayerInputSystem(
 
     for (let i = 0; i < entities.length; i++) {
       const eid = entities[i];
-      if (Health.current[eid] <= 0) continue;
+      if (Health.current[eid] <= 0 || PlayerControlled.isDowned[eid] === 1) {
+        Velocity.x[eid] = 0;
+        Velocity.y[eid] = 0;
+        InputStateComponent.left[eid] = 0;
+        InputStateComponent.right[eid] = 0;
+        InputStateComponent.up[eid] = 0;
+        InputStateComponent.down[eid] = 0;
+        InputStateComponent.attack[eid] = 0;
+        continue;
+      }
 
       const playerId = PlayerControlled.playerId[eid];
 

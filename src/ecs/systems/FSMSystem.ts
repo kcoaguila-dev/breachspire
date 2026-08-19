@@ -1,5 +1,5 @@
 import { defineQuery, IWorld, hasComponent } from "bitecs";
-import { FSMState, FSMStateValues, Position, Velocity, Speed, Health, FactionTag, FloorDefenderComponent, PlayerControlled } from "../components";
+import { FSMState, FSMStateValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, FloorDefenderComponent, PlayerControlled } from "../components";
 
 const fsmQuery = defineQuery([FSMState, Position, Velocity, Speed, FactionTag, Health]);
 const aliveQuery = defineQuery([Health, Position, FactionTag]);
@@ -41,22 +41,30 @@ export function createFSMSystem() {
             const potentialTarget = aliveEntities[j];
             if (potentialTarget === eid) continue;
             if (Health.current[potentialTarget] <= 0) continue;
+            const targetFaction = FactionTag.faction[potentialTarget];
 
-            if (FactionTag.faction[potentialTarget] !== myFaction) {
-                const targetY = Position.y[potentialTarget];
+            // Monsters only attack Heroes
+            if (myFaction === FactionValues.Monster && targetFaction !== FactionValues.Hero) continue;
 
-                // If this is a stationed defender, only target heroes on the same floor/Y level (+/- a small threshold like 20px)
-                if (isDefender && Math.abs(targetY - myY) > 20) {
-                    continue;
-                }
+            // Neutral wildlife does not attack
+            if (myFaction === FactionValues.Neutral) continue;
 
-                const dx = Position.x[potentialTarget] - Position.x[eid];
-                const dy = targetY - myY;
-                const distSq = dx*dx + dy*dy;
-                if (distSq < closestDist) {
-                    closestDist = distSq;
-                    closestEnemy = potentialTarget;
-                }
+            // Heroes do not attack Heroes
+            if (myFaction === FactionValues.Hero && targetFaction === FactionValues.Hero) continue;
+
+            const targetY = Position.y[potentialTarget];
+
+            // If this is a stationed defender, only target heroes on the same floor/Y level (+/- a small threshold like 20px)
+            if (isDefender && Math.abs(targetY - myY) > 20) {
+                continue;
+            }
+
+            const dx = Position.x[potentialTarget] - Position.x[eid];
+            const dy = targetY - myY;
+            const distSq = dx*dx + dy*dy;
+            if (distSq < closestDist) {
+                closestDist = distSq;
+                closestEnemy = potentialTarget;
             }
         }
 
