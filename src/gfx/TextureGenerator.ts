@@ -128,19 +128,18 @@ export class TextureGenerator {
     private static generateToolHammerStand(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Richer stand
-        graphics.fillStyle(0x5C4033, 1); // Darker wood base
-        graphics.fillRect(6, 20, 20, 12);
-        graphics.fillStyle(0x8B4513, 1); // Wood stand
-        graphics.fillRect(14, 10, 4, 10);
-        // Anvil/Forge look
-        graphics.fillStyle(0x2F4F4F, 1);
-        graphics.fillRect(8, 20, 16, 8);
+        // Wooden workbench
+        graphics.fillStyle(0x5c3a21, 1);
+        graphics.fillRect(4, 18, 24, 12);
+        // Anvil
+        graphics.fillStyle(0x3a4048, 1);
+        graphics.fillRect(8, 12, 16, 6);
+        graphics.fillRect(10, 8, 12, 4);
         // Hammer
-        graphics.fillStyle(0xB0C4DE, 1); // Steel head
-        graphics.fillRect(10, 4, 12, 6);
         graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(14, 10, 4, 10);
+        graphics.fillRect(18, 4, 3, 10);
+        graphics.fillStyle(0xb0c4de, 1);
+        graphics.fillRect(15, 2, 9, 4);
         graphics.generateTexture(key, 32, 32);
         graphics.destroy();
     }
@@ -148,17 +147,21 @@ export class TextureGenerator {
     private static generateToolBowStand(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(8, 16, 16, 16);
-        // Archery target
-        graphics.fillStyle(0xFFFFFF, 1);
+        // Wooden rack
+        graphics.fillStyle(0x5c3a21, 1);
+        graphics.fillRect(6, 14, 20, 16);
+        // Archery target board
+        graphics.fillStyle(0xf0ece1, 1);
         graphics.fillCircle(16, 10, 8);
-        graphics.fillStyle(0xFF0000, 1);
-        graphics.fillCircle(16, 10, 4);
-        // Bow
-        graphics.fillStyle(0x5C4033, 1); // Dark wood bow
+        graphics.fillStyle(0xcc2222, 1);
+        graphics.fillCircle(16, 10, 5);
+        graphics.fillStyle(0xffea00, 1);
+        graphics.fillCircle(16, 10, 2);
+        // Bow leaning
+        graphics.lineStyle(2, 0x8b5a2b, 1);
         graphics.beginPath();
-        graphics.arc(24, 16, 10, -Math.PI / 2, Math.PI / 2);
+        graphics.moveTo(24, 6);
+        graphics.lineTo(28, 22);
         graphics.strokePath();
         graphics.generateTexture(key, 32, 32);
         graphics.destroy();
@@ -167,15 +170,19 @@ export class TextureGenerator {
     private static generateToolSwordStand(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(8, 16, 16, 16); // Stand
-        // Armor rack look
-        graphics.fillStyle(0xA9A9A9, 1);
-        graphics.fillRect(10, 8, 12, 10); // Chainmail
-        graphics.fillStyle(0xB0C4DE, 1); // Steel blade
-        graphics.fillRect(14, 0, 4, 16);
-        graphics.fillStyle(0xFFD700, 1); // Gold hilt
-        graphics.fillRect(10, 16, 12, 2);
+        // Wooden weapon rack
+        graphics.fillStyle(0x5c3a21, 1);
+        graphics.fillRect(6, 14, 20, 16);
+        // Shield
+        graphics.fillStyle(0x335588, 1);
+        graphics.fillCircle(12, 16, 6);
+        graphics.fillStyle(0xffea00, 1);
+        graphics.fillRect(11, 12, 2, 8);
+        // Sword
+        graphics.fillStyle(0xddeeff, 1);
+        graphics.fillRect(20, 2, 3, 18);
+        graphics.fillStyle(0xffea00, 1);
+        graphics.fillRect(17, 18, 9, 2);
         graphics.generateTexture(key, 32, 32);
         graphics.destroy();
     }
@@ -183,13 +190,26 @@ export class TextureGenerator {
     private static generatePeasantUnit(scene: Phaser.Scene, key: string) {
         if (scene.textures.exists(key)) return;
         const graphics = scene.make.graphics({ x: 0, y: 0 });
-        // Face Shadow
-        graphics.fillStyle(0x1e372e, 1);
-        graphics.fillRect(10, 6, 4, 4);
-        // Body (rags)
-        graphics.fillStyle(0x8B4513, 1);
-        graphics.fillRect(8, 12, 8, 8);
-        graphics.generateTexture(key, 24, 24);
+        // Head / Skin
+        graphics.fillStyle(0xf5cda0, 1);
+        graphics.fillRect(12, 6, 8, 8);
+        // Cap
+        graphics.fillStyle(0x4a3728, 1);
+        graphics.fillRect(11, 4, 10, 4);
+        // Eyes
+        graphics.fillStyle(0x1a1a1a, 1);
+        graphics.fillRect(17, 9, 2, 2);
+        // Tunic (peasant brown/green)
+        graphics.fillStyle(0x5c7a42, 1);
+        graphics.fillRect(10, 14, 12, 10);
+        // Belt
+        graphics.fillStyle(0x332211, 1);
+        graphics.fillRect(10, 19, 12, 2);
+        // Legs / Boots
+        graphics.fillStyle(0x3b2b1d, 1);
+        graphics.fillRect(11, 24, 4, 6);
+        graphics.fillRect(17, 24, 4, 6);
+        graphics.generateTexture(key, 32, 32);
         graphics.destroy();
     }
 

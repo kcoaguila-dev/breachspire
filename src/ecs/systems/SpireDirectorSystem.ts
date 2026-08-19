@@ -50,22 +50,26 @@ export function createSpireDirectorSystem() {
       SpireComponent.darkEnergy[eid] += rate * (delta / 1000);
 
       // Perform actions based on budget
-      const action = decideSpireAction(SpireComponent.darkEnergy[eid], isNight);
+      let maxActions = 20;
+      while (maxActions-- > 0) {
+        const action = decideSpireAction(SpireComponent.darkEnergy[eid], isNight);
+        if (action === 'WAIT') break;
 
-      if (action === 'SPAWN_TROLL') {
-        SpireComponent.darkEnergy[eid] -= 60;
-        InvasionSpawner.pendingTrolls[eid]++;
-      } else if (action === 'SPAWN_ARCHER') {
-        SpireComponent.darkEnergy[eid] -= 25;
-        InvasionSpawner.pendingArchers[eid]++;
-      } else if (action === 'SPAWN_GOBLIN') {
-        SpireComponent.darkEnergy[eid] -= 10;
-        InvasionSpawner.pendingGoblins[eid]++;
-      } else if (action === 'FORTIFY_CRYSTAL') {
-        SpireComponent.darkEnergy[eid] -= 40;
-        SpireComponent.crystalHP[eid] += 50;
-        Health.max[eid] += 50;
-        Health.current[eid] += 50;
+        if (action === 'SPAWN_TROLL') {
+          SpireComponent.darkEnergy[eid] -= 60;
+          InvasionSpawner.pendingTrolls[eid]++;
+        } else if (action === 'SPAWN_ARCHER') {
+          SpireComponent.darkEnergy[eid] -= 25;
+          InvasionSpawner.pendingArchers[eid]++;
+        } else if (action === 'SPAWN_GOBLIN') {
+          SpireComponent.darkEnergy[eid] -= 10;
+          InvasionSpawner.pendingGoblins[eid]++;
+        } else if (action === 'FORTIFY_CRYSTAL') {
+          SpireComponent.darkEnergy[eid] -= 40;
+          SpireComponent.crystalHP[eid] += 50;
+          Health.max[eid] += 50;
+          Health.current[eid] += 50;
+        }
       }
     }
 

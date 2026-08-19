@@ -1,13 +1,12 @@
 import { createDayNightSystem } from "../ecs/systems/DayNightSystem";
 import Phaser from "phaser";
 import { world, createUnitEntity, createCampCoreEntity, createCampWallEntity, createSpireEntity, createGameStateEntity, createInvasionSpawner, setPlayerControlled, createDayNightEntity } from "../ecs/world";
-import { SpireSideValues } from "../ecs/components";
+import { SpireSideValues, Position, Velocity, Speed, Health, FactionTag, FactionValues, UnitRole, RoleValues, WallBlueprint, BlueprintStateValues, CoopStateComponent, WildernessPoiComponent, GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent, InvasionSpawner, SpireComponent } from "../ecs/components";
 import { createFSMSystem } from "../ecs/systems/FSMSystem";
 import { createPlayerInputSystem } from "../ecs/systems/PlayerInputSystem";
 import { createSplitCameraSystem } from "../ecs/systems/SplitCameraSystem";
 import { createCoopSystem } from "../ecs/systems/CoopSystem";
 import { createClimbingSystem } from "../ecs/systems/ClimbingSystem";
-import { CoopStateComponent, WildernessPoiComponent } from "../ecs/components";
 import { createCombatSystem } from "../ecs/systems/CombatSystem";
 import { createRenderSyncSystem } from "../ecs/systems/RenderSyncSystem";
 import { createMovementSystem } from "../ecs/systems/MovementSystem";
@@ -25,18 +24,18 @@ import { createCombatFeedbackSystem } from "../ecs/systems/CombatFeedbackSystem"
 import { AudioManager } from "../audio/AudioManager";
 import { loadUnitData, loadCampConfig, loadSpireConfig } from "../data/loader";
 import { defineQuery, addEntity, addComponent } from "bitecs";
-import { GameStateComponent, DayNightCycle, GameStateValues, CampCoreComponent, ScreenAlertComponent } from "../ecs/components";
 import { SpriteMap } from "../ecs/systems/RenderSyncSystem";
 import { createHUDSystem } from "../ecs/systems/HUDSystem";
 import { resetWorldState } from "../ecs/world";
 import { createBuildingSystem } from "../ecs/systems/BuildingSystem";
 import { createRecruitmentSystem } from "../ecs/systems/RecruitmentSystem";
 import { createProgressionXPSystem } from "../ecs/systems/ProgressionXPSystem";
-import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateManager";
 import { createAetherSpawningSystem } from "../ecs/systems/AetherSpawningSystem";
 import { createAetherCollectionSystem } from "../ecs/systems/AetherCollectionSystem";
 import { ANIM_DEFS } from "../gfx/AnimationKeys";
 
+
+import { loadCampSaveState, saveCampSaveState } from "../persistence/RunStateManager";
 
 export class GameScene extends Phaser.Scene {
   private fsmSystem!: ReturnType<typeof createFSMSystem>;
@@ -45,70 +44,59 @@ export class GameScene extends Phaser.Scene {
   private leaderDeathSystem!: ReturnType<typeof createLeaderDeathSystem>;
   private deathSystem!: ReturnType<typeof createDeathSystem>;
   private campEnergySystem!: ReturnType<typeof createCampEnergySystem>;
-  private commanderSupportSystem!: ReturnType<typeof createCommanderSupportSystem>;
   private spireGrowthSystem!: ReturnType<typeof createSpireGrowthSystem>;
-  private renderSyncSystem!: ReturnType<typeof createRenderSyncSystem>;
-
   private monsterSpawnSystem!: ReturnType<typeof createMonsterSpawnSystem>;
   private spireDirectorSystem!: ReturnType<typeof createSpireDirectorSystem>;
-  private dayNightSystem!: ReturnType<typeof createDayNightSystem>;
   private campSiegeSystem!: ReturnType<typeof createCampSiegeSystem>;
   private floorCollapseSystem!: ReturnType<typeof createFloorCollapseSystem>;
   private gameStateSystem!: ReturnType<typeof createGameStateSystem>;
+  private commanderSupportSystem!: ReturnType<typeof createCommanderSupportSystem>;
+  private renderSyncSystem!: ReturnType<typeof createRenderSyncSystem>;
+  private hudSystem!: ReturnType<typeof createHUDSystem>;
   private playerInputSystem!: ReturnType<typeof createPlayerInputSystem>;
+  private climbingSystem!: ReturnType<typeof createClimbingSystem>;
   private splitCameraSystem!: ReturnType<typeof createSplitCameraSystem>;
   private coopSystem!: ReturnType<typeof createCoopSystem>;
-  private climbingSystem!: ReturnType<typeof createClimbingSystem>;
-  private hudSystem!: ReturnType<typeof createHUDSystem>;
-  private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
+  private dayNightSystem!: ReturnType<typeof createDayNightSystem>;
   private buildingSystem!: ReturnType<typeof createBuildingSystem>;
   private recruitmentSystem!: ReturnType<typeof createRecruitmentSystem>;
   private progressionXPSystem!: ReturnType<typeof createProgressionXPSystem>;
   private aetherSpawningSystem!: ReturnType<typeof createAetherSpawningSystem>;
   private aetherCollectionSystem!: ReturnType<typeof createAetherCollectionSystem>;
-
-
-  private screenAlertEid!: number;
-
-  private bgMountains!: Phaser.GameObjects.TileSprite;
-  private bgTrees!: Phaser.GameObjects.TileSprite;
+  private combatFeedbackSystem!: ReturnType<typeof createCombatFeedbackSystem>;
+  private audioManager!: AudioManager;
 
   private spriteMap: SpriteMap = new Map();
-
   private isReady = false;
   private isGameOver = false;
+  private prevIsNight: number = -1;
+  private bgMountains!: Phaser.GameObjects.TileSprite;
+  private bgTrees!: Phaser.GameObjects.TileSprite;
+  private screenAlertEid!: number;
 
   private stateQuery = defineQuery([GameStateComponent]);
   private coreQuery = defineQuery([CampCoreComponent]);
   private dayNightQuery = defineQuery([DayNightCycle]);
 
-
-  private audioManager!: AudioManager;
-  private prevIsNight: number = -1;
-constructor() {
+  constructor() {
     super("GameScene");
   }
 
-  async create() {
+  init(_data?: { coop?: boolean }) {
     this.isReady = false;
     this.isGameOver = false;
     this.prevIsNight = -1;
+    this.spriteMap.clear();
     resetWorldState(world);
+  }
 
-    this.fsmSystem = createFSMSystem();
-    this.movementSystem = createMovementSystem();
-    this.combatSystem = createCombatSystem();
-    this.leaderDeathSystem = createLeaderDeathSystem();
-    this.deathSystem = createDeathSystem(this.spriteMap);
-    this.campEnergySystem = createCampEnergySystem();
-    this.commanderSupportSystem = createCommanderSupportSystem();
-    this.spireGrowthSystem = createSpireGrowthSystem();
-    this.renderSyncSystem = createRenderSyncSystem(this, this.spriteMap);
-    this.dayNightSystem = createDayNightSystem(45000, 30000); // 45s day, 30s night
+  async create() {
+    (window as any).__breachspire = {
+      world,
+      InvasionSpawner,
+      SpireComponent,
+    };
 
-    this.campSiegeSystem = createCampSiegeSystem();
-    this.floorCollapseSystem = createFloorCollapseSystem();
-    this.gameStateSystem = createGameStateSystem();
     this.hudSystem = createHUDSystem(this);
     this.buildingSystem = createBuildingSystem();
     this.recruitmentSystem = createRecruitmentSystem();
@@ -117,11 +105,17 @@ constructor() {
     // Setup Audio and Feedback
     this.audioManager = new AudioManager();
 
-    // Unlock Audio Context and start Day BGM on first interaction
-    this.input.once('pointerdown', () => {
+    // Unlock Audio Context and start Day BGM on first interaction (pointer, keyboard, or immediate)
+    const startAudio = () => {
       this.audioManager.startBGM();
-      this.audioManager.setMusicMood('day', 0); // Start immediately as day
-    });
+      this.audioManager.setMusicMood('day', 0);
+    };
+
+    startAudio();
+    this.input.once('pointerdown', startAudio);
+    this.input.keyboard?.once('keydown', startAudio);
+    window.addEventListener('keydown', startAudio, { once: true });
+    window.addEventListener('pointerdown', startAudio, { once: true });
 
     // Mute key
     const mKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M);
@@ -139,10 +133,8 @@ constructor() {
     ScreenAlertComponent.shakeIntensity[this.screenAlertEid] = 0;
 
     // Set Map Bounds (3200x1200)
-    this.physics?.world.setBounds(0, 0, 3200, 1200); // Optional if physics exists
+    this.physics?.world.setBounds(0, 0, 3200, 1200);
     this.cameras.main.setBounds(0, 0, 3200, 1200);
-    // Zoom: Kingdom Two Crowns-style — at 2× zoom each world pixel = 2 screen pixels
-    // Characters at 80-128px display = 40-64 actual pixels * 2 = perfect chunky pixel art
     this.cameras.main.setZoom(2.0);
 
     // Setup Inputs
@@ -161,43 +153,26 @@ constructor() {
     this.aetherCollectionSystem = createAetherCollectionSystem(this.audioManager);
 
     try {
-      // Load Data from public directory
-      const knightData = await loadUnitData('/data/heroes/commander.json');
-      // For P2 we can reuse knightData or load an archer if available. We'll use knightData for now if no archer.
-      // But let's check if archer exists. If it fails, fallback to knight.
-      let p2Data = knightData;
-      try {
-        p2Data = await loadUnitData('/data/heroes/archer.json');
-      } catch (e) { }
+      // Load all game data via validated loaders
+      const commanderData = await loadUnitData("/data/heroes/commander.json");
+      const monsterData = await loadUnitData("/data/monsters/goblin.json");
+      const archerData = await loadUnitData("/data/heroes/archer.json");
+      const darkArcherData = await loadUnitData("/data/monsters/dark_archer.json");
+      const trollData = await loadUnitData("/data/monsters/troll.json");
+      const cultistData = await loadUnitData("/data/monsters/cultist.json");
+      const campConfig = await loadCampConfig("/data/camp/camp_config.json");
+      const spireConfig = await loadSpireConfig("/data/spires/spire_config.json");
 
-      const goblinData = await loadUnitData('/data/monsters/goblin.json');
-      const campConfig = await loadCampConfig('/data/camp/camp_config.json');
-      const spireConfig = await loadSpireConfig('/data/spires/spire_config.json');
-
-      let trollData = goblinData;
-      let archerData = goblinData;
-      let cultistData = goblinData;
-      let darkArcherData = goblinData;
-      try { trollData = await loadUnitData('/data/monsters/troll.json'); } catch(e) {}
-      try { archerData = await loadUnitData('/data/monsters/archer.json'); } catch(e) {}
-      try { cultistData = await loadUnitData('/data/monsters/cultist.json'); } catch(e) {}
-      try { darkArcherData = await loadUnitData('/data/monsters/dark_archer.json'); } catch(e) {}
-
-      const defendersData = {
-        goblin: goblinData,
+      const defendersMap = {
+        cultist: cultistData,
+        goblin: monsterData,
         troll: trollData,
         dark_archer: darkArcherData,
-        cultist: cultistData
       };
-
-      this.monsterSpawnSystem = createMonsterSpawnSystem(goblinData, archerData, trollData); // Actually p2Data might be archer. Let's load archer explicitly for monsters if we can.
-      this.spireDirectorSystem = createSpireDirectorSystem();
-      this.coopSystem = createCoopSystem(f2Key, p2Data);
 
       // ── Register Animations (wiring only — no gameplay logic) ────────────────
       for (const def of ANIM_DEFS) {
         if (!this.textures.exists(def.key)) continue;
-        // Avoid re-creating animations on scene restart
         if (!this.anims.exists(`${def.key}_idle`)) {
           this.anims.create({
             key: `${def.key}_idle`,
@@ -216,62 +191,49 @@ constructor() {
         }
       }
 
-      const centerY = 650;
+      // Set up systems
+      this.fsmSystem = createFSMSystem();
+      this.movementSystem = createMovementSystem();
+      this.combatSystem = createCombatSystem();
+      this.leaderDeathSystem = createLeaderDeathSystem();
+      this.deathSystem = createDeathSystem(this.spriteMap);
+      this.campEnergySystem = createCampEnergySystem();
+      this.spireGrowthSystem = createSpireGrowthSystem();
+      this.monsterSpawnSystem = createMonsterSpawnSystem(monsterData, darkArcherData, trollData);
+      this.spireDirectorSystem = createSpireDirectorSystem();
+      this.campSiegeSystem = createCampSiegeSystem();
+      this.floorCollapseSystem = createFloorCollapseSystem();
+      this.gameStateSystem = createGameStateSystem();
+      this.commanderSupportSystem = createCommanderSupportSystem();
+      this.renderSyncSystem = createRenderSyncSystem(this, this.spriteMap);
+      this.coopSystem = createCoopSystem(f2Key, archerData);
+      this.dayNightSystem = createDayNightSystem();
 
-      // Camp Core at 1600
-      const coreX = 1600;
-      const sw = this.scale.width;
       const worldWidth = 3200;
-
-      // ── Backgrounds ─────────────────────────────────────────────────────────
-      // At zoom 2×, world y=650 (centerY) maps to screen y≈360 (viewport centre).
-      // The ground cobblestone is at world y=682 → screen y≈424.
-      // All scrollFactor(0) objects use SCREEN coordinates, so position them
-      // explicitly to stay above the ground line.
+      const coreX = 1600;
+      const centerY = 650;
+      const sw = this.scale.width;
       const sh = this.scale.height;
 
+      // ── Backgrounds (Kingdom Two Crowns aesthetic) ───────────────────────────
       // Sky — full screen, fixed
       this.add.tileSprite(sw / 2, sh / 2, sw, sh, "bg_sky")
         .setScrollFactor(0).setDepth(-10);
 
-      // Mountains — upper 60 % of screen
-      this.bgMountains = this.add.tileSprite(sw / 2, sh * 0.32, sw, sh * 0.55, "bg_mountains")
-        .setScrollFactor(0).setDepth(-9);
+      // Misty Pine Forest Parallax Layer — dense evergreens down to the grass
+      this.bgTrees = this.add.tileSprite(worldWidth / 2, centerY - 20, worldWidth, 550, "bg_forest_mist")
+        .setScrollFactor(0.2, 1.0).setDepth(-8);
 
-      // Trees — just above the ground, capped so they don't bleed below
-      this.bgTrees = this.add.tileSprite(sw / 2, sh * 0.46, sw, sh * 0.35, "bg_trees")
-        .setScrollFactor(0).setDepth(-8);
-
-      // Cobblestone ground band (world-space, scrolls with camera)
-      this.add.tileSprite(worldWidth / 2, centerY + 32, worldWidth, 64, "ground_cobblestone_bank")
+      // Authentic Kingdom Two Crowns Ground Embankment (Cobblestone path, stone block wall, soil strata & water reflection)
+      this.add.tileSprite(worldWidth / 2, centerY + 70, worldWidth, 320, "bg_ground_embankment")
         .setScrollFactor(1.0).setDepth(0);
 
-      // Solid earth fill — covers everything below the cobblestone so no
-      // background art bleeds through the ground.
-      this.add.rectangle(worldWidth / 2, centerY + 250, worldWidth, 500, 0x1a0e06)
+      // Deep water / bedrock fill below embankment
+      this.add.rectangle(worldWidth / 2, centerY + 300, worldWidth, 400, 0x0a0c10)
         .setScrollFactor(1.0).setDepth(0);
-
 
       // Center the camera on the avatar
-      this.cameras.main.centerOn(coreX, centerY);
-
-      // Secondary camera for water reflection
-      const reflectionCamera = this.cameras.add(0, 650, 3200, 250);
-      reflectionCamera.setAlpha(0.35);
-      reflectionCamera.setZoom(2, -2);
-      reflectionCamera.scrollY = 650;
-      // Also match the bounds and zoom of main camera
-      reflectionCamera.setBounds(0, 0, 3200, 1200);
-      // We will sync scrollX in update()
-      this.events.on('update', (time: number) => {
-        reflectionCamera.scrollX = this.cameras.main.scrollX;
-        // The reflection camera should always focus on the same vertical baseline inverted
-        reflectionCamera.scrollY = 650;
-
-        // Add subtle wave ripple offsets
-        reflectionCamera.scrollX += Math.sin(time / 500) * 4;
-        reflectionCamera.scrollY += Math.cos(time / 400) * 2;
-      });
+      this.cameras.main.centerOn(1480, centerY);
 
       createGameStateEntity(world);
       createDayNightEntity(world);
@@ -283,42 +245,112 @@ constructor() {
       CoopStateComponent.player1Eid[coopEid] = -1;
       CoopStateComponent.player2Eid[coopEid] = -1;
 
-      // Spawn Camp
+      // Spawn Camp Core
       createCampCoreEntity(world, campConfig, coreX, centerY);
-      createCampWallEntity(world, campConfig, SpireSideValues.Left, 1200, centerY);
-      createCampWallEntity(world, campConfig, SpireSideValues.Right, 2000, centerY);
 
       // Spawn Spires
-      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, 200, centerY, defendersData);
-      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, 3000, centerY, defendersData);
-
-      // Wilderness Shrines
-      const leftShrine = addEntity(world);
-      addComponent(world, WildernessPoiComponent, leftShrine);
-      WildernessPoiComponent.poiType[leftShrine] = 0;
-      WildernessPoiComponent.x[leftShrine] = 800;
-
-      const rightShrine = addEntity(world);
-      addComponent(world, WildernessPoiComponent, rightShrine);
-      WildernessPoiComponent.poiType[rightShrine] = 0;
-      WildernessPoiComponent.x[rightShrine] = 2400;
+      const leftSpire = createSpireEntity(world, spireConfig, SpireSideValues.Left, 200, centerY, defendersMap);
+      const rightSpire = createSpireEntity(world, spireConfig, SpireSideValues.Right, 3000, centerY, defendersMap);
 
       // Spawn invasion spawners
       createInvasionSpawner(world, leftSpire, SpireSideValues.Left, 3000, 3);
       createInvasionSpawner(world, rightSpire, SpireSideValues.Right, 3000, 3);
 
-      // Spawn units
-      const knightEntity = createUnitEntity(world, knightData, coreX, centerY);
+      // ── Tool Stands in Town (Kingdom Two Crowns Economy) ─────────────────────
+      const spawnPoi = (type: number, x: number, y: number) => {
+        const poiEid = addEntity(world);
+        addComponent(world, Position, poiEid);
+        Position.x[poiEid] = x;
+        Position.y[poiEid] = y;
+        addComponent(world, WildernessPoiComponent, poiEid);
+        WildernessPoiComponent.poiType[poiEid] = type;
+        WildernessPoiComponent.x[poiEid] = x;
+        return poiEid;
+      };
+
+      // Tool Guild Stands
+      spawnPoi(5, 1450, centerY); // Bow Stand (Archer Guild, 15 Aether)
+      spawnPoi(4, 1750, centerY); // Hammer Stand (Builder Guild, 10 Aether)
+      spawnPoi(6, 1350, centerY); // Sword Stand (Knight Guild, 20 Aether)
+
+      // Vagrant Camps in Wilderness
+      spawnPoi(3, 550, centerY);  // Left Vagrant Camp
+      spawnPoi(3, 2650, centerY); // Right Vagrant Camp
+
+      // Shrines
+      spawnPoi(0, 750, centerY);  // Left Shrine
+      spawnPoi(0, 2450, centerY); // Right Shrine
+
+      // ── Unemployed People (Peasants / Wanderers) ─────────────────────────────
+      const spawnPeasant = (x: number, y: number) => {
+        const pEid = addEntity(world);
+        addComponent(world, Position, pEid);
+        Position.x[pEid] = x;
+        Position.y[pEid] = y;
+
+        addComponent(world, Velocity, pEid);
+        Velocity.x[pEid] = 0;
+        Velocity.y[pEid] = 0;
+
+        addComponent(world, Speed, pEid);
+        Speed.value[pEid] = 40;
+
+        addComponent(world, Health, pEid);
+        Health.max[pEid] = 50;
+        Health.current[pEid] = 50;
+
+        addComponent(world, FactionTag, pEid);
+        FactionTag.faction[pEid] = FactionValues.Hero;
+
+        addComponent(world, UnitRole, pEid);
+        UnitRole.role[pEid] = RoleValues.PEASANT;
+        UnitRole.level[pEid] = 1;
+        UnitRole.xp[pEid] = 0;
+        UnitRole.nextLevelXp[pEid] = 50;
+        return pEid;
+      };
+
+      // Starting wanderers sitting by vagrant camps
+      spawnPeasant(530, centerY);
+      spawnPeasant(570, centerY);
+      spawnPeasant(2630, centerY);
+      spawnPeasant(2670, centerY);
+
+      // Starting unemployed citizens in base camp
+      spawnPeasant(1530, centerY);
+      spawnPeasant(1670, centerY);
+
+      // ── Procedural / Randomized Wall Mounds & Debris ─────────────────────────
+      const spawnWallMound = (x: number, y: number) => {
+        const bpEid = addEntity(world);
+        addComponent(world, Position, bpEid);
+        Position.x[bpEid] = x;
+        Position.y[bpEid] = y;
+
+        addComponent(world, WallBlueprint, bpEid);
+        WallBlueprint.state[bpEid] = BlueprintStateValues.MOUND;
+        WallBlueprint.cost[bpEid] = 10;
+        WallBlueprint.progress[bpEid] = 0;
+        WallBlueprint.targetWallEid[bpEid] = -1;
+        return bpEid;
+      };
+
+      // Inner camp boundary mounds (randomized ± 30px)
+      const leftInnerWallX = 1200 + Math.floor(Math.random() * 40 - 20);
+      const rightInnerWallX = 2000 + Math.floor(Math.random() * 40 - 20);
+      createCampWallEntity(world, campConfig, SpireSideValues.Left, leftInnerWallX, centerY);
+      createCampWallEntity(world, campConfig, SpireSideValues.Right, rightInnerWallX, centerY);
+
+      // Outer expansion wall debris / mounds (randomized ± 40px)
+      const leftOuterMoundX = 850 + Math.floor(Math.random() * 60 - 30);
+      const rightOuterMoundX = 2350 + Math.floor(Math.random() * 60 - 30);
+      spawnWallMound(leftOuterMoundX, centerY);
+      spawnWallMound(rightOuterMoundX, centerY);
+
+      // Spawn Player Unit
+      const knightEntity = createUnitEntity(world, commanderData, 1480, centerY);
       setPlayerControlled(world, knightEntity, 1);
       CoopStateComponent.player1Eid[coopEid] = knightEntity;
-
-      // Explicitly checking import.meta.env for Vite instead of process.env
-      // Exposed unconditionally so E2E tests can always inspect ECS state
-      (window as any).__breachspire = {
-          world,
-          InvasionSpawner: (await import("../ecs/components")).InvasionSpawner,
-          SpireComponent: (await import("../ecs/components")).SpireComponent
-      };
 
       this.isReady = true;
       console.log("GameScene ready");
@@ -419,9 +451,9 @@ constructor() {
       // Flash screen red
       this.cameras.main.flash(1000, 255, 0, 0);
       // Play defeat stinger
-      this.audioManager.playDefeatStinger();
+      this.audioManager?.playDefeatStinger?.();
     } else {
-      this.audioManager.playVictoryStinger();
+      this.audioManager?.playVictoryStinger?.();
     }
 
     // Save state

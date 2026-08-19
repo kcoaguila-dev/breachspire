@@ -42,6 +42,8 @@ const poiQueryEnter = enterQuery(poiQuery);
 
 const stateQuery = defineQuery([GameStateComponent]);
 
+const playerQuery = defineQuery([PlayerControlled, Position]);
+
 const levelUpEventQuery = defineQuery([LevelUpEvent]);
 
 const moteQuery = defineQuery([AetherMoteComponent, Position]);
@@ -57,6 +59,15 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
   const ambientRect = scene.add.rectangle(scene.scale.width / 2, scene.scale.height / 2, scene.scale.width, scene.scale.height, 0xffffff, 1);
   ambientRect.setScrollFactor(0);
   (ambientRect as any).setDepth(99);
+
+  // Floating prompt for building / hiring interactions
+  const promptText = scene.add.text(0, 0, "", {
+    fontSize: "12px",
+    fontFamily: "monospace",
+    color: "#ffea00",
+    backgroundColor: "#111111ee",
+    padding: { x: 6, y: 3 }
+  }).setOrigin(0.5).setDepth(200).setVisible(false);
 
   // Create UI elements
   const unitHpGraphicsMap = new Map<number, Phaser.GameObjects.Graphics>();
@@ -81,10 +92,11 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
       // px_*.jpg sources: heroes=48px, troll/commander=64px, goblin/cultist=40px
       const textureKey = getUnitTextureKey(faction, combatType, isFlying, role);
       let displaySize = 96; // default: 48px × 2
-      if (textureKey === "steed_commander" || textureKey === "unit_troll" ||
-          textureKey === "anim_commander"  || textureKey === "anim_troll") {
+      if (textureKey === "anim_commander" || textureKey === "steed_commander") {
+        displaySize = 140; // 80px × 1.75 — generous frame for king on horse with sword
+      } else if (textureKey === "anim_troll" || textureKey === "unit_troll") {
         displaySize = 128; // 64px × 2
-      } else if (textureKey === "unit_goblin" || textureKey === "unit_cultist") {
+      } else if (textureKey === "anim_goblin" || textureKey === "unit_goblin" || textureKey === "anim_cultist" || textureKey === "unit_cultist") {
         displaySize = 80;  // 40px × 2
       }
       sprite.setDisplaySize(displaySize, displaySize);
@@ -112,9 +124,6 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         const isMoving = Math.abs(velX) > 5 || Math.abs(Velocity.y[eid]) > 5;
 
         // ── Animation playback ─────────────────────────────────────────────────
-        // Only attempt animation if the sprite was created from an anim_ spritesheet.
-        // Static px_*.jpg sprites (steed_commander, unit_goblin, etc.) are single-frame
-        // canvas textures and cannot play animations — skip them.
         if (!isDead && sprite.texture.key.startsWith("anim_")) {
           const combatType = hasComponent(world, CombatTypeComponent, eid)
             ? CombatTypeComponent.type[eid] : 0;
@@ -128,14 +137,11 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         }
 
         // ── FlipX: mirror sprite to face movement direction ────────────────────
-        // Heroes default face RIGHT → flip when moving LEFT  (velX < 0)
-        // Monsters default face LEFT → flip when moving RIGHT (velX > 0)
+        // All spritesheets (heroes & monsters) are normalized to face RIGHT by default.
+        // Moving Left (velX < 0) flips the sprite to face left.
+        // Moving Right (velX > 0) keeps standard right-facing.
         if (Math.abs(velX) > 5) {
-          if (faction === FactionValues.Hero) {
-            sprite.setFlipX(velX < 0);
-          } else {
-            sprite.setFlipX(velX > 0);
-          }
+          sprite.setFlipX(velX < 0);
         }
 
         // Sprint dust particle
@@ -150,73 +156,32 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
             });
         }
 
-        if (Health.current[eid] <= 0) {
-            sprite.setAlpha(0.2); // Dead visually
-        } else {
-            sprite.setPosition(Position.x[eid], Position.y[eid]);
+        // ── Synchronize position ───────────────────────────────────────────────
+        sprite.setPosition(Position.x[eid], Position.y[eid]);
+
+        // ── Dead entity fadeout ────────────────────────────────────────────────
+        if (isDead) {
+          sprite.setAlpha(Math.max(0, sprite.alpha - 0.05));
+          if (hpGraphics) hpGraphics.clear();
+          continue;
         }
 
-        if (hasComponent(world, UnitRole, eid)) {
-            const role = UnitRole.role[eid];
-            const combatType = hasComponent(world, CombatTypeComponent, eid) ? CombatTypeComponent.type[eid] : 0;
-            const faction = FactionTag.faction[eid];
-            const isFlying = hasComponent(world, CanReachElevated, eid);
-            const textureId = getUnitTextureKey(faction, combatType, isFlying, role);
-            if (sprite.texture.key !== textureId) {
-                sprite.setTexture(textureId);
-            }
-
-            if (UnitRole.level[eid] === 2) {
-                sprite.setTint(0xd0d8e8); // Silver
-            } else if (UnitRole.level[eid] >= 3) {
-                sprite.setTint(0xffea55); // Gold
-            } else {
-                sprite.clearTint();
-            }
-
-            // Hammering Dust Animation
-            if (UnitRole.isConstructing[eid]) {
-                // Spawn a quick fading tween circle
-                if (Math.random() < 0.2) { // roughly every 5 frames
-                    const dust = scene.add.circle(Position.x[eid] + (Math.random() * 10 - 5), Position.y[eid] - 5, 3, 0xaaaaaa, 0.8);
-                    scene.tweens.add({
-                        targets: dust,
-                        y: dust.y - 15,
-                        alpha: 0,
-                        duration: 400,
-                        onComplete: () => dust.destroy()
-                    });
-                }
-            }
-        }
-      }
-
-      if (hpGraphics) {
-        hpGraphics.clear();
-        if (!hasComponent(world, PlayerControlled, eid)) {
-          if (Health.current[eid] > 0 && Health.current[eid] < Health.max[eid]) {
-            const w = 32;
-            const h = 4;
-            const x = Position.x[eid] - w / 2;
-            const y = Position.y[eid] - 24;
-
-            const hpRatio = Math.max(0, Health.current[eid] / Health.max[eid]);
-            const faction = FactionTag.faction[eid];
-            const fillColor = faction === FactionValues.Hero ? 0x00ff00 : 0xff0000;
-
-            // Background
-            hpGraphics.fillStyle(0x000000, 0.8);
-            hpGraphics.fillRect(x, y, w, h);
-
-            // Fill
-            hpGraphics.fillStyle(fillColor, 1.0);
-            hpGraphics.fillRect(x, y, w * hpRatio, h);
-          }
-
-          // Always draw aura for flying units if alive
-          if (Health.current[eid] > 0 && hasComponent(world, CanReachElevated, eid)) {
-            hpGraphics.lineStyle(2, 0x00ffff, 0.5);
-            hpGraphics.strokeCircle(Position.x[eid], Position.y[eid], 20);
+        // ── Dynamic HP Bar ─────────────────────────────────────────────────────
+        if (hpGraphics) {
+          hpGraphics.clear();
+          const hp = Health.current[eid];
+          const maxHp = Health.max[eid];
+          if (hp < maxHp && hp > 0) {
+            const barW = 32;
+            const barH = 4;
+            const barX = Position.x[eid] - barW / 2;
+            const barY = Position.y[eid] - 38;
+            hpGraphics.fillStyle(0x222222, 0.8);
+            hpGraphics.fillRect(barX, barY, barW, barH);
+            const fillRatio = Math.max(0, hp / maxHp);
+            const color = faction === FactionValues.Hero ? 0x44ff44 : 0xff4444;
+            hpGraphics.fillStyle(color, 1.0);
+            hpGraphics.fillRect(barX, barY, barW * fillRatio, barH);
           }
         }
       }
@@ -242,14 +207,11 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
     const coresEntered = campCoreQueryEnter(world);
     for (let i = 0; i < coresEntered.length; i++) {
       const eid = coresEntered[i];
-      // Use real crystal art if available, otherwise fall back to programmatic hearth
       const coreTexture = scene.textures.exists("light_aether_crystal")
         ? "light_aether_crystal"
         : "camp_core_hearth";
       const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], coreTexture);
-      // Crystal: 128px source × 1.5 = 192 screen pixels but
-      // reduced to 96px so it reads as a centrepiece without dominating the view
-      sprite.setDisplaySize(96, 96);
+      sprite.setDisplaySize(112, 112);
       sprite.setDepth(1);
       spriteMap.set(eid, sprite);
     }
@@ -261,35 +223,32 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         sprite.setPosition(Position.x[eid], Position.y[eid]);
         const time = scene.time.now;
 
-        // Hearth Smoke Particles
+        // Hearth Smoke / Spark Particles
         if (Math.random() < 0.15) {
-            const smoke = scene.add.rectangle(Position.x[eid] + 16, Position.y[eid] - 32, 6, 6, 0x808080);
-            smoke.setAlpha(0.6);
+            const spark = scene.add.circle(Position.x[eid] + (Math.random() * 30 - 15), Position.y[eid] - 20, 2, 0xffea00);
+            spark.setAlpha(0.8);
             scene.tweens.add({
-                targets: smoke,
-                y: '-=40',
-                x: '+=10',
+                targets: spark,
+                y: '-=35',
+                x: `+=${Math.random() * 20 - 10}`,
                 alpha: 0,
-                scale: 2,
-                duration: 1500,
-                onComplete: () => smoke.destroy()
+                scale: 1.5,
+                duration: 1200,
+                onComplete: () => spark.destroy()
             });
         }
 
-        // Diegetic Visuals — gentle glowing pulse based on light energy
+        // Diegetic Visuals — gentle light pulsation based on energy ratio
         const energyRatio = Math.max(0, Math.min(1, CampCoreComponent.lightEnergy[eid] / CampCoreComponent.maxEnergy[eid]));
-        const pulseScale = 1.0 + Math.sin(time / 600) * 0.04;
-        sprite.setScale(pulseScale);
+        const glowAlpha = 0.88 + 0.12 * Math.sin(time / 700);
 
         if (energyRatio > 0.5) {
-            sprite.setAlpha(1.0);
+            sprite.setAlpha(glowAlpha);
             sprite.clearTint();
         } else if (energyRatio > 0.2) {
-            // Draining: slightly warm tint
             sprite.setAlpha(0.85);
             sprite.setTint(0xffd080);
         } else {
-            // Critical: red danger pulse
             const danger = 0.6 + Math.sin(time / 150) * 0.4;
             sprite.setAlpha(danger);
             sprite.setTint(0xff4422);
@@ -405,6 +364,57 @@ export function createRenderSyncSystem(scene: Phaser.Scene, spriteMap: SpriteMap
         const sprite = scene.add.sprite(Position.x[eid], Position.y[eid], texture);
         sprite.setOrigin(0.5, 1);
         spriteMap.set(eid, sprite);
+    }
+
+    // --- Interactive Floating Prompt ---
+    let promptShown = false;
+    const players = playerQuery(world);
+    if (players.length > 0) {
+      const pX = Position.x[players[0]];
+
+      // 1. Check Wall Blueprints (Mounds)
+      for (let i = 0; i < blueprints.length; i++) {
+        const bpEid = blueprints[i];
+        if (WallBlueprint.state[bpEid] === BlueprintStateValues.MOUND) {
+          const dist = Math.abs(Position.x[bpEid] - pX);
+          if (dist < 65) {
+            promptText.setText("[SPACE] Build Wall (10 Aether)")
+              .setPosition(Position.x[bpEid], Position.y[bpEid] - 40)
+              .setVisible(true);
+            promptShown = true;
+            break;
+          }
+        }
+      }
+
+      // 2. Check Tool Stands / POIs
+      if (!promptShown) {
+        const pois = poiQuery(world);
+        for (let i = 0; i < pois.length; i++) {
+          const poiEid = pois[i];
+          const dist = Math.abs(Position.x[poiEid] - pX);
+          if (dist < 65) {
+            const type = WildernessPoiComponent.poiType[poiEid];
+            let label = "";
+            if (type === 3) label = "[SPACE] Recruit Vagrant (5 Aether)";
+            else if (type === 4) label = "[SPACE] Hire Builder (10 Aether)";
+            else if (type === 5) label = "[SPACE] Hire Archer (15 Aether)";
+            else if (type === 6) label = "[SPACE] Hire Knight (20 Aether)";
+
+            if (label) {
+              promptText.setText(label)
+                .setPosition(Position.x[poiEid], Position.y[poiEid] - 50)
+                .setVisible(true);
+              promptShown = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!promptShown) {
+      promptText.setVisible(false);
     }
 
     // --- Motes ---

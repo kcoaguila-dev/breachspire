@@ -34,6 +34,10 @@ export class BootScene extends Phaser.Scene {
         frameHeight: def.frameH,
       });
     }
+
+    // Authentic Kingdom Two Crowns pixel art background & ground layers
+    this.load.image("bg_forest_mist", "/sprites/bg_forest_mist.jpg");
+    this.load.image("bg_ground_embankment", "/sprites/bg_ground_embankment.jpg");
   }
 
   create() {

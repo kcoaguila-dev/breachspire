@@ -37,8 +37,8 @@ export function createBuildingSystem() {
           const dy = Position.y[bpEid] - Position.y[pEid];
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist <= 30) {
-            const cost = WallBlueprint.cost[bpEid];
+          if (dist <= 65) {
+            const cost = WallBlueprint.cost[bpEid] || 10;
             if (CampCoreComponent.lightEnergy[coreEid] >= cost) {
               CampCoreComponent.lightEnergy[coreEid] -= cost;
               WallBlueprint.state[bpEid] = BlueprintStateValues.ORDERED;
@@ -79,7 +79,7 @@ export function createBuildingSystem() {
       if (targetBpEid === -1) {
         for (let j = 0; j < walls.length; j++) {
           const wallEid = walls[j];
-          if (CampWallComponent.hp[wallEid] > 0 && CampWallComponent.hp[wallEid] < CampWallComponent.maxHp[wallEid]) {
+          if (CampWallComponent.hp[wallEid] < CampWallComponent.maxHp[wallEid] && CampWallComponent.hp[wallEid] > 0) {
             const dx = Position.x[wallEid] - Position.x[builderEid];
             const dist = Math.abs(dx);
             if (dist < minDist) {
@@ -94,14 +94,12 @@ export function createBuildingSystem() {
         const dx = Position.x[targetBpEid] - Position.x[builderEid];
         const dist = Math.abs(dx);
 
-        if (dist > 5) {
+        if (dist > 30) {
           Velocity.x[builderEid] = Math.sign(dx) * Speed.value[builderEid];
         } else {
           Velocity.x[builderEid] = 0;
+          WallBlueprint.state[targetBpEid] = BlueprintStateValues.BUILDING;
           UnitRole.isConstructing[builderEid] = 1; // Emit dust
-          if (WallBlueprint.state[targetBpEid] === BlueprintStateValues.ORDERED) {
-            WallBlueprint.state[targetBpEid] = BlueprintStateValues.BUILDING;
-          }
 
           // Build speed multiplier based on builder level
           const speedMultiplier = UnitRole.level[builderEid] >= 2 ? 2.0 : 1.0;
@@ -119,16 +117,14 @@ export function createBuildingSystem() {
             WallBlueprint.state[targetBpEid] = BlueprintStateValues.COMPLETED;
 
             // Create camp wall component or update existing
-            const blueprintTargetWallEid = WallBlueprint.targetWallEid[targetBpEid];
-            if (blueprintTargetWallEid) {
-               addComponent(world, CampWallComponent, blueprintTargetWallEid);
-               CampWallComponent.hp[blueprintTargetWallEid] = 100;
-               CampWallComponent.maxHp[blueprintTargetWallEid] = 100;
-               if (UnitRole.level[builderEid] >= 2) {
-                 CampWallComponent.hp[blueprintTargetWallEid] += 50;
-                 CampWallComponent.maxHp[blueprintTargetWallEid] += 50;
-               }
+            let blueprintTargetWallEid = WallBlueprint.targetWallEid[targetBpEid];
+            if (!blueprintTargetWallEid || blueprintTargetWallEid === -1) {
+              blueprintTargetWallEid = targetBpEid;
             }
+            addComponent(world, CampWallComponent, blueprintTargetWallEid);
+            const wallHp = UnitRole.level[builderEid] >= 2 ? 150 : 100;
+            CampWallComponent.hp[blueprintTargetWallEid] = wallHp;
+            CampWallComponent.maxHp[blueprintTargetWallEid] = wallHp;
 
             // XP burst on completion
             UnitRole.xp[builderEid] += 10;
